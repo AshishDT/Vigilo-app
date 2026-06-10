@@ -4223,7 +4223,6 @@ class _InvigilatorSelectorDialogState
     );
   }
 }
-
 class _PresetMessagesDialog extends StatefulWidget {
   const _PresetMessagesDialog({
     required this.initialPresets,
@@ -4240,23 +4239,39 @@ class _PresetMessagesDialog extends StatefulWidget {
 }
 
 class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
-  // ignore: non_constant_identifier_names
   _OtSheetColorPalette get _OtSheetColors => _OtSheetColorPalette(context);
   final TextEditingController _newPresetController = TextEditingController();
-  late final List<TextEditingController> _presetControllers = widget
-      .initialPresets
-      .map((p) => TextEditingController(text: p))
-      .toList();
+  late final List<TextEditingController> _presetControllers;
 
   bool _showLimitError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _presetControllers = widget.initialPresets
+        .map((p) => TextEditingController(text: p))
+        .toList();
+    for (final c in _presetControllers) {
+      c.addListener(_autoSave);
+    }
+  }
 
   @override
   void dispose() {
     _newPresetController.dispose();
     for (final c in _presetControllers) {
+      c.removeListener(_autoSave);
       c.dispose();
     }
     super.dispose();
+  }
+
+  void _autoSave() {
+    final cleaned = _presetControllers
+        .map((c) => c.text.trim())
+        .where((preset) => preset.isNotEmpty)
+        .toList();
+    widget.onSave(cleaned);
   }
 
   void _addPreset() {
@@ -4270,35 +4285,22 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
     if (value.isEmpty) return;
 
     setState(() {
-      _presetControllers.add(TextEditingController(text: value));
+      final newCtrl = TextEditingController(text: value);
+      newCtrl.addListener(_autoSave);
+      _presetControllers.add(newCtrl);
       _newPresetController.clear();
       _showLimitError = false;
     });
+    _autoSave();
   }
 
-  void _save() {
-    final cleaned = _presetControllers
-        .map((c) => c.text.trim())
-        .where((preset) => preset.isNotEmpty)
-        .toList();
-    widget.onSave(cleaned);
-    Navigator.pop(context);
-  }
-
-  InputDecoration _inputDecoration() {
-    return InputDecoration(
-      hintText: 'Type message...',
-      hintStyle: TextStyle(
-        color: _OtSheetColors.blackWhite.withValues(alpha: 0.38),
-      ),
-      filled: true,
-      fillColor: _OtSheetColors.blackWhite.withValues(alpha: .2),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    );
+  void _removePreset(int index) {
+    setState(() {
+      final removed = _presetControllers.removeAt(index);
+      removed.removeListener(_autoSave);
+      removed.dispose();
+    });
+    _autoSave();
   }
 
   @override
@@ -4308,6 +4310,7 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
     final maxDialogHeight = (media.size.height - keyboardInset - 40)
         .clamp(260.0, media.size.height * 0.82)
         .toDouble();
+
     return AnimatedPadding(
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOut,
@@ -4320,293 +4323,256 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
             child: Container(
               constraints: BoxConstraints(maxHeight: maxDialogHeight),
               width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              margin: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+              padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
                 color: _OtSheetColors.panel,
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: _OtSheetColors.line),
+                border: Border.all(color: _OtSheetColors.line.withValues(alpha: 0.75)),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black45,
-                    blurRadius: 18,
-                    offset: Offset(0, 10),
+                    blurRadius: 30,
+                    offset: Offset(0, 14),
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 20, 0),
-                    child: Row(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
                       children: [
                         Container(
-                          width: 50,
-                          height: 50,
+                          width: 58,
+                          height: 58,
                           decoration: BoxDecoration(
-                            color: _OtSheetColors.blue.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: _OtSheetColors.blue.withValues(alpha: 0.3),
-                            ),
+                            color: _OtSheetColors.blue.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: _OtSheetColors.blue.withValues(alpha: 0.5)),
                           ),
                           child: Icon(
                             Icons.edit_note_rounded,
-                            color: _OtSheetColors.blueSoft,
-                            size: 26,
+                            color: _OtSheetColors.blue,
+                            size: 31,
                           ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Text(
                             'Edit Preset Messages',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: _OtSheetColors.text,
-                              fontSize: 22,
+                              fontSize: 24,
                               fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Tooltip(
-                          message: 'Close',
-                          child: InkWell(
-                            onTap: () => Navigator.pop(context),
-                            borderRadius: BorderRadius.circular(14),
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.close_rounded,
-                                size: 24,
-                                color: _OtSheetColors.textSoft,
-                              ),
+                              height: 1.1,
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Flexible(
-                    child: _presetControllers.isEmpty
-                        ? Padding(
-                            padding: EdgeInsets.fromLTRB(20, 8, 20, 12),
-                            child: Text(
-                              'No preset messages yet',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: _OtSheetColors.textSoft,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          )
-                        : ListView.separated(
-                            primary: false,
-                            shrinkWrap: true,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                            ).copyWith(bottom: 12),
-                            itemCount: _presetControllers.length,
-                            separatorBuilder: (context, index) => Divider(
-                              color: _OtSheetColors.blackWhite.withValues(
-                                alpha: 0.18,
-                              ),
-                              height: 26,
-                            ),
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 6,
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _presetControllers[index],
-                                        minLines: 1,
-                                        maxLines: 4,
-                                        cursorColor: _OtSheetColors.blueSoft,
-                                        keyboardType: TextInputType.text,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          height: 1.4,
-                                        ),
-                                        decoration: const InputDecoration(
-                                          isDense: true,
-                                          contentPadding: EdgeInsets.zero,
-                                          border: InputBorder.none,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          final removed = _presetControllers
-                                              .removeAt(index);
-                                          removed.dispose();
-                                        });
-                                      },
-                                      child: Icon(
-                                        Icons.delete,
-                                        color: _OtSheetColors.red,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                  Divider(
-                    color: _OtSheetColors.blackWhite.withValues(alpha: 0.18),
-                    height: 1,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Add new preset',
+
+                    const SizedBox(height: 26),
+
+                    if (_presetControllers.isEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Text(
+                          'No preset messages yet',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: _OtSheetColors.blackWhite.withValues(
-                              alpha: 0.70,
-                            ),
+                            color: _OtSheetColors.textSoft,
                             fontSize: 14,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _newPresetController,
-                                onChanged: (_) {
-                                  setState(() {
-                                    if (_presetControllers.length >= 50 &&
-                                        _newPresetController.text.isNotEmpty) {
-                                      _showLimitError = true;
-                                    } else {
-                                      _showLimitError = false;
-                                    }
-                                  });
-                                },
-                                decoration: _inputDecoration(),
+                      ),
+                    ] else ...[
+                      ...List.generate(_presetControllers.length, (index) {
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom: index == _presetControllers.length - 1 ? 0 : 16,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  decoration: BoxDecoration(
+                                    color: _OtSheetColors.panel2.withValues(alpha: 0.58),
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: _OtSheetColors.lineSoft.withValues(alpha: 0.28),
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _presetControllers[index],
+                                    maxLines: null,
+                                    cursorColor: _OtSheetColors.blue,
+                                    style: TextStyle(
+                                      color: _OtSheetColors.text,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.35,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                      contentPadding:
+                                          EdgeInsets.symmetric(vertical: 13),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              GestureDetector(
+                                onTap: () => _removePreset(index),
+                                child: Icon(
+                                  Icons.delete_rounded,
+                                  color: _OtSheetColors.red,
+                                  size: 27,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+
+                    const SizedBox(height: 22),
+
+                    Container(
+                      height: 1,
+                      color: _OtSheetColors.line.withValues(alpha: 0.18),
+                    ),
+
+                    const SizedBox(height: 22),
+
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Add new preset',
+                        style: TextStyle(
+                          color: _OtSheetColors.textSoft,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Container(
+                      height: 60,
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      decoration: BoxDecoration(
+                        color: _OtSheetColors.panel2,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: _OtSheetColors.lineSoft.withValues(alpha: 0.45)),
+                      ),
+                      child: TextField(
+                        controller: _newPresetController,
+                        cursorColor: _OtSheetColors.blue,
+                        onChanged: (_) {
+                          setState(() {
+                            if (_presetControllers.length >= 50 &&
+                                _newPresetController.text.isNotEmpty) {
+                              _showLimitError = true;
+                            } else {
+                              _showLimitError = false;
+                            }
+                          });
+                        },
+                        style: TextStyle(
+                          color: _OtSheetColors.text,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          hintText: 'Type message...',
+                          hintStyle: TextStyle(
+                            color: _OtSheetColors.textFaint,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    if (_showLimitError) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Quick Message limit reached (50). Delete an existing message to create a new one.',
+                        style: TextStyle(
+                          color: _OtSheetColors.red,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 20),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(58),
+                              side: BorderSide(color: _OtSheetColors.line.withValues(alpha: 0.75)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(22),
                               ),
                             ),
-                            const SizedBox(width: 10),
-                            SizedBox(
-                              height: 44,
-                              child: FilledButton(
-                                onPressed:
-                                    _newPresetController.text.trim().isNotEmpty
-                                    ? _addPreset
-                                    : null,
-                                style: FilledButton.styleFrom(
+                            child: Text(
+                              'Close',
+                              style: TextStyle(
+                                color: _OtSheetColors.blueSoft,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: _newPresetController,
+                            builder: (context, val, _) {
+                              final isEnabled = val.text.trim().isNotEmpty && _presetControllers.length < 50;
+                              return ElevatedButton(
+                                onPressed: isEnabled ? _addPreset : null,
+                                style: ElevatedButton.styleFrom(
                                   backgroundColor: _OtSheetColors.blue,
-                                  disabledBackgroundColor: _OtSheetColors.blue
-                                      .withValues(alpha: 0.45),
+                                  disabledBackgroundColor: _OtSheetColors.blue.withValues(alpha: 0.45),
                                   foregroundColor: Colors.white,
-                                  disabledForegroundColor: Colors.white
-                                      .withValues(alpha: 0.6),
-                                  shape: const StadiumBorder(),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
+                                  disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
+                                  minimumSize: const Size.fromHeight(58),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(22),
                                   ),
-                                  elevation:
-                                      _newPresetController.text
-                                          .trim()
-                                          .isNotEmpty
-                                      ? 2
-                                      : 0,
                                 ),
                                 child: const Text(
                                   'Add',
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (_showLimitError) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            'Quick Message limit reached (50). Delete an existing message to create a new one.',
-                            style: TextStyle(
-                              color: _OtSheetColors.red,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
+                              );
+                            }
                           ),
-                          const SizedBox(height: 12),
-                        ] else
-                          const SizedBox(height: 32),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            AnimatedScaleOnPress(
-                              child: TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                ),
-                                child: Text(
-                                  'Cancel',
-                                  style: TextStyle(
-                                    color: _OtSheetColors.blue,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            SizedBox(
-                              height: 44,
-                              child: FilledButton(
-                                onPressed: _save,
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: _OtSheetColors.blue,
-                                  foregroundColor: Colors.white,
-                                  shape: const StadiumBorder(),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: const Text(
-                                  'Save',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
