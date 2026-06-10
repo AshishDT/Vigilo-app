@@ -1849,31 +1849,33 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   Widget _otPresetChip(String text, {required VoidCallback onTap}) {
     return IntrinsicWidth(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: double.infinity),
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: _OtSheetColors.blue,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 6,
-                  offset: Offset(0, 3),
+        constraints: const BoxConstraints(
+          minHeight: 48,
+          maxWidth: 320,
+        ),
+        child: Material(
+          color: _OtSheetColors.blue,
+          borderRadius: BorderRadius.circular(24),
+          elevation: 3,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 12,
+              ),
+              child: Text(
+                text,
+                softWrap: true,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
                 ),
-              ],
-            ),
-            child: Text(
-              text,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13.2,
-                fontWeight: FontWeight.w800,
-                height: 1.2,
               ),
             ),
           ),
@@ -3076,8 +3078,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                 child: IgnorePointer(
                                   ignoring: _isExamCompleted,
                                   child: Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
+                                    spacing: 10,
+                                    runSpacing: 10,
                                     children: presetMessages
                                         .map(
                                           (m) => _otPresetChip(
