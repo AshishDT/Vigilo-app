@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vigilo/models/exam_card_data.dart';
 import 'package:vigilo/models/schedule.dart';
+import 'package:vigilo/models/message.dart';
 import 'package:vigilo/views/officer_tools_screen.dart';
 
 void main() {
@@ -140,5 +141,42 @@ void main() {
 
     expect(find.text('Record a malpractice concern'), findsOneWidget);
     expect(find.text('Suspected cheating'), findsNothing);
+  });
+
+  testWidgets('Sharing briefings includes recipient names in Recent Messages', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final testData = buildExamCardData().copyWith(
+      messages: [
+        Message('to Alice: Plan A shared', time: DateTime.now()),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: OfficerToolsSheet(
+            isExamCompleted: false,
+            data: testData,
+            initialTabIndex: 2,
+            onLog: (_) {},
+            onReStart: () {},
+            onPause: () {},
+            onEnd: () {},
+            onExportCopy: () {},
+            onExportCsvDownload: () {},
+            onExportCsvShare: () {},
+            onToggleAutoStart: (_) {},
+            onDeleteData: () {},
+            onUpdateData: (_) {},
+            onSaveData: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Briefing document shared'), findsOneWidget);
+    expect(find.text('Plan A attached'), findsOneWidget);
+    expect(find.text('To: Alice'), findsOneWidget);
   });
 }

@@ -1984,15 +1984,15 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       }
 
       bool merged = false;
-      if (grouped.isNotEmpty) {
-        final last = grouped.last;
-        final timeDiff = msg.time.difference(last.time).abs();
-        if (last.text == display && timeDiff.inSeconds < 5) {
-          if (recipient.isNotEmpty && !last.recipients.contains(recipient)) {
-            last.recipients.add(recipient);
-            last.recipients.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      for (final existing in grouped) {
+        final timeDiff = msg.time.difference(existing.time).abs();
+        if (existing.text == display && timeDiff.inSeconds < 5) {
+          if (recipient.isNotEmpty && !existing.recipients.contains(recipient)) {
+            existing.recipients.add(recipient);
+            existing.recipients.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
           }
           merged = true;
+          break;
         }
       }
 
