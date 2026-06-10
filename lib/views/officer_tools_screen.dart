@@ -1846,13 +1846,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     );
   }
 
-  Widget _otPresetChip(String text, {double? forcedWidth, required VoidCallback onTap}) {
-    final chip = ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: 48,
-        maxWidth: forcedWidth ?? 320,
-        minWidth: forcedWidth ?? 0,
-      ),
+  Widget _otPresetChip(String text, {double? maxWidth, required VoidCallback onTap}) {
+    final chip = IntrinsicWidth(
       child: Material(
         color: _OtSheetColors.blue,
         borderRadius: BorderRadius.circular(24),
@@ -1868,6 +1863,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             child: Text(
               text,
               softWrap: true,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,
@@ -1880,10 +1877,13 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       ),
     );
 
-    if (forcedWidth != null) {
-      return chip;
-    }
-    return IntrinsicWidth(child: chip);
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: 48,
+        maxWidth: maxWidth ?? double.infinity,
+      ),
+      child: chip,
+    );
   }
 
   Widget _buildResponsivePresetWrap(List<String> messages) {
@@ -1893,14 +1893,22 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         final spacing = 10.0;
         final runSpacing = 10.0;
 
+        // Retrieve the theme font family to ensure precise text measurement
+        final themeStyle = Theme.of(context).textTheme.bodyMedium?.merge(
+          const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+          ),
+        ) ?? const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
+        );
+
         double measureText(String text) {
           final tp = TextPainter(
             text: TextSpan(
               text: text,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-              ),
+              style: themeStyle,
             ),
             textDirection: TextDirection.ltr,
           );
@@ -1912,11 +1920,33 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         List<Widget> currentRow = [];
         double currentRowWidth = 0;
 
+        void commitRow({bool isLast = false}) {
+          if (currentRow.isEmpty) return;
+
+          final rowWidget = currentRow.length == 1
+              ? currentRow.first
+              : Row(
+                  spacing: spacing,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: List.from(currentRow),
+                );
+
+          rows.add(
+            isLast
+                ? rowWidget
+                : Padding(
+                    padding: EdgeInsets.only(bottom: runSpacing),
+                    child: rowWidget,
+                  ),
+          );
+
+          currentRow = [];
+          currentRowWidth = 0;
+        }
+
         for (final m in messages) {
           final naturalWidth = measureText(m);
-          final remainingWidth = parentWidth -
-              currentRowWidth -
-              (currentRow.isNotEmpty ? spacing : 0);
+          final remainingWidth = parentWidth - currentRowWidth - (currentRow.isNotEmpty ? spacing : 0);
 
           if (naturalWidth <= remainingWidth) {
             currentRow.add(
@@ -1925,60 +1955,33 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 onTap: () => _sendPreset(m),
               ),
             );
-            currentRowWidth +=
-                (currentRow.length == 1 ? 0 : spacing) + naturalWidth;
-          } else if (remainingWidth >= 120) {
+            currentRowWidth += (currentRow.length == 1 ? 0 : spacing) + naturalWidth;
+          } else if (remainingWidth >= (parentWidth * 0.35)) {
+            // Fit the chip into the remaining space of the current row and wrap in Flexible
             currentRow.add(
-              _otPresetChip(
-                m,
-                forcedWidth: remainingWidth - 1.5,
-                onTap: () => _sendPreset(m),
-              ),
-            );
-            rows.add(
-              Padding(
-                padding: EdgeInsets.only(bottom: runSpacing),
-                child: Row(
-                  spacing: spacing,
-                  children: List.from(currentRow),
+              Flexible(
+                child: _otPresetChip(
+                  m,
+                  maxWidth: remainingWidth - 4.0,
+                  onTap: () => _sendPreset(m),
                 ),
               ),
             );
-            currentRow = [];
-            currentRowWidth = 0;
+            commitRow();
           } else {
-            if (currentRow.isNotEmpty) {
-              rows.add(
-                Padding(
-                  padding: EdgeInsets.only(bottom: runSpacing),
-                  child: Row(
-                    spacing: spacing,
-                    children: List.from(currentRow),
-                  ),
-                ),
-              );
-            }
-            final newWidth =
-                naturalWidth > parentWidth ? parentWidth : naturalWidth;
+            commitRow();
             currentRow = [
               _otPresetChip(
                 m,
-                forcedWidth: naturalWidth > parentWidth ? parentWidth - 1.5 : null,
+                maxWidth: parentWidth - 4.0,
                 onTap: () => _sendPreset(m),
               ),
             ];
-            currentRowWidth = newWidth;
+            currentRowWidth = naturalWidth > parentWidth ? parentWidth : naturalWidth;
           }
         }
 
-        if (currentRow.isNotEmpty) {
-          rows.add(
-            Row(
-              spacing: spacing,
-              children: List.from(currentRow),
-            ),
-          );
-        }
+        commitRow(isLast: true);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
