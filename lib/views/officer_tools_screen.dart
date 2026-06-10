@@ -1961,12 +1961,55 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     );
   }
 
-  Widget _otMessageBubble(Message message) {
-    final text = message.message;
-    String display = text;
-    if (text.startsWith('to ') && text.contains(': ')) {
-      display = text.substring(text.indexOf(': ') + 2);
+
+  String _recipientText(List<String> names) {
+    if (names.isEmpty) return 'To: No recipients';
+    if (names.length <= 2) return 'To: ${names.join(', ')}';
+    return 'To: ${names.take(2).join(', ')} +${names.length - 2}';
+  }
+
+  List<_GroupedMessage> _getGroupedMessages() {
+    final List<_GroupedMessage> grouped = [];
+    for (final msg in messageLog) {
+      final text = msg.message;
+      String display = text;
+      String recipient = '';
+      final isToMessage = text.startsWith('to ') && text.contains(': ');
+      if (isToMessage) {
+        final colonIdx = text.indexOf(': ');
+        recipient = text.substring(3, colonIdx).trim();
+        display = text.substring(colonIdx + 2);
+      }
+
+      bool merged = false;
+      if (grouped.isNotEmpty) {
+        final last = grouped.last;
+        final timeDiff = msg.time.difference(last.time).abs();
+        if (last.text == display && timeDiff.inSeconds < 5) {
+          if (recipient.isNotEmpty && !last.recipients.contains(recipient)) {
+            last.recipients.add(recipient);
+            last.recipients.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+          }
+          merged = true;
+        }
+      }
+
+      if (!merged) {
+        grouped.add(
+          _GroupedMessage(
+            text: display,
+            recipients: recipient.isNotEmpty ? [recipient] : [],
+            time: msg.time,
+            isToMessage: isToMessage,
+          ),
+        );
+      }
     }
+    return grouped;
+  }
+
+  Widget _otMessageBubble(_GroupedMessage message) {
+    final display = message.text;
 
     String title = display;
     String? subtitle;
@@ -2046,6 +2089,19 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: _OtSheetColors.textSoft,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                if (message.isToMessage) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    _recipientText(message.recipients),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -3085,7 +3141,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   ),
                                 ),
                                 const SizedBox(height: 12),
-                                ...messageLog.map(_otMessageBubble),
+                                ..._getGroupedMessages().map(_otMessageBubble),
                               ],
                             ],
                           ),
@@ -6669,3 +6725,18 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
     );
   }
 }
+
+class _GroupedMessage {
+  final String text;
+  final List<String> recipients;
+  final DateTime time;
+  final bool isToMessage;
+
+  _GroupedMessage({
+    required this.text,
+    required this.recipients,
+    required this.time,
+    required this.isToMessage,
+  });
+}
+

@@ -37,7 +37,7 @@ void main() {
     return find.byWidgetPredicate(
       (widget) =>
           widget is TextField &&
-          widget.decoration?.labelText == 'Type Your Message',
+          widget.decoration?.hintText == 'Type a message',
     );
   }
 
@@ -79,22 +79,28 @@ void main() {
         findsNothing,
       );
 
-      await tester.tap(find.text('None selected'));
+      await tester.tap(find.text('No Invigilators selected'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(CheckboxListTile, 'Alice'));
+      await tester.tap(find.text('Alice').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(TextButton, 'Done'));
+      await tester.tap(find.text('Save Changes'));
       await tester.pumpAndSettle();
 
-      await tester.enterText(messageField(), 'Status check');
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Send'));
+      final fieldFinder = messageField();
+      await tester.ensureVisible(fieldFinder);
+      await tester.enterText(fieldFinder, 'Status check');
+      await tester.pumpAndSettle();
+
+      final sendButtonFinder = find.byIcon(Icons.send_rounded);
+      await tester.ensureVisible(sendButtonFinder);
+      await tester.tap(sendButtonFinder);
       await tester.pumpAndSettle();
 
       expect(updatedData.messages, isNotNull);
       expect(updatedData.messages, hasLength(1));
       expect(updatedData.messages!.single.message, 'to Alice: Status check');
-      expect(find.text('Alice'), findsWidgets);
+      expect(find.text('To: Alice'), findsWidgets);
       expect(find.text('Status check'), findsOneWidget);
     },
   );
@@ -132,7 +138,7 @@ void main() {
     await tester.tap(find.text('Malpractice'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Suspected malpractice'), findsOneWidget);
+    expect(find.text('Record a malpractice concern'), findsOneWidget);
     expect(find.text('Suspected cheating'), findsNothing);
   });
 }
