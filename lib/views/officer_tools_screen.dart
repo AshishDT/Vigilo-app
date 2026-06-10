@@ -1846,41 +1846,145 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     );
   }
 
-  Widget _otPresetChip(String text, {required VoidCallback onTap}) {
-    return IntrinsicWidth(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minHeight: 48,
-          maxWidth: 320,
-        ),
-        child: Material(
-          color: _OtSheetColors.blue,
+  Widget _otPresetChip(String text, {double? forcedWidth, required VoidCallback onTap}) {
+    final chip = ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: 48,
+        maxWidth: forcedWidth ?? 320,
+        minWidth: forcedWidth ?? 0,
+      ),
+      child: Material(
+        color: _OtSheetColors.blue,
+        borderRadius: BorderRadius.circular(24),
+        elevation: 3,
+        child: InkWell(
           borderRadius: BorderRadius.circular(24),
-          elevation: 3,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(24),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: 12,
-              ),
-              child: Text(
-                text,
-                softWrap: true,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                ),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 12,
+            ),
+            child: Text(
+              text,
+              softWrap: true,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
         ),
       ),
+    );
+
+    if (forcedWidth != null) {
+      return chip;
+    }
+    return IntrinsicWidth(child: chip);
+  }
+
+  Widget _buildResponsivePresetWrap(List<String> messages) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final parentWidth = constraints.maxWidth;
+        final spacing = 10.0;
+        final runSpacing = 10.0;
+
+        double measureText(String text) {
+          final tp = TextPainter(
+            text: TextSpan(
+              text: text,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            textDirection: TextDirection.ltr,
+          );
+          tp.layout(maxWidth: parentWidth - 36);
+          return tp.width + 36;
+        }
+
+        final List<Widget> rows = [];
+        List<Widget> currentRow = [];
+        double currentRowWidth = 0;
+
+        for (final m in messages) {
+          final naturalWidth = measureText(m);
+          final remainingWidth = parentWidth -
+              currentRowWidth -
+              (currentRow.isNotEmpty ? spacing : 0);
+
+          if (naturalWidth <= remainingWidth) {
+            currentRow.add(
+              _otPresetChip(
+                m,
+                onTap: () => _sendPreset(m),
+              ),
+            );
+            currentRowWidth +=
+                (currentRow.length == 1 ? 0 : spacing) + naturalWidth;
+          } else if (remainingWidth >= 120) {
+            currentRow.add(
+              _otPresetChip(
+                m,
+                forcedWidth: remainingWidth - 1.5,
+                onTap: () => _sendPreset(m),
+              ),
+            );
+            rows.add(
+              Padding(
+                padding: EdgeInsets.only(bottom: runSpacing),
+                child: Row(
+                  spacing: spacing,
+                  children: List.from(currentRow),
+                ),
+              ),
+            );
+            currentRow = [];
+            currentRowWidth = 0;
+          } else {
+            if (currentRow.isNotEmpty) {
+              rows.add(
+                Padding(
+                  padding: EdgeInsets.only(bottom: runSpacing),
+                  child: Row(
+                    spacing: spacing,
+                    children: List.from(currentRow),
+                  ),
+                ),
+              );
+            }
+            final newWidth =
+                naturalWidth > parentWidth ? parentWidth : naturalWidth;
+            currentRow = [
+              _otPresetChip(
+                m,
+                forcedWidth: naturalWidth > parentWidth ? parentWidth - 1.5 : null,
+                onTap: () => _sendPreset(m),
+              ),
+            ];
+            currentRowWidth = newWidth;
+          }
+        }
+
+        if (currentRow.isNotEmpty) {
+          rows.add(
+            Row(
+              spacing: spacing,
+              children: List.from(currentRow),
+            ),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: rows,
+        );
+      },
     );
   }
 
@@ -3077,18 +3181,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                 opacity: _isExamCompleted ? 0.58 : 1,
                                 child: IgnorePointer(
                                   ignoring: _isExamCompleted,
-                                  child: Wrap(
-                                    spacing: 10,
-                                    runSpacing: 10,
-                                    children: presetMessages
-                                        .map(
-                                          (m) => _otPresetChip(
-                                            m,
-                                            onTap: () => _sendPreset(m),
-                                          ),
-                                        )
-                                        .toList(),
-                                  ),
+                                  child: _buildResponsivePresetWrap(presetMessages),
                                 ),
                               ),
                               const SizedBox(height: 20),
