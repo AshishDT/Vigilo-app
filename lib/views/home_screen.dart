@@ -1844,7 +1844,7 @@ class _HomeScreenState extends State<HomeScreen>
                           context: context,
                           builder: (ctx) => confirmationDialog(
                             context: ctx,
-                            title: "End Exam",
+                            title: "End Exam ?",
                             message:
                                 "This action will end the exam session and record the final finish time.",
                             okTitle: "End Exam",

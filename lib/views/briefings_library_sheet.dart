@@ -270,129 +270,148 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
 
   Future<bool> _confirmDelete(BriefingItem item) async {
     final colors = _SheetColorPalette(context);
-    final redColor = const Color(0xFFFF5467);
-    final redSoftColor = const Color(0xFFFF5467).withValues(alpha: 0.12);
+    final dangerColor = const Color(0xFFE85D73);
+    final dangerSoftColor = const Color(0x33E85D73);
 
     final ok = await showDialog<bool>(
       context: context,
+      barrierColor: Colors.black.withOpacity(0.72),
       builder: (ctx) {
         return Dialog(
-          backgroundColor: colors.panel,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: colors.line, width: 1),
-          ),
-          elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 24,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 26),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(22, 22, 22, 24),
+            decoration: BoxDecoration(
+              color: colors.panel,
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: colors.line.withOpacity(0.9),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.45),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+              ],
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 52,
-                      height: 52,
+                      width: 58,
+                      height: 58,
                       decoration: BoxDecoration(
-                        color: redSoftColor,
-                        borderRadius: BorderRadius.circular(16),
+                        color: dangerSoftColor,
+                        borderRadius: BorderRadius.circular(18),
                         border: Border.all(
-                          color: redColor.withValues(alpha: 0.25),
-                          width: 1,
+                          color: dangerColor.withOpacity(0.55),
+                          width: 1.2,
                         ),
                       ),
-                      alignment: Alignment.center,
                       child: Icon(
                         Icons.delete_outline_rounded,
-                        color: redColor,
-                        size: 26,
+                        color: dangerColor,
+                        size: 30,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 18),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Delete Briefing?',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              color: colors.text,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Delete Briefing?',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colors.text,
+                                fontSize: 26,
+                                fontWeight: FontWeight.w800,
+                                height: 1.08,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'This briefing will be removed from all exams and briefing lists. This cannot be undone.',
-                            style: TextStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w600,
-                              color: colors.textSoft,
-                              height: 1.3,
+                            const SizedBox(height: 16),
+                            Text(
+                              'This briefing will be removed from all exams and briefing lists',
+                              style: TextStyle(
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFFD2DCE8)
+                                    : colors.textSoft,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                height: 1.42,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 10),
+                            Text(
+                              'This cannot be undone',
+                              style: TextStyle(
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFFAEBCCC)
+                                    : colors.textSoft.withOpacity(0.8),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                height: 1.42,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 30),
                 Row(
                   children: [
                     Expanded(
-                      child: AnimatedScaleOnPress(
-                        child: InkWell(
-                          onTap: () => Navigator.pop(ctx, false),
-                          borderRadius: BorderRadius.circular(100),
-                          child: Container(
-                            height: 44,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(100),
-                              border: Border.all(
-                                color: colors.blue.withValues(alpha: 0.3),
-                                width: 1,
-                              ),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              'Cancel',
-                              style: TextStyle(
-                                color: colors.blue,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(58),
+                          side: BorderSide(
+                            color: colors.line.withOpacity(0.85),
+                            width: 1.2,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: colors.blue,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     Expanded(
-                      child: AnimatedScaleOnPress(
-                        child: InkWell(
-                          onTap: () => Navigator.pop(ctx, true),
-                          borderRadius: BorderRadius.circular(100),
-                          child: Container(
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: redColor,
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                            alignment: Alignment.center,
-                            child: const Text(
-                              'Delete',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: dangerColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          minimumSize: const Size.fromHeight(58),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),

@@ -11,140 +11,178 @@ Widget confirmationDialog({
   bool shouldNotRestart = false,
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  final panelBg = isDark ? const Color(0xFF10263D) : const Color(0xFFFFFFFF);
-  final lineBorder = isDark ? const Color(0xFF294867) : const Color(0xFFD0D7DE);
-  final textMain = isDark ? const Color(0xFFF3F7FC) : const Color(0xFF0B253A);
-  final textMuted = isDark ? const Color(0xFFB6C7D8) : const Color(0xFF475569);
-  final buttonOutlineText = isDark
-      ? const Color(0xFF4B86F8)
-      : const Color(0xFF2563EB);
-  final buttonDangerBg = isDark
-      ? const Color(0xFFE05D74)
-      : const Color(0xFFDC2626);
+  final panelColor = isDark ? const Color(0xFF10263D) : const Color(0xFFFFFFFF);
+  final lineColor = isDark ? const Color(0xFF294867) : const Color(0xFFE2E8F0);
+  final textColor = isDark ? const Color(0xFFF3F7FC) : const Color(0xFF0B253A);
+  final textSoftColor = isDark ? const Color(0xFFB6C7D8) : const Color(0xFF475569);
+  final blueColor = isDark ? const Color(0xFF4B86F8) : const Color(0xFF2563EB);
+
+  final dangerColor = const Color(0xFFE85D73);
+  final dangerSoftColor = const Color(0x33E85D73);
 
   final resolvedIcon = title.toLowerCase().contains('delete')
       ? Icons.delete_outline_rounded
       : title.toLowerCase().contains('end')
-      ? Icons.stop_circle_outlined
-      : Icons.info_outline_rounded;
+          ? Icons.stop_circle_outlined
+          : title.toLowerCase().contains('restart')
+              ? Icons.restart_alt_rounded
+              : Icons.info_outline_rounded;
 
-  return AlertDialog(
-    backgroundColor: panelBg,
-    constraints: BoxConstraints(minWidth: double.infinity),
-    insetPadding: EdgeInsets.symmetric(horizontal: 24).copyWith(top: 20),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(24),
-      side: BorderSide(color: lineBorder, width: 1),
-    ),
-    titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-    contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-    actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-    title: Row(
-      children: [
-        Icon(resolvedIcon, color: buttonDangerBg, size: 24),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            title.replaceAll('?', ''),
-            style: TextStyle(
-              color: textMain,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
+  final cleanMessage = message
+      .replaceAll('This action cannot be undone.', '')
+      .replaceAll('This cannot be undone.', '')
+      .trim();
+
+  return Dialog(
+    backgroundColor: Colors.transparent,
+    insetPadding: const EdgeInsets.symmetric(horizontal: 26),
+    child: Container(
+      padding: const EdgeInsets.fromLTRB(22, 22, 22, 24),
+      decoration: BoxDecoration(
+        color: panelColor,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: lineColor.withOpacity(0.9),
+          width: 1.2,
         ),
-      ],
-    ),
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          message
-              .replaceAll('This action cannot be undone.', '')
-              .replaceAll('This cannot be undone.', '')
-              .trim(),
-          style: TextStyle(
-            color: textMain,
-            fontSize: 13.5,
-            fontWeight: FontWeight.w700,
-            height: 1.4,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.45),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
           ),
-        ),
-        if (!shouldNotRestart) ...[
-          const SizedBox(height: 8),
-          Text(
-            "This cannot be undone.",
-            style: TextStyle(
-              color: textMuted,
-              fontSize: 12.5,
-              fontWeight: FontWeight.w500,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ],
-    ),
-    actions: [
-      Row(
-        children: [
-          Expanded(
-            child: SizedBox(
-              height: 44,
-              child: AnimatedScaleOnPress(
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: lineBorder),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: EdgeInsets.zero,
-                  ),
-                  onPressed: onCancel,
-                  child: Text(
-                    shouldNotRestart ? 'Okay' : 'Cancel',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: buttonOutlineText,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          if (!shouldNotRestart) ...[
-            const SizedBox(width: 10),
-            Expanded(
-              child: AnimatedScaleOnPress(
-                child: SizedBox(
-                  height: 44,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: buttonDangerBg,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      padding: EdgeInsets.zero,
-                    ),
-                    onPressed: onConfirm,
-                    child: Text(
-                      okTitle,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
         ],
       ),
-    ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: dangerSoftColor,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: dangerColor.withOpacity(0.55),
+                    width: 1.2,
+                  ),
+                ),
+                child: Icon(
+                  resolvedIcon,
+                  color: dangerColor,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          height: 1.08,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        cleanMessage,
+                        style: TextStyle(
+                          color: isDark ? const Color(0xFFD2DCE8) : textSoftColor,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          height: 1.42,
+                        ),
+                      ),
+                      if (!shouldNotRestart) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          'This cannot be undone',
+                          style: TextStyle(
+                            color: isDark
+                                ? const Color(0xFFAEBCCC)
+                                : textSoftColor.withOpacity(0.8),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            height: 1.42,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 30),
+          Row(
+            children: [
+              Expanded(
+                child: AnimatedScaleOnPress(
+                  child: OutlinedButton(
+                    onPressed: onCancel,
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(58),
+                      side: BorderSide(
+                        color: lineColor.withOpacity(0.85),
+                        width: 1.2,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                    ),
+                    child: Text(
+                      shouldNotRestart ? 'Okay' : 'Cancel',
+                      style: TextStyle(
+                        color: blueColor,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (!shouldNotRestart) ...[
+                const SizedBox(width: 16),
+                Expanded(
+                  child: AnimatedScaleOnPress(
+                    child: ElevatedButton(
+                      onPressed: onConfirm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: dangerColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        minimumSize: const Size.fromHeight(58),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                      ),
+                      child: Text(
+                        okTitle,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    ),
   );
 }
+
