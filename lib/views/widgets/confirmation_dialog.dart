@@ -29,15 +29,15 @@ Widget confirmationDialog({
               : Icons.info_outline_rounded;
 
   final cleanMessage = message
-      .replaceAll('This action cannot be undone.', '')
-      .replaceAll('This cannot be undone.', '')
+      .replaceAll('This action cannot be undone', '')
+      .replaceAll('This cannot be undone', '')
       .trim();
 
   return Dialog(
     backgroundColor: Colors.transparent,
-    insetPadding: const EdgeInsets.symmetric(horizontal: 26),
+    insetPadding: const EdgeInsets.symmetric(horizontal: 8),
     child: Container(
-      padding: const EdgeInsets.fromLTRB(22, 22, 22, 24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: panelColor,
         borderRadius: BorderRadius.circular(30),
@@ -76,7 +76,7 @@ Widget confirmationDialog({
                   size: 30,
                 ),
               ),
-              const SizedBox(width: 18),
+              const SizedBox(width: 12),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 2),
@@ -105,7 +105,7 @@ Widget confirmationDialog({
                         ),
                       ),
                       if (!shouldNotRestart) ...[
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 4),
                         Text(
                           'This cannot be undone',
                           style: TextStyle(

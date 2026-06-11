@@ -1820,10 +1820,10 @@ class _HomeScreenState extends State<HomeScreen>
                             context: ctx,
                             title: "Restart Exam?",
                             message: _cards[i].progress == 0.0
-                                ? 'The exam has not started yet. You cannot restart it.'
+                                ? 'The exam has not started yet. You cannot restart it'
                                 : _cards[i].phase == ExamPhase.finished
-                                ? 'This exam has already been completed. Restarting or modifying it is not allowed.'
-                                : "This will restart the exam from the beginning. This cannot be undone.",
+                                ? 'This exam has already been completed. Restarting or modifying it is not allowed'
+                                : "This will restart the exam from the beginning",
                             okTitle: "Restart",
                             onCancel: () => Navigator.pop(ctx, false),
                             onConfirm: () => Navigator.pop(ctx, true),
@@ -1846,7 +1846,7 @@ class _HomeScreenState extends State<HomeScreen>
                             context: ctx,
                             title: "End Exam ?",
                             message:
-                                "This action will end the exam session and record the final finish time.",
+                                "This action will end the exam session and record the final finish time",
                             okTitle: "End Exam",
                             onCancel: () => Navigator.pop(ctx, false),
                             onConfirm: () => Navigator.pop(ctx, true),
@@ -1895,7 +1895,7 @@ class _HomeScreenState extends State<HomeScreen>
                             context: ctx,
                             title: "Delete Exam Data",
                             message:
-                                "This action will permanently remove data for this exam only.",
+                                "This action will permanently remove data for this exam only",
                             okTitle: "Delete",
                             onCancel: () => Navigator.pop(ctx, false),
                             onConfirm: () => Navigator.pop(ctx, true),

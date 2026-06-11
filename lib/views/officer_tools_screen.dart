@@ -1847,145 +1847,56 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   }
 
   Widget _otPresetChip(String text, {double? maxWidth, required VoidCallback onTap}) {
-    final chip = IntrinsicWidth(
-      child: Material(
-        color: _OtSheetColors.blue,
-        borderRadius: BorderRadius.circular(24),
-        elevation: 3,
-        child: InkWell(
+    return IntrinsicWidth(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: 48,
+          maxWidth: maxWidth ?? 320,
+        ),
+        child: Material(
+          color: _OtSheetColors.blue,
           borderRadius: BorderRadius.circular(24),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: 12,
-            ),
-            child: Text(
-              text,
-              softWrap: true,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
+          elevation: 3,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 12,
+              ),
+              child: Text(
+                text,
+                softWrap: false,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
         ),
       ),
     );
-
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: 48,
-        maxWidth: maxWidth ?? double.infinity,
-      ),
-      child: chip,
-    );
   }
 
   Widget _buildResponsivePresetWrap(List<String> messages) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final parentWidth = constraints.maxWidth;
-        final spacing = 10.0;
-        final runSpacing = 10.0;
-
-        // Retrieve the theme font family to ensure precise text measurement
-        final themeStyle = Theme.of(context).textTheme.bodyMedium?.merge(
-          const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-          ),
-        ) ?? const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w800,
-        );
-
-        double measureText(String text) {
-          final tp = TextPainter(
-            text: TextSpan(
-              text: text,
-              style: themeStyle,
-            ),
-            textDirection: TextDirection.ltr,
-          );
-          tp.layout(maxWidth: parentWidth - 36);
-          return tp.width + 36;
-        }
-
-        final List<Widget> rows = [];
-        List<Widget> currentRow = [];
-        double currentRowWidth = 0;
-
-        void commitRow({bool isLast = false}) {
-          if (currentRow.isEmpty) return;
-
-          final rowWidget = currentRow.length == 1
-              ? currentRow.first
-              : Row(
-                  spacing: spacing,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: List.from(currentRow),
-                );
-
-          rows.add(
-            isLast
-                ? rowWidget
-                : Padding(
-                    padding: EdgeInsets.only(bottom: runSpacing),
-                    child: rowWidget,
-                  ),
-          );
-
-          currentRow = [];
-          currentRowWidth = 0;
-        }
-
-        for (final m in messages) {
-          final naturalWidth = measureText(m);
-          final remainingWidth = parentWidth - currentRowWidth - (currentRow.isNotEmpty ? spacing : 0);
-
-          if (naturalWidth <= remainingWidth) {
-            currentRow.add(
-              _otPresetChip(
-                m,
-                onTap: () => _sendPreset(m),
-              ),
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: messages.map((m) {
+            return _otPresetChip(
+              m,
+              maxWidth: constraints.maxWidth,
+              onTap: () => _sendPreset(m),
             );
-            currentRowWidth += (currentRow.length == 1 ? 0 : spacing) + naturalWidth;
-          } else if (remainingWidth >= (parentWidth * 0.35)) {
-            // Fit the chip into the remaining space of the current row and wrap in Flexible
-            currentRow.add(
-              Flexible(
-                child: _otPresetChip(
-                  m,
-                  maxWidth: remainingWidth - 4.0,
-                  onTap: () => _sendPreset(m),
-                ),
-              ),
-            );
-            commitRow();
-          } else {
-            commitRow();
-            currentRow = [
-              _otPresetChip(
-                m,
-                maxWidth: parentWidth - 4.0,
-                onTap: () => _sendPreset(m),
-              ),
-            ];
-            currentRowWidth = naturalWidth > parentWidth ? parentWidth : naturalWidth;
-          }
-        }
-
-        commitRow(isLast: true);
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: rows,
+          }).toList(),
         );
       },
     );
@@ -2214,9 +2125,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: _OtSheetColors.textSoft,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                      color: _OtSheetColors.textSoft.withValues(alpha: 0.65),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -3269,7 +3180,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               children: [
                                 _otIncidentActionButton(
                                   title: "Toilet Visit",
-                                  subtitle: "Log a toilet visit",
+                                  subtitle: "Record a toilet visit",
                                   icon: Icons.groups,
                                   color: _OtSheetColors.blueSoft,
                                   onTap: _showToiletVisitIncidentDialog,
@@ -3277,7 +3188,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                 ),
                                 _otIncidentActionButton(
                                   title: "Medical",
-                                  subtitle: "Log a medical incident",
+                                  subtitle: "Record a medical incident",
                                   icon: Icons.medical_services,
                                   color: _OtSheetColors.blue,
                                   onTap: _showMedicalIncidentDialog,
@@ -3285,7 +3196,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                 ),
                                 _otIncidentActionButton(
                                   title: "Malpractice",
-                                  subtitle: "Log a malpractice incident",
+                                  subtitle: "Record a malpractice concern",
                                   icon: Icons.warning_amber_rounded,
                                   color: _OtSheetColors.orange,
                                   onTap: _showMalpracticeIncidentDialog,
@@ -4458,7 +4369,7 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: Text(
-                            'Edit Preset Messages',
+                            'Edit Presets',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(

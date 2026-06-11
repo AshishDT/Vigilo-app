@@ -279,9 +279,9 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
       builder: (ctx) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 26),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 8),
           child: Container(
-            padding: const EdgeInsets.fromLTRB(22, 22, 22, 24),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: colors.panel,
               borderRadius: BorderRadius.circular(30),
@@ -320,7 +320,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
                         size: 30,
                       ),
                     ),
-                    const SizedBox(width: 18),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.only(top: 2),
@@ -350,7 +350,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
                                 height: 1.42,
                               ),
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 4),
                             Text(
                               'This cannot be undone',
                               style: TextStyle(
