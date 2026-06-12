@@ -1070,16 +1070,17 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     required VoidCallback onTap,
     IconData? icon,
   }) {
-    return SizedBox(
-      height: 44,
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: _OtSheetColors.lineSoft),
-          backgroundColor: _OtSheetColors.panel2.withValues(alpha: 0.62),
-          shape: const StadiumBorder(),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-        ),
-        onPressed: onTap,
+    return AnimatedScaleOnPress(
+      child: SizedBox(
+        height: 44,
+        child: OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: _OtSheetColors.lineSoft),
+            backgroundColor: _OtSheetColors.panel2.withValues(alpha: 0.62),
+            shape: const StadiumBorder(),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+          ),
+          onPressed: onTap,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1103,8 +1104,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   EdgeInsets _otScrollPadding(BuildContext context) {
     return EdgeInsets.fromLTRB(
@@ -4329,24 +4331,25 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
           constraints: const BoxConstraints(maxWidth: 520),
           child: Material(
             color: Colors.transparent,
-            child: Container(
-              constraints: BoxConstraints(maxHeight: maxDialogHeight),
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                color: _OtSheetColors.panel,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: _OtSheetColors.line.withValues(alpha: 0.75)),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black45,
-                    blurRadius: 30,
-                    offset: Offset(0, 14),
-                  ),
-                ],
-              ),
-              child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Container(
+                constraints: BoxConstraints(maxHeight: maxDialogHeight),
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _OtSheetColors.panel,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: _OtSheetColors.line.withValues(alpha: 0.75)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black45,
+                      blurRadius: 30,
+                      offset: Offset(0, 14),
+                    ),
+                  ],
+                ),
+                child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -4529,21 +4532,28 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(58),
-                              side: BorderSide(color: _OtSheetColors.line.withValues(alpha: 0.75)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(22),
-                              ),
-                            ),
-                            child: Text(
-                              'Close',
-                              style: TextStyle(
-                                color: _OtSheetColors.blueSoft,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
+                          child: AnimatedScaleOnPress(
+                            child: SizedBox(
+                              height: 44,
+                              child: OutlinedButton(
+                                onPressed: () => Navigator.pop(context),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: _OtSheetColors.lineSoft),
+                                  backgroundColor: _OtSheetColors.panel2.withValues(alpha: 0.62),
+                                  shape: const StadiumBorder(),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                ),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'Close',
+                                    style: TextStyle(
+                                      color: _OtSheetColors.blackWhite,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -4554,24 +4564,32 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                             valueListenable: _newPresetController,
                             builder: (context, val, _) {
                               final isEnabled = val.text.trim().isNotEmpty && _presetControllers.length < 50;
-                              return ElevatedButton(
-                                onPressed: isEnabled ? _addPreset : null,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _OtSheetColors.blue,
-                                  disabledBackgroundColor: _OtSheetColors.blue.withValues(alpha: 0.45),
-                                  foregroundColor: Colors.white,
-                                  disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
-                                  minimumSize: const Size.fromHeight(58),
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(22),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Add',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w800,
+                              return AnimatedScaleOnPress(
+                                isDisabled: !isEnabled,
+                                child: SizedBox(
+                                  height: 44,
+                                  child: FilledButton(
+                                    onPressed: isEnabled ? _addPreset : null,
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: _OtSheetColors.blue,
+                                      disabledBackgroundColor: _OtSheetColors.blue.withValues(alpha: 0.45),
+                                      foregroundColor: Colors.white,
+                                      disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
+                                      shape: const StadiumBorder(),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                      elevation: isEnabled ? 2 : 0,
+                                    ),
+                                    child: const FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        'Add',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               );
@@ -4587,8 +4605,9 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _RequestRunnerDialog extends StatefulWidget {
@@ -4614,7 +4633,11 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
       TextEditingController();
 
   String _priority = 'Normal';
-  String? _errorText;
+
+  bool get _isFormValid {
+    return _requestTypeController.text.trim().isNotEmpty &&
+        _messageController.text.trim().isNotEmpty;
+  }
 
   @override
   void dispose() {
@@ -4625,18 +4648,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
   }
 
   void _sendRequest() {
-    final String requestType = _requestTypeController.text.trim();
-    final String messageText = _messageController.text.trim();
-
-    if (requestType.isEmpty || messageText.isEmpty) {
-      setState(() {
-        _errorText = 'Please enter both request type and message details.';
-      });
-      return;
-    }
-
-    final String combinedNeed = '$requestType. Details: $messageText';
-
+    if (!_isFormValid) return;
+    final String combinedNeed =
+        '${_requestTypeController.text.trim()}. Details: ${_messageController.text.trim()}';
     widget.onSend(_roomController.text, combinedNeed, _priority);
   }
 
@@ -4652,40 +4666,25 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
     );
   }
 
-  Widget _otFilledButton(
-    String text, {
-    required VoidCallback onTap,
-    bool danger = false,
-    bool disabled = false,
-    bool isExtraTime = false,
-    EdgeInsets? padding,
-  }) {
-    final Color backgroundColor;
-    if (disabled) {
-      backgroundColor = Colors.grey.shade700;
-    } else if (danger) {
-      backgroundColor = _OtSheetColors.red;
-    } else {
-      backgroundColor = _OtSheetColors.blue;
-    }
-
+  Widget _otFilledButton(String text, {VoidCallback? onTap}) {
+    final disabled = onTap == null;
     return AnimatedScaleOnPress(
       isDisabled: disabled,
       child: SizedBox(
         height: 44,
         child: FilledButton(
           style: FilledButton.styleFrom(
-            backgroundColor: isExtraTime
-                ? _OtSheetColors.orange
-                : backgroundColor,
-            disabledBackgroundColor: Colors.grey.shade700,
-            disabledForegroundColor: Colors.white70,
+            backgroundColor: _OtSheetColors.blue,
+            disabledBackgroundColor: _OtSheetColors.blue.withValues(
+              alpha: 0.45,
+            ),
             foregroundColor: Colors.white,
+            disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
             shape: const StadiumBorder(),
-            padding: padding ?? const EdgeInsets.symmetric(horizontal: 10),
-            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            elevation: disabled ? 0 : 2,
           ),
-          onPressed: disabled ? null : onTap,
+          onPressed: onTap,
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
@@ -4748,28 +4747,30 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
           constraints: const BoxConstraints(maxWidth: 520),
           child: Material(
             color: Colors.transparent,
-            child: Container(
-              constraints: BoxConstraints(maxHeight: media.size.height * 0.82),
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              decoration: BoxDecoration(
-                color: _OtSheetColors.panel,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: _OtSheetColors.line),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black45,
-                    blurRadius: 18,
-                    offset: Offset(0, 10),
-                  ),
-                ],
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Container(
+                constraints: BoxConstraints(maxHeight: media.size.height * 0.82),
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _OtSheetColors.panel,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: _OtSheetColors.line),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black45,
+                      blurRadius: 18,
+                      offset: Offset(0, 10),
+                    ),
+                  ],
+                ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 20, 0),
+                    padding: const EdgeInsets.only(top: 8, left: 8, right: 4),
                     child: Row(
                       children: [
                         Container(
@@ -4846,7 +4847,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                   const SizedBox(height: 24),
                   Flexible(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -4876,11 +4877,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 fontWeight: FontWeight.w700,
                               ),
                               onChanged: (_) {
-                                if (_errorText != null) {
-                                  setState(() {
-                                    _errorText = null;
-                                  });
-                                }
+                                setState(() {});
                               },
                               decoration: InputDecoration(
                                 hintText: 'Additional papers / materials',
@@ -5024,11 +5021,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 fontWeight: FontWeight.w700,
                               ),
                               onChanged: (_) {
-                                if (_errorText != null) {
-                                  setState(() {
-                                    _errorText = null;
-                                  });
-                                }
+                                setState(() {});
                               },
                               decoration: InputDecoration(
                                 hintText: 'Add details for the runner...',
@@ -5047,20 +5040,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                               ),
                             ),
                           ),
-                          if (_errorText != null) ...[
-                            const SizedBox(height: 14),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                _errorText!,
-                                style: TextStyle(
-                                  color: _OtSheetColors.red,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
+
                           const SizedBox(height: 20),
                           Container(
                             width: double.infinity,
@@ -5107,7 +5087,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                    padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
                     child: Row(
                       spacing: 10,
                       children: [
@@ -5120,7 +5100,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                         Expanded(
                           child: _otFilledButton(
                             'Send Request',
-                            onTap: _sendRequest,
+                            onTap: _isFormValid ? _sendRequest : null,
                           ),
                         ),
                       ],
@@ -5132,8 +5112,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _MedicalIncidentDialog extends StatefulWidget {
@@ -5282,28 +5263,30 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
           constraints: const BoxConstraints(maxWidth: 520),
           child: Material(
             color: Colors.transparent,
-            child: Container(
-              constraints: BoxConstraints(maxHeight: media.size.height * 0.82),
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              decoration: BoxDecoration(
-                color: _OtSheetColors.panel,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: _OtSheetColors.line),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black45,
-                    blurRadius: 18,
-                    offset: Offset(0, 10),
-                  ),
-                ],
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Container(
+                constraints: BoxConstraints(maxHeight: media.size.height * 0.82),
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _OtSheetColors.panel,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: _OtSheetColors.line),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black45,
+                      blurRadius: 18,
+                      offset: Offset(0, 10),
+                    ),
+                  ],
+                ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 20, 0),
+                    padding: const EdgeInsets.only(top: 8, left: 8, right: 4),
                     child: Row(
                       children: [
                         Container(
@@ -5385,7 +5368,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                   const SizedBox(height: 24),
                   Flexible(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -5463,7 +5446,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                               onChanged: (_) => setState(() {}),
                               decoration: InputDecoration(
                                 hintText:
-                                    'Describe medical issue and action taken...',
+                                    'Describe the incident detail and symptoms...',
                                 hintStyle: TextStyle(
                                   color: _OtSheetColors.textSoft.withValues(
                                     alpha: 0.60,
@@ -5530,7 +5513,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
+                    padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
                     child: Row(
                       spacing: 10,
                       children: [
@@ -5555,8 +5538,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _MalpracticeIncidentDialog extends StatefulWidget {
@@ -5707,28 +5691,30 @@ class _MalpracticeIncidentDialogState
           constraints: const BoxConstraints(maxWidth: 520),
           child: Material(
             color: Colors.transparent,
-            child: Container(
-              constraints: BoxConstraints(maxHeight: media.size.height * 0.82),
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              decoration: BoxDecoration(
-                color: _OtSheetColors.panel,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: _OtSheetColors.line),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black45,
-                    blurRadius: 18,
-                    offset: Offset(0, 10),
-                  ),
-                ],
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Container(
+                constraints: BoxConstraints(maxHeight: media.size.height * 0.82),
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _OtSheetColors.panel,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: _OtSheetColors.line),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black45,
+                      blurRadius: 18,
+                      offset: Offset(0, 10),
+                    ),
+                  ],
+                ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 20, 0),
+                    padding: const EdgeInsets.only(top: 8, left: 8, right: 4),
                     child: Row(
                       children: [
                         Container(
@@ -5812,7 +5798,7 @@ class _MalpracticeIncidentDialogState
                   const SizedBox(height: 24),
                   Flexible(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -5834,21 +5820,14 @@ class _MalpracticeIncidentDialogState
                                 width: .7,
                               ),
                             ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'Use factual wording only. This records malpractice, not a confirmed outcome.',
-                                    style: TextStyle(
-                                      color: _OtSheetColors.orange,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.45,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              'Use factual wording only. This records malpractice, not a confirmed outcome.',
+                              style: TextStyle(
+                                color: _OtSheetColors.orange,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                height: 1.45,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -5993,7 +5972,7 @@ class _MalpracticeIncidentDialogState
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
+                    padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
                     child: Row(
                       spacing: 10,
                       children: [
@@ -6018,8 +5997,9 @@ class _MalpracticeIncidentDialogState
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _ToiletVisitIncidentDialog extends StatefulWidget {
@@ -6214,28 +6194,30 @@ class _ToiletVisitIncidentDialogState
           constraints: const BoxConstraints(maxWidth: 520),
           child: Material(
             color: Colors.transparent,
-            child: Container(
-              constraints: BoxConstraints(maxHeight: media.size.height * 0.82),
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              decoration: BoxDecoration(
-                color: _OtSheetColors.panel,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: _OtSheetColors.line),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black45,
-                    blurRadius: 18,
-                    offset: Offset(0, 10),
-                  ),
-                ],
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Container(
+                constraints: BoxConstraints(maxHeight: media.size.height * 0.82),
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _OtSheetColors.panel,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: _OtSheetColors.line),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black45,
+                      blurRadius: 18,
+                      offset: Offset(0, 10),
+                    ),
+                  ],
+                ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 20, 0),
+                    padding: const EdgeInsets.only(top: 8, left: 8, right: 4),
                     child: Row(
                       children: [
                         Container(
@@ -6319,7 +6301,7 @@ class _ToiletVisitIncidentDialogState
                   const SizedBox(height: 24),
                   Flexible(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -6470,7 +6452,7 @@ class _ToiletVisitIncidentDialogState
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
+                    padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
                     child: Row(
                       spacing: 10,
                       children: [
@@ -6495,8 +6477,9 @@ class _ToiletVisitIncidentDialogState
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _RoleSelectorDialog extends StatefulWidget {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../enums/exam_phase.dart';
 import '../../models/exam_card_data.dart';
 import '../../utils/constants.dart';
+import 'animated_scale_on_press.dart';
 import 'ring_painter_widget.dart';
 import 'time_cell_widget.dart';
 import 'timing_cell_widget.dart';
@@ -417,12 +418,12 @@ class ExamCard extends StatelessWidget {
                                       onChanged: (data.running)
                                           ? null
                                           : (v) => onUpdate(
-                                              data.copyWith(
-                                                progress: v,
-                                                autoStart: false,
-                                                autoStartUserModified: true,
+                                                data.copyWith(
+                                                  progress: v,
+                                                  autoStart: false,
+                                                  autoStartUserModified: true,
+                                                ),
                                               ),
-                                            ),
                                     ),
                                   ),
                                 ),
@@ -460,53 +461,61 @@ class ExamCard extends StatelessWidget {
                               runSpacing: 8,
                               alignment: WrapAlignment.center,
                               children: [
-                                ElevatedButton.icon(
-                                  style: ButtonStyle(
-                                    side: WidgetStateProperty.all(
-                                      BorderSide(
-                                        color: kBlue.withValues(alpha: 0.45),
-                                        width: 1,
+                                AnimatedScaleOnPress(
+                                  child: ElevatedButton.icon(
+                                    style: ButtonStyle(
+                                      side: WidgetStateProperty.all(
+                                        BorderSide(
+                                          color: kBlue.withValues(alpha: 0.45),
+                                          width: 1,
+                                        ),
                                       ),
                                     ),
+                                    onPressed: onEditDate,
+                                    icon: const Icon(Icons.event),
+                                    label: const Text("Date"),
                                   ),
-                                  onPressed: onEditDate,
-                                  icon: const Icon(Icons.event),
-                                  label: const Text("Date"),
                                 ),
-                                ElevatedButton.icon(
-                                  style: ButtonStyle(
-                                    side: WidgetStateProperty.all(
-                                      BorderSide(
-                                        color: kBlue.withValues(alpha: 0.45),
-                                        width: 1,
+                                AnimatedScaleOnPress(
+                                  child: ElevatedButton.icon(
+                                    style: ButtonStyle(
+                                      side: WidgetStateProperty.all(
+                                        BorderSide(
+                                          color: kBlue.withValues(alpha: 0.45),
+                                          width: 1,
+                                        ),
                                       ),
                                     ),
+                                    onPressed: onEditStartTime,
+                                    icon: const Icon(Icons.schedule),
+                                    label: const Text("Start Time"),
                                   ),
-                                  onPressed: onEditStartTime,
-                                  icon: const Icon(Icons.schedule),
-                                  label: const Text("Start Time"),
                                 ),
-                                ElevatedButton.icon(
-                                  style: ButtonStyle(
-                                    side: WidgetStateProperty.all(
-                                      BorderSide(
-                                        color: kBlue.withValues(alpha: 0.45),
-                                        width: 1,
+                                AnimatedScaleOnPress(
+                                  child: ElevatedButton.icon(
+                                    style: ButtonStyle(
+                                      side: WidgetStateProperty.all(
+                                        BorderSide(
+                                          color: kBlue.withValues(alpha: 0.45),
+                                          width: 1,
+                                        ),
                                       ),
                                     ),
+                                    onPressed: onEditDuration,
+                                    icon: const Icon(Icons.timer),
+                                    label: const Text("Duration"),
                                   ),
-                                  onPressed: onEditDuration,
-                                  icon: const Icon(Icons.timer),
-                                  label: const Text("Duration"),
                                 ),
-                                ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: kAmber,
-                                    foregroundColor: Colors.black,
+                                AnimatedScaleOnPress(
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: kAmber,
+                                      foregroundColor: Colors.black,
+                                    ),
+                                    onPressed: onEditExtra,
+                                    icon: const Icon(Icons.more_time),
+                                    label: const Text("Extra Time"),
                                   ),
-                                  onPressed: onEditExtra,
-                                  icon: const Icon(Icons.more_time),
-                                  label: const Text("Extra Time"),
                                 ),
                               ],
                             )
@@ -516,80 +525,88 @@ class ExamCard extends StatelessWidget {
                                   children: [
                                     Expanded(
                                       flex: 95,
-                                      child: ElevatedButton.icon(
-                                        style: ButtonStyle(
-                                          padding: WidgetStateProperty.all(
-                                            EdgeInsets.all(4),
-                                          ),
-                                          side: WidgetStateProperty.all(
-                                            BorderSide(
-                                              color: kBlue.withValues(
-                                                alpha: 0.45,
+                                      child: AnimatedScaleOnPress(
+                                        child: ElevatedButton.icon(
+                                          style: ButtonStyle(
+                                            padding: WidgetStateProperty.all(
+                                              EdgeInsets.all(4),
+                                            ),
+                                            side: WidgetStateProperty.all(
+                                              BorderSide(
+                                                color: kBlue.withValues(
+                                                  alpha: 0.45,
+                                                ),
+                                                width: 1,
                                               ),
-                                              width: 1,
                                             ),
                                           ),
+                                          onPressed: onEditDate,
+                                          icon: const Icon(Icons.event),
+                                          label: const Text("Date"),
                                         ),
-                                        onPressed: onEditDate,
-                                        icon: const Icon(Icons.event),
-                                        label: const Text("Date"),
                                       ),
                                     ),
                                     SizedBox(width: 6),
                                     Expanded(
                                       flex: 110,
-                                      child: ElevatedButton.icon(
-                                        style: ButtonStyle(
-                                          padding: WidgetStateProperty.all(
-                                            EdgeInsets.all(4),
-                                          ),
-                                          side: WidgetStateProperty.all(
-                                            BorderSide(
-                                              color: kBlue.withValues(
-                                                alpha: 0.45,
+                                      child: AnimatedScaleOnPress(
+                                        child: ElevatedButton.icon(
+                                          style: ButtonStyle(
+                                            padding: WidgetStateProperty.all(
+                                              EdgeInsets.all(4),
+                                            ),
+                                            side: WidgetStateProperty.all(
+                                              BorderSide(
+                                                color: kBlue.withValues(
+                                                  alpha: 0.45,
+                                                ),
+                                                width: 1,
                                               ),
-                                              width: 1,
                                             ),
                                           ),
+                                          onPressed: onEditStartTime,
+                                          icon: const Icon(Icons.schedule),
+                                          label: const Text("Start Time"),
                                         ),
-                                        onPressed: onEditStartTime,
-                                        icon: const Icon(Icons.schedule),
-                                        label: const Text("Start Time"),
                                       ),
                                     ),
                                     SizedBox(width: 6),
                                     Expanded(
                                       flex: 95,
-                                      child: ElevatedButton.icon(
-                                        style: ButtonStyle(
-                                          padding: WidgetStateProperty.all(
-                                            EdgeInsets.all(4),
-                                          ),
-                                          side: WidgetStateProperty.all(
-                                            BorderSide(
-                                              color: kBlue.withValues(
-                                                alpha: 0.45,
+                                      child: AnimatedScaleOnPress(
+                                        child: ElevatedButton.icon(
+                                          style: ButtonStyle(
+                                            padding: WidgetStateProperty.all(
+                                              EdgeInsets.all(4),
+                                            ),
+                                            side: WidgetStateProperty.all(
+                                              BorderSide(
+                                                color: kBlue.withValues(
+                                                  alpha: 0.45,
+                                                ),
+                                                width: 1,
                                               ),
-                                              width: 1,
                                             ),
                                           ),
+                                          onPressed: onEditDuration,
+                                          icon: const Icon(Icons.timer),
+                                          label: const Text("Duration"),
                                         ),
-                                        onPressed: onEditDuration,
-                                        icon: const Icon(Icons.timer),
-                                        label: const Text("Duration"),
                                       ),
                                     ),
                                   ],
                                 ),
                                 SizedBox(height: 8),
-                                ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: kAmber,
-                                    foregroundColor: Colors.black,
+                                AnimatedScaleOnPress(
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: kAmber,
+                                      foregroundColor: Colors.black,
+                                    ),
+                                    onPressed: onEditExtra,
+                                    icon: const Icon(Icons.more_time),
+                                    label: const Text("Extra Time"),
                                   ),
-                                  onPressed: onEditExtra,
-                                  icon: const Icon(Icons.more_time),
-                                  label: const Text("Extra Time"),
                                 ),
                               ],
                             ),

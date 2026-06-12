@@ -646,218 +646,225 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _SheetColors.lineSoft),
       ),
-      child: ListTile(
-        onTap: () => _toggleSelection(item),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: _SheetColors.blue.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: _SheetColors.blue.withValues(alpha: 0.4),
-              width: 1,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          onTap: () => _toggleSelection(item),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          leading: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: _SheetColors.blue.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _SheetColors.blue.withValues(alpha: 0.4),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              isPhoto ? Icons.image_outlined : Icons.picture_as_pdf_outlined,
+              color: _SheetColors.blue,
+              size: 22,
             ),
           ),
-          child: Icon(
-            isPhoto ? Icons.image_outlined : Icons.picture_as_pdf_outlined,
-            color: _SheetColors.blue,
-            size: 22,
+          title: Text(
+            item.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: _SheetColors.text,
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+            ),
           ),
-        ),
-        title: Text(
-          item.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: _SheetColors.text,
-            fontWeight: FontWeight.w900,
-            fontSize: 16,
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(
+              color: _SheetColors.textSoft,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            color: _SheetColors.textSoft,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+          contentPadding: EdgeInsets.only(
+            left: 16,
+            top: 4,
+            bottom: 4,
+            right: widget.allowSelection ? 16 : 6,
           ),
-        ),
-        contentPadding: EdgeInsets.only(
-          left: 16,
-          top: 4,
-          bottom: 4,
-          right: widget.allowSelection ? 16 : 6,
-        ),
-        trailing: widget.allowSelection
-            ? Icon(
-                isSelected
-                    ? Icons.check_circle_rounded
-                    : Icons.radio_button_unchecked,
-                color: isSelected ? _SheetColors.blue : _SheetColors.textSoft,
-                size: 24,
-              )
-            : PopupMenuButton<String>(
-                icon: Icon(
-                  Icons.more_vert_rounded,
-                  color: _SheetColors.textSoft,
+          trailing: widget.allowSelection
+              ? Icon(
+                  isSelected
+                      ? Icons.check_circle_rounded
+                      : Icons.radio_button_unchecked,
+                  color: isSelected ? _SheetColors.blue : _SheetColors.textSoft,
                   size: 24,
-                ),
-                color: _SheetColors.panel2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: _SheetColors.lineSoft),
-                ),
-                onSelected: (value) {
-                  if (value == 'open') {
-                    _openBriefing(item);
-                  } else if (value == 'share') {
-                    _shareBriefing(item);
-                  } else if (value == 'delete') {
-                    _deleteBriefing(item);
-                  }
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'open',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.open_in_new_rounded,
-                          size: 20,
-                          color: _SheetColors.blueSoft,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Open',
-                          style: TextStyle(
-                            color: _SheetColors.text,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
+                )
+              : PopupMenuButton<String>(
+                  icon: Icon(
+                    Icons.more_vert_rounded,
+                    color: _SheetColors.textSoft,
+                    size: 24,
                   ),
-                  PopupMenuItem(
-                    value: 'share',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.share_rounded,
-                          size: 20,
-                          color: _SheetColors.blueSoft,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Share',
-                          style: TextStyle(
-                            color: _SheetColors.text,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
+                  color: _SheetColors.panel2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: _SheetColors.lineSoft),
                   ),
-                  const PopupMenuDivider(thickness: .2),
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.delete_outline_rounded,
-                          size: 20,
-                          color: Colors.red.shade400,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Delete',
-                          style: TextStyle(
+                  onSelected: (value) {
+                    if (value == 'open') {
+                      _openBriefing(item);
+                    } else if (value == 'share') {
+                      _shareBriefing(item);
+                    } else if (value == 'delete') {
+                      _deleteBriefing(item);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'open',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.open_in_new_rounded,
+                            size: 20,
+                            color: _SheetColors.blueSoft,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Open',
+                            style: TextStyle(
+                              color: _SheetColors.text,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'share',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.share_rounded,
+                            size: 20,
+                            color: _SheetColors.blueSoft,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Share',
+                            style: TextStyle(
+                              color: _SheetColors.text,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuDivider(thickness: .2),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete_outline_rounded,
+                            size: 20,
                             color: Colors.red.shade400,
-                            fontWeight: FontWeight.w700,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          Text(
+                            'Delete',
+                            style: TextStyle(
+                              color: Colors.red.shade400,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+        ),
       ),
     );
   }
 
   Widget _buildUploadPdfButton() {
-    return SizedBox(
-      height: 44,
-      child: FilledButton(
-        style: FilledButton.styleFrom(
-          backgroundColor: _SheetColors.blue,
-          shape: StadiumBorder(),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-        ),
-        onPressed: _loading || _operationInProgress ? () {} : _uploadPdf,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          spacing: 4,
-          children: [
-            const Icon(
-              Icons.picture_as_pdf_outlined,
-              color: Colors.white,
-              size: 17,
-            ),
-            Flexible(
-              child: Text(
-                "Upload PDF",
-                softWrap: false,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
+    return AnimatedScaleOnPress(
+      child: SizedBox(
+        height: 44,
+        child: FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: _SheetColors.blue,
+            shape: StadiumBorder(),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+          ),
+          onPressed: _loading || _operationInProgress ? () {} : _uploadPdf,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            spacing: 4,
+            children: [
+              const Icon(
+                Icons.picture_as_pdf_outlined,
+                color: Colors.white,
+                size: 17,
+              ),
+              Flexible(
+                child: Text(
+                  "Upload PDF",
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildCapturePhotoButton() {
-    return SizedBox(
-      height: 44,
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: _SheetColors.lineSoft),
-          backgroundColor: _SheetColors.panel2.withValues(alpha: .7),
-          shape: const StadiumBorder(),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-        ),
-        onPressed: _loading || _operationInProgress ? () {} : _capturePhoto,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          spacing: 4,
-          children: [
-            Icon(
-              Icons.photo_camera_outlined,
-              color: _SheetColors.text,
-              size: 17,
-            ),
-            Flexible(
-              child: Text(
-                'Capture Photo',
-                softWrap: false,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _SheetColors.blackWhite,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
+    return AnimatedScaleOnPress(
+      child: SizedBox(
+        height: 44,
+        child: OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: _SheetColors.lineSoft),
+            backgroundColor: _SheetColors.panel2.withValues(alpha: .7),
+            shape: const StadiumBorder(),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+          ),
+          onPressed: _loading || _operationInProgress ? () {} : _capturePhoto,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            spacing: 4,
+            children: [
+              Icon(
+                Icons.photo_camera_outlined,
+                color: _SheetColors.text,
+                size: 17,
+              ),
+              Flexible(
+                child: Text(
+                  'Capture Photo',
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _SheetColors.blackWhite,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
