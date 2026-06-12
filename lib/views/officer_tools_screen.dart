@@ -342,7 +342,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
   List<String> _parseInvigilatorsInput(String raw) {
     final parts = raw
-        .split(RegExp(r'[,\s]+'))
+        .split(RegExp(r'[\s,;:|/\\+=\-]+'))
         .map((name) => name.trim())
         .where((name) => name.isNotEmpty);
     return parts.toSet().toList();
@@ -1673,6 +1673,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     'Save Changes',
                     disabled: _isExamCompleted,
                     onTap: () {
+                      FocusScope.of(context).unfocus();
                       _updateOperationalSetup(save: true);
                       _saveScheduleDetails();
                     },
