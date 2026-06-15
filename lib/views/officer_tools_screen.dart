@@ -172,7 +172,13 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
       if (hasChanges) {
         setState(() {
-          _currentData = found!;
+          _currentData = found!.copyWith(
+            scheduleList: scheduleList,
+            roomsSnapshot: _scheduleRoomsSummary(),
+            invigilatorsSnapshot: allInvigilators.join(", "),
+            setUpBy: _setUpByController.text.trim(),
+            setUpRole: _setUpRole,
+          );
           if (found.messages != null) {
             messageLog = List<Message>.from(found.messages!);
           }
@@ -342,7 +348,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
   List<String> _parseInvigilatorsInput(String raw) {
     final parts = raw
-        .split(RegExp(r'[\s,;:|/\\+=\-]+'))
+        .replaceAll('\r', '\n')
+        .split(RegExp(r'[\n,;|]+'))
         .map((name) => name.trim())
         .where((name) => name.isNotEmpty);
     return parts.toSet().toList();
@@ -364,6 +371,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             .toSet()
             .toList()
           ..sort();
+    selectedInvigilators.retainWhere(invigilators.contains);
     _updateData(
       _currentData.copyWith(
         roomsSnapshot: rooms.join(', '),
