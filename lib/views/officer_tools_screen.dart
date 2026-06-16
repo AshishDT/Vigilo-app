@@ -5814,7 +5814,7 @@ class _MalpracticeIncidentDialogState
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
+                              horizontal: 16,
                               vertical: 14,
                             ),
                             decoration: BoxDecoration(
