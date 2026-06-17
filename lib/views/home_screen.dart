@@ -16,7 +16,6 @@ import 'briefings_library_sheet.dart';
 import 'license_activation_screen.dart';
 import 'officer_tools_screen.dart';
 import 'widgets/confirmation_dialog.dart';
-import 'widgets/duration_picker.dart';
 import 'widgets/exam_card_widget.dart';
 import 'widgets/footer_widget.dart';
 import 'widgets/license_required_view.dart';

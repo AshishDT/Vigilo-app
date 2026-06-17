@@ -69,7 +69,7 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
     final selected = await showGridPicker(
       context: context,
       title: "Select Hours",
-      maxVal: 24,
+      values: List.generate(10, (i) => i),
       selectedVal: _hours,
       colors: colors,
     );
@@ -85,7 +85,7 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
     final selected = await showGridPicker(
       context: context,
       title: "Select Minutes",
-      maxVal: 60,
+      values: List.generate(12, (i) => i * 5),
       selectedVal: _minutes,
       colors: colors,
       padLeft: true,
@@ -331,7 +331,7 @@ class _ValueCard extends StatelessWidget {
 Future<int?> showGridPicker({
   required BuildContext context,
   required String title,
-  required int maxVal,
+  required List<int> values,
   required int selectedVal,
   required _PickerColors colors,
   bool padLeft = false,
@@ -342,11 +342,11 @@ Future<int?> showGridPicker({
     builder: (ctx) {
       return Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 8),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
         child: Container(
           width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 520),
-          padding: const EdgeInsets.all(16),
+          constraints: const BoxConstraints(maxWidth: 300),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: colors.panel,
             borderRadius: BorderRadius.circular(30),
@@ -378,18 +378,19 @@ Future<int?> showGridPicker({
                 child: SingleChildScrollView(
                   child: GridView.builder(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 8,
-                      mainAxisSpacing: 6,
-                      crossAxisSpacing: 6,
-                      childAspectRatio: 1.0,
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 1.6,
                     ),
                     padding: EdgeInsets.zero,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: maxVal + 1,
+                    itemCount: values.length,
                     itemBuilder: (context, index) {
-                      final isSelected = index == selectedVal;
-                      final displayStr = padLeft ? index.toString().padLeft(2, '0') : index.toString();
+                      final val = values[index];
+                      final isSelected = val == selectedVal;
+                      final displayStr = padLeft ? val.toString().padLeft(2, '0') : val.toString();
                       return AnimatedScaleOnPress(
                         child: FilledButton(
                           style: FilledButton.styleFrom(
@@ -406,7 +407,7 @@ Future<int?> showGridPicker({
                             padding: EdgeInsets.zero,
                           ),
                           onPressed: () {
-                            Navigator.of(context).pop(index);
+                            Navigator.of(context).pop(val);
                           },
                           child: Text(
                             displayStr,
