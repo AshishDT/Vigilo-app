@@ -21,6 +21,9 @@ import 'widgets/exam_card_widget.dart';
 import 'widgets/footer_widget.dart';
 import 'widgets/license_required_view.dart';
 import 'widgets/stat_chip_widget.dart';
+import 'widgets/vigilo_date_picker.dart';
+import 'widgets/vigilo_time_picker.dart';
+import 'widgets/vigilo_duration_picker.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -739,12 +742,12 @@ class _HomeScreenState extends State<HomeScreen>
 
     Future<void> pickStart() async {
       final t = _parseHHMM(startHHMM);
-      final picked = await showTimePicker(
+      final picked = await showModalBottomSheet<TimeOfDay>(
         context: context,
-        initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
-        builder: (ctx, ch) => MediaQuery(
-          data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
-          child: ch!,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (_) => VigiloTimePickerSheet(
+          initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
         ),
       );
       if (picked != null) {
@@ -868,12 +871,11 @@ class _HomeScreenState extends State<HomeScreen>
                           subtitle: Text(_fmtDate(selectedDate)),
                           trailing: TextButton(
                             onPressed: () async {
-                              final now = DateTime.now();
-                              final picked = await showDatePicker(
+                              final picked = await showModalBottomSheet<DateTime>(
                                 context: context,
-                                initialDate: selectedDate,
-                                firstDate: DateTime(now.year - 1),
-                                lastDate: DateTime(now.year + 2),
+                                backgroundColor: Colors.transparent,
+                                isScrollControlled: true,
+                                builder: (_) => VigiloDatePickerSheet(initialDate: selectedDate),
                               );
                               if (picked != null) {
                                 setSheet(() => selectedDate = picked);
@@ -1171,89 +1173,16 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<String> pickDur(String time, String title) async {
-    int h = _parseHHMM(time).$1;
-    int m = _parseHHMM(time).$2;
-    int hrs = h;
-    int min = m;
-
-    TextEditingController hrController = TextEditingController();
-    TextEditingController minController = TextEditingController();
-    hrController.text = h.toString();
-    minController.text = m.toString().padLeft(2, '0');
-
-    final res = await showDialog<(int, int)>(
+    final res = await showModalBottomSheet<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: DurationPicker(
-          hrController: hrController,
-          minController: minController,
-          onHrChange: (value) {
-            if (value.isEmpty) return;
-            final intValue = int.tryParse(value);
-            if (intValue == null || intValue > 9) {
-              // Revert to previous valid value if invalid
-              hrController.text = hrs.toString().padLeft(2, '0');
-              hrController.selection = TextSelection.fromPosition(
-                TextPosition(offset: hrController.text.length),
-              );
-              return;
-            }
-            setState(() {
-              hrs = intValue;
-              h = intValue;
-            });
-          },
-          onMinChange: (value) {
-            if (value.isEmpty) return;
-            final intValue = int.tryParse(value);
-            if (intValue == null || intValue > 59) {
-              // Revert to previous valid value if invalid
-              minController.text = min.toString().padLeft(2, '0');
-              minController.selection = TextSelection.fromPosition(
-                TextPosition(offset: minController.text.length),
-              );
-              return;
-            }
-            setState(() {
-              min = intValue;
-              m = intValue;
-            });
-          },
-          onHrsDropdownChange: (value) {
-            setState(() {
-              hrs = value;
-              h = value;
-              hrController.text = value.toString();
-            });
-          },
-          onMinsDropdownChange: (int value) {
-            setState(() {
-              min = value;
-              m = value;
-              minController.text = value.toString().padLeft(2, '0');
-            });
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, (h, m)),
-            child: const Text("Save"),
-          ),
-        ],
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => VigiloDurationPickerSheet(
+        initialDuration: time,
+        title: title,
       ),
     );
-
-    if (res != null) {
-      final hh = res.$1.toString().padLeft(2, '0');
-      final mm = res.$2.toString().padLeft(2, '0');
-      return "$hh:$mm";
-    }
-    return "";
+    return res ?? "";
   }
 
   int get _activeExamCount =>
@@ -1502,11 +1431,11 @@ class _HomeScreenState extends State<HomeScreen>
                     final y = int.tryParse(parts[2]) ?? now.year;
                     initial = DateTime(y, m, d);
                   }
-                  final picked = await showDatePicker(
+                  final picked = await showModalBottomSheet<DateTime>(
                     context: context,
-                    initialDate: initial,
-                    firstDate: DateTime(now.year - 1),
-                    lastDate: DateTime(now.year + 2),
+                    backgroundColor: Colors.transparent,
+                    isScrollControlled: true,
+                    builder: (_) => VigiloDatePickerSheet(initialDate: initial),
                   );
                   if (picked != null) {
                     final dd = picked.day.toString().padLeft(2, '0');
@@ -1521,14 +1450,12 @@ class _HomeScreenState extends State<HomeScreen>
                     return;
                   }
                   final t = _parseHHMM(c.normalStart);
-                  final picked = await showTimePicker(
+                  final picked = await showModalBottomSheet<TimeOfDay>(
                     context: context,
-                    initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
-                    builder: (ctx, ch) => MediaQuery(
-                      data: MediaQuery.of(
-                        ctx,
-                      ).copyWith(alwaysUse24HourFormat: true),
-                      child: ch!,
+                    backgroundColor: Colors.transparent,
+                    isScrollControlled: true,
+                    builder: (_) => VigiloTimePickerSheet(
+                      initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
                     ),
                   );
                   if (picked != null) {
