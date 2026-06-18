@@ -45,10 +45,6 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  final List<String> _weekdays = [
-    'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'
-  ];
-
   @override
   void initState() {
     super.initState();

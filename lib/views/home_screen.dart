@@ -15,6 +15,7 @@ import '../utils/id_generator.dart';
 import 'briefings_library_sheet.dart';
 import 'license_activation_screen.dart';
 import 'officer_tools_screen.dart';
+import 'widgets/add_exam_sheet.dart';
 import 'widgets/confirmation_dialog.dart';
 import 'widgets/exam_card_widget.dart';
 import 'widgets/footer_widget.dart';
@@ -350,71 +351,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  ExamCardData _recomputePreservingTimer(
-    ExamCardData c, {
-    String? newNormalStart,
-    String? newNormalDuration,
-    String? newExtraTime,
-  }) {
-    final updated = _recompute(
-      c.copyWith(
-        normalStart: newNormalStart ?? c.normalStart,
-        normalDuration: newNormalDuration ?? c.normalDuration,
-        extraTime: newExtraTime ?? c.extraTime,
-      ),
-    );
-
-    if (!c.running || c.epochStart == null) {
-      return updated.copyWith(
-        running: c.running,
-        epochStart: c.epochStart,
-        pausedSeconds: c.pausedSeconds,
-        progress: c.progress,
-        phase: c.phase,
-      );
-    }
-
-    final now = DateTime.now();
-    final elapsed = c.pausedSeconds + now.difference(c.epochStart!).inSeconds;
-    final newTotal = _toMin(updated.totalDuration) * 60;
-    if (elapsed >= newTotal && newTotal > 0) {
-      _log(
-        c,
-        Incident(
-          "Duration changed; elapsed exceeded new total. Exam ended.",
-          eventType: "control",
-        ),
-      );
-      return updated.copyWith(
-        running: false,
-        epochStart: null,
-        pausedSeconds: newTotal,
-        progress: 1.0,
-        phase: ExamPhase.finished,
-      );
-    } else if (newTotal <= 0) {
-      _log(
-        c,
-        Incident(
-          "Invalid new duration (00:00). Ignored.",
-          eventType: "control",
-        ),
-      );
-      return c;
-    } else {
-      final prog = (elapsed / newTotal).clamp(0.0, 1.0);
-      final phase = elapsed < _toMin(updated.normalDuration) * 60
-          ? ExamPhase.normal
-          : (elapsed < newTotal ? ExamPhase.extra : ExamPhase.finished);
-      return updated.copyWith(
-        running: phase != ExamPhase.finished,
-        progress: prog,
-        phase: phase,
-        epochStart: c.epochStart,
-        pausedSeconds: c.pausedSeconds,
-      );
-    }
-  }
 
   ExamPhase _phaseForProgress(ExamCardData c, double progress) {
     final totalSeconds = c.totalSeconds;
@@ -721,449 +657,88 @@ class _HomeScreenState extends State<HomeScreen>
     return ((int.tryParse(p[0]) ?? 0), (int.tryParse(p[1]) ?? 0));
   }
 
-  DateTime _suggestDate() => DateTime.now();
 
   Future<void> _openQuickAddWizard() async {
-    final schoolCtl = TextEditingController(text: _lastSchool ?? "");
-    final centreCtl = TextEditingController(text: _lastCentre ?? "");
-    final subjectCtl = TextEditingController(text: _lastSubject ?? "");
-    final boardCtl = TextEditingController(text: _lastBoard ?? "");
-    DateTime selectedDate = _suggestDate();
-    String startHHMM = _normalizeHHMM(_lastStart, fallback: "09:00");
-    String durationHHMM = _normalizeHHMM(
-      _lastDuration,
-      fallback: "01:30",
-      allowZero: false,
-    );
-    String extraHHMM = _normalizeHHMM(_lastExtra, fallback: "00:15");
-
-    int step = 0;
-
-    Future<void> pickStart() async {
-      final t = _parseHHMM(startHHMM);
-      final picked = await showModalBottomSheet<TimeOfDay>(
-        context: context,
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-        builder: (_) => VigiloTimePickerSheet(
-          initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
-        ),
-      );
-      if (picked != null) {
-        startHHMM =
-            "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
-      }
-    }
-
-    bool validStep0() =>
-        subjectCtl.text.trim().isNotEmpty && boardCtl.text.trim().isNotEmpty;
-    bool validStep1() => true;
-    bool validStep2() =>
-        schoolCtl.text.trim().isNotEmpty && centreCtl.text.trim().isNotEmpty;
-    bool validStep3() => true;
-
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => AddExamSheet(
+        lastSchool: _lastSchool,
+        lastCentre: _lastCentre,
+        lastSubject: _lastSubject,
+        lastBoard: _lastBoard,
+        lastStart: _lastStart,
+        lastDuration: _lastDuration,
+        lastExtra: _lastExtra,
+        onSave: ({
+          required String school,
+          required String centre,
+          required String subject,
+          required String board,
+          required DateTime date,
+          required String startTime,
+          required String duration,
+          required String extraTime,
+        }) async {
+          final normalizedStart = _normalizeHHMM(
+            startTime,
+            fallback: "09:00",
+          );
+          final normalizedDuration = _normalizeHHMM(
+            duration,
+            fallback: "01:30",
+            allowZero: false,
+          );
+          final normalizedExtra = _normalizeHHMM(
+            extraTime,
+            fallback: "00:15",
+          );
+
+          if (_toMin(normalizedDuration) <= 0) {
+            _toast("Set a valid exam duration before saving.");
+            return;
+          }
+
+          final dd = date.day.toString().padLeft(2, '0');
+          final mm = date.month.toString().padLeft(2, '0');
+          final yy = date.year.toString();
+
+          var newCard = ExamCardData(
+            recordId: generateId(),
+            school: school,
+            centreNumber: centre,
+            date: "$dd/$mm/$yy",
+            subject: "$subject ($board)",
+            start: normalizedStart,
+            duration: normalizedDuration,
+            end: normalizedStart,
+            normalStart: normalizedStart,
+            normalDuration: normalizedDuration,
+            normalEnd: normalizedStart,
+            extraTime: normalizedExtra,
+            totalDuration: "00:00",
+            extraEnd: normalizedStart,
+            expanded: false,
+            autoStart: true,
+          );
+          newCard = _recompute(newCard);
+
+          setState(() {
+            _cards.insert(0, newCard);
+            _lastSchool = school;
+            _lastCentre = centre;
+            _lastSubject = subject;
+            _lastBoard = board;
+            _lastStart = normalizedStart;
+            _lastDuration = normalizedDuration;
+            _lastExtra = normalizedExtra;
+          });
+          await _saveState();
+          if (!mounted) return;
+          Navigator.of(context).pop(true);
+        },
       ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setSheet) {
-            Widget buildHeader() {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Add Exam",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        "Step ${step + 1} / 4",
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Close',
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(ctx, false),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            Widget buildStep() {
-              switch (step) {
-                case 0:
-                  return Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      8,
-                      16,
-                      16 + MediaQuery.of(ctx).viewInsets.bottom,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextField(
-                          controller: subjectCtl,
-                          decoration: const InputDecoration(
-                            labelText: "Exam Subject",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: boardCtl,
-                          decoration: const InputDecoration(
-                            labelText: "Exam Board (OCR, AQA, Edexcel)",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // _lastSchool == null
-                        //     ? Align(
-                        //         alignment: Alignment.centerLeft,
-                        //         child: TextButton.icon(
-                        //           onPressed: () {
-                        //             if (_lastSchool != null) {
-                        //               setSheet(() {
-                        //                 schoolCtl.text = _lastSchool!;
-                        //                 centreCtl.text = _lastCentre ?? "";
-                        //               });
-                        //             }
-                        //           },
-                        //           icon: const Icon(Icons.history),
-                        //           label: const Text("Use last"),
-                        //         ),
-                        //       )
-                        //     : Container(),
-                      ],
-                    ),
-                  );
-                case 1:
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.event),
-                          title: const Text("Date"),
-                          subtitle: Text(_fmtDate(selectedDate)),
-                          trailing: TextButton(
-                            onPressed: () async {
-                              final picked = await showModalBottomSheet<DateTime>(
-                                context: context,
-                                backgroundColor: Colors.transparent,
-                                isScrollControlled: true,
-                                builder: (_) => VigiloDatePickerSheet(initialDate: selectedDate),
-                              );
-                              if (picked != null) {
-                                setSheet(() => selectedDate = picked);
-                              }
-                            },
-                            child: const Text("Change"),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                case 2:
-                  return Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      8,
-                      16,
-                      16 + MediaQuery.of(ctx).viewInsets.bottom,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextField(
-                          controller: schoolCtl,
-                          decoration: const InputDecoration(
-                            labelText: "Organisation Name",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: centreCtl,
-                          decoration: const InputDecoration(
-                            labelText: "Centre Number",
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // _lastSubject == null
-                        //     ? Align(
-                        //         alignment: Alignment.centerLeft,
-                        //         child: TextButton.icon(
-                        //           onPressed: () {
-                        //             if (_lastSubject != null) {
-                        //               setSheet(() {
-                        //                 subjectCtl.text = _lastSubject!;
-                        //                 boardCtl.text = _lastBoard ?? "";
-                        //               });
-                        //             }
-                        //           },
-                        //           icon: const Icon(Icons.history),
-                        //           label: const Text("Use last"),
-                        //         ),
-                        //       )
-                        //     : Container(),
-                      ],
-                    ),
-                  );
-                default:
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.schedule),
-                          title: const Text("Start time"),
-                          subtitle: Text(startHHMM),
-                          trailing: TextButton(
-                            onPressed: () async {
-                              await pickStart();
-                              setSheet(() {});
-                            },
-                            child: const Text("Change"),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.timer),
-                          title: const Text("Duration"),
-                          subtitle: Text(durationHHMM),
-                          trailing: TextButton(
-                            onPressed: () async {
-                              String res = await pickDur(
-                                durationHHMM,
-                                "Set Duration",
-                              );
-                              if (res != "") {
-                                setState(() {
-                                  durationHHMM = res;
-                                });
-                              }
-                              setSheet(() {});
-                            },
-                            child: const Text("Change"),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.more_time),
-                          title: const Text("Extra time"),
-                          subtitle: Text(extraHHMM),
-                          trailing: TextButton(
-                            onPressed: () async {
-                              String res = await pickDur(
-                                extraHHMM,
-                                "Add Extra Time",
-                              );
-                              if (res != "") {
-                                setState(() {
-                                  extraHHMM = res;
-                                });
-                              }
-                              setSheet(() {});
-                            },
-                            child: const Text("Change"),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        // _lastStart == null
-                        //     ? Align(
-                        //         alignment: Alignment.centerLeft,
-                        //         child: TextButton.icon(
-                        //           onPressed: () {
-                        //             if (_lastStart != null) {
-                        //               setSheet(() {
-                        //                 startHHMM = _lastStart!;
-                        //                 durationHHMM =
-                        //                     _lastDuration ?? durationHHMM;
-                        //                 extraHHMM = _lastExtra ?? extraHHMM;
-                        //               });
-                        //             }
-                        //           },
-                        //           icon: const Icon(Icons.history),
-                        //           label: const Text("Use last"),
-                        //         ),
-                        //       )
-                        //     : Container(),
-                      ],
-                    ),
-                  );
-              }
-            }
-
-            bool canNext() {
-              switch (step) {
-                case 0:
-                  return validStep0();
-                case 1:
-                  return validStep1();
-                case 2:
-                  return validStep2();
-                case 3:
-                  return validStep3();
-              }
-              return false;
-            }
-
-            return SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  buildHeader(),
-                  Flexible(child: SingleChildScrollView(child: buildStep())),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-                    child: Row(
-                      children: [
-                        if (step > 0)
-                          OutlinedButton.icon(
-                            onPressed: () => setSheet(() => step--),
-                            icon: const Icon(Icons.chevron_left),
-                            label: const Text("Back"),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: kBlue),
-                            ),
-                          ),
-                        if (step == 0)
-                          const SizedBox(width: 0)
-                        else
-                          const SizedBox(width: 8),
-                        const Spacer(),
-                        if (step < 3)
-                          FilledButton.icon(
-                            onPressed: canNext()
-                                ? () => setSheet(() => step++)
-                                : null,
-                            icon: const Icon(Icons.chevron_right),
-                            label: const Text("Next"),
-                          )
-                        else
-                          FilledButton.icon(
-                            onPressed: canNext()
-                                ? () async {
-                                    final school = schoolCtl.text.trim();
-                                    final centre = centreCtl.text.trim();
-                                    final subj = subjectCtl.text.trim();
-                                    final board = boardCtl.text.trim();
-
-                                    if (school.isEmpty ||
-                                        centre.isEmpty ||
-                                        subj.isEmpty ||
-                                        board.isEmpty) {
-                                      _toast(
-                                        "Required fields cannot be empty. Please fill in all mandatory fields.",
-                                      );
-                                      return;
-                                    }
-
-                                    final normalizedStart = _normalizeHHMM(
-                                      startHHMM,
-                                      fallback: "09:00",
-                                    );
-                                    final normalizedDuration = _normalizeHHMM(
-                                      durationHHMM,
-                                      fallback: "01:30",
-                                      allowZero: false,
-                                    );
-                                    final normalizedExtra = _normalizeHHMM(
-                                      extraHHMM,
-                                      fallback: "00:15",
-                                    );
-
-                                    if (_toMin(normalizedDuration) <= 0) {
-                                      _toast(
-                                        "Set a valid exam duration before saving.",
-                                      );
-                                      return;
-                                    }
-
-                                    final dd = selectedDate.day
-                                        .toString()
-                                        .padLeft(2, '0');
-                                    final mm = selectedDate.month
-                                        .toString()
-                                        .padLeft(2, '0');
-                                    final yy = selectedDate.year.toString();
-
-                                    var newCard = ExamCardData(
-                                      recordId: generateId(),
-                                      school: school,
-                                      centreNumber: centre,
-                                      date: "$dd/$mm/$yy",
-                                      subject: "$subj ($board)",
-                                      start: normalizedStart,
-                                      duration: normalizedDuration,
-                                      end: normalizedStart,
-                                      normalStart: normalizedStart,
-                                      normalDuration: normalizedDuration,
-                                      normalEnd: normalizedStart,
-                                      extraTime: normalizedExtra,
-                                      totalDuration: "00:00",
-                                      extraEnd: normalizedStart,
-                                      expanded: false,
-                                      autoStart: true,
-                                    );
-                                    newCard = _recompute(newCard);
-
-                                    setState(() {
-                                      _cards.insert(0, newCard);
-                                      _lastSchool = school;
-                                      _lastCentre = centre;
-                                      _lastSubject = subj;
-                                      _lastBoard = board;
-                                      _lastStart = normalizedStart;
-                                      _lastDuration = normalizedDuration;
-                                      _lastExtra = normalizedExtra;
-                                    });
-                                    await _saveState();
-                                    if (!mounted) return;
-                                    Navigator.of(context).pop(true);
-                                  }
-                                : null,
-                            icon: const Icon(Icons.check),
-                            label: const Text("Save"),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
     );
 
     if (result == true) {
@@ -1865,11 +1440,7 @@ class _HomeScreenState extends State<HomeScreen>
       return true;
     }
   }
-
   int getExpandedCardIndex() {
     return _cards.indexWhere((card) => card.expanded);
   }
-
-  String _fmtDate(DateTime d) =>
-      "${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year.toString()}";
 }
