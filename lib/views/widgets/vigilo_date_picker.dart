@@ -39,6 +39,8 @@ class VigiloDatePickerSheet extends StatefulWidget {
 class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
   late DateTime _selectedDate;
   late DateTime _currentMonth;
+  late final DateTime _minDate;
+  late final DateTime _maxDate;
 
   final List<String> _months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -48,8 +50,18 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
   @override
   void initState() {
     super.initState();
-    _selectedDate = widget.initialDate;
-    _currentMonth = DateTime(widget.initialDate.year, widget.initialDate.month);
+    final now = DateTime.now();
+    _minDate = DateTime(now.year, now.month, now.day);
+    _maxDate = DateTime(now.year + 2, 12, 31);
+
+    var initial = widget.initialDate;
+    if (initial.isBefore(_minDate)) {
+      initial = _minDate;
+    } else if (initial.isAfter(_maxDate)) {
+      initial = _maxDate;
+    }
+    _selectedDate = initial;
+    _currentMonth = DateTime(_selectedDate.year, _selectedDate.month);
   }
 
   bool get _isChanged {
@@ -72,7 +84,24 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
     return dateTime.weekday % 7; // Sunday is 0, Monday is 1, ..., Saturday is 6
   }
 
+  bool get _canPrevMonth {
+    final prev = _currentMonth.month == 1
+        ? DateTime(_currentMonth.year - 1, 12)
+        : DateTime(_currentMonth.year, _currentMonth.month - 1);
+    final minMonth = DateTime(_minDate.year, _minDate.month);
+    return !prev.isBefore(minMonth);
+  }
+
+  bool get _canNextMonth {
+    final next = _currentMonth.month == 12
+        ? DateTime(_currentMonth.year + 1, 1)
+        : DateTime(_currentMonth.year, _currentMonth.month + 1);
+    final maxMonth = DateTime(_maxDate.year, _maxDate.month);
+    return !next.isAfter(maxMonth);
+  }
+
   void _prevMonth() {
+    if (!_canPrevMonth) return;
     setState(() {
       if (_currentMonth.month == 1) {
         _currentMonth = DateTime(_currentMonth.year - 1, 12);
@@ -83,6 +112,7 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
   }
 
   void _nextMonth() {
+    if (!_canNextMonth) return;
     setState(() {
       if (_currentMonth.month == 12) {
         _currentMonth = DateTime(_currentMonth.year + 1, 1);
@@ -94,8 +124,8 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
 
   void _showYearPickerMenu(BuildContext context) async {
     final colors = _PickerColors(context);
-    final int currentYear = DateTime.now().year;
-    final List<int> years = List.generate(16, (i) => currentYear - 5 + i);
+    final int currentYear = _minDate.year;
+    final List<int> years = [currentYear, currentYear + 1, currentYear + 2];
 
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
@@ -131,10 +161,28 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
 
     if (selectedYear != null) {
       setState(() {
-        _currentMonth = DateTime(selectedYear, _currentMonth.month);
+        int newMonth = _currentMonth.month;
+        final targetMonth = DateTime(selectedYear, newMonth);
+        final minMonth = DateTime(_minDate.year, _minDate.month);
+        final maxMonth = DateTime(_maxDate.year, _maxDate.month);
+
+        if (targetMonth.isBefore(minMonth)) {
+          newMonth = _minDate.month;
+        } else if (targetMonth.isAfter(maxMonth)) {
+          newMonth = _maxDate.month;
+        }
+
+        _currentMonth = DateTime(selectedYear, newMonth);
         final maxDays = _daysInMonth(selectedYear, _selectedDate.month);
         final newDay = _selectedDate.day.clamp(1, maxDays);
-        _selectedDate = DateTime(selectedYear, _selectedDate.month, newDay);
+        var newSelectedDate = DateTime(selectedYear, _selectedDate.month, newDay);
+
+        if (newSelectedDate.isBefore(_minDate)) {
+          newSelectedDate = _minDate;
+        } else if (newSelectedDate.isAfter(_maxDate)) {
+          newSelectedDate = _maxDate;
+        }
+        _selectedDate = newSelectedDate;
       });
     }
   }
@@ -163,18 +211,27 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
     }
 
     for (int d = 1; d <= daysCount; d++) {
+      final dayDate = DateTime(_currentMonth.year, _currentMonth.month, d);
+      final isBeforeToday = dayDate.isBefore(_minDate);
+      final isAfterMax = dayDate.isAfter(_maxDate);
+      final isDisabled = isBeforeToday || isAfterMax;
+
       final isSelected = _selectedDate.year == _currentMonth.year &&
           _selectedDate.month == _currentMonth.month &&
           _selectedDate.day == d;
 
       dayWidgets.add(
         GestureDetector(
-          onTap: () {
-            setState(() {
-              _selectedDate = DateTime(_currentMonth.year, _currentMonth.month, d);
-            });
-          },
-          child: isSelected ? _SelectedDayChip('$d', colors) : _DayChip('$d', colors),
+          onTap: isDisabled
+              ? null
+              : () {
+                  setState(() {
+                    _selectedDate = DateTime(_currentMonth.year, _currentMonth.month, d);
+                  });
+                },
+          child: isSelected
+              ? _SelectedDayChip('$d', colors)
+              : _DayChip('$d', colors, isDisabled: isDisabled),
         ),
       );
     }
@@ -291,13 +348,19 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
                               ),
                               const Spacer(),
                               GestureDetector(
-                                onTap: _prevMonth,
-                                child: Icon(Icons.chevron_left, color: colors.textSoft),
+                                onTap: _canPrevMonth ? _prevMonth : null,
+                                child: Icon(
+                                  Icons.chevron_left,
+                                  color: _canPrevMonth ? colors.textSoft : colors.textSoft.withValues(alpha: 0.3),
+                                ),
                               ),
                               const SizedBox(width: 8),
                               GestureDetector(
-                                onTap: _nextMonth,
-                                child: Icon(Icons.chevron_right, color: colors.textSoft),
+                                onTap: _canNextMonth ? _nextMonth : null,
+                                child: Icon(
+                                  Icons.chevron_right,
+                                  color: _canNextMonth ? colors.textSoft : colors.textSoft.withValues(alpha: 0.3),
+                                ),
                               ),
                             ],
                           ),
@@ -436,7 +499,8 @@ class _WeekLabel extends StatelessWidget {
 class _DayChip extends StatelessWidget {
   final String text;
   final _PickerColors colors;
-  const _DayChip(this.text, this.colors);
+  final bool isDisabled;
+  const _DayChip(this.text, this.colors, {this.isDisabled = false});
 
   @override
   Widget build(BuildContext context) {
@@ -446,7 +510,7 @@ class _DayChip extends StatelessWidget {
         child: Text(
           text,
           style: TextStyle(
-            color: colors.text,
+            color: isDisabled ? colors.textSoft.withValues(alpha: 0.35) : colors.text,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
