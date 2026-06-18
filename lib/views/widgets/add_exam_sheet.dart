@@ -377,56 +377,51 @@ class _AddExamSheetState extends State<AddExamSheet> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
         decoration: BoxDecoration(
           color: colors.inputBg,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16.r),
           border: Border.all(color: colors.line),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: colors.blackWhite, size: 22),
-            const SizedBox(width: 10),
+            Icon(icon, color: colors.blackWhite, size: 20.r),
+            SizedBox(width: 8.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      style: TextStyle(
-                        color: colors.textSoft,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(
+                      color: colors.textSoft,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      value,
-                      maxLines: 1,
-                      style: TextStyle(
-                        color: colors.text,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(
+                      color: colors.text,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 6.w),
             Icon(
               Icons.keyboard_arrow_down_rounded,
               color: colors.textSoft,
-              size: 22,
+              size: 20.r,
             ),
           ],
         ),
@@ -509,6 +504,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
 
   @override
   Widget build(BuildContext context) {
+    ScreenUtil.init(context);
     final colors = _SheetColors(context);
     final realViewInsets = MediaQuery.of(context).viewInsets;
 
@@ -597,10 +593,10 @@ class _AddExamSheetState extends State<AddExamSheet> {
                   child: SingleChildScrollView(
                     controller: scrollController,
                     padding: EdgeInsets.fromLTRB(
-                      22,
-                      15,
-                      22,
-                      18 + realViewInsets.bottom,
+                      16.w,
+                      15.h,
+                      16.w,
+                      18.h + realViewInsets.bottom,
                     ),
                     child: Column(
                       children: [
@@ -663,7 +659,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                       onTap: _pickDate,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  SizedBox(width: 8.w),
                                   Expanded(
                                     child: _tapTimingField(
                                       label: 'Start Time',
@@ -674,7 +670,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 8.h),
                               Row(
                                 children: [
                                   Expanded(
@@ -685,7 +681,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                       onTap: _pickDuration,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  SizedBox(width: 8.w),
                                   Expanded(
                                     child: _tapTimingField(
                                       label: 'Extra Time',
@@ -748,4 +744,31 @@ class _AddExamSheetState extends State<AddExamSheet> {
       ),
     );
   }
+}
+
+class ScreenUtil {
+  static late ScreenUtil _instance;
+  static bool _initialized = false;
+
+  final double width;
+  final double height;
+
+  ScreenUtil._({required this.width, required this.height});
+
+  static void init(BuildContext context, {double designWidth = 390, double designHeight = 844}) {
+    final size = MediaQuery.of(context).size;
+    _instance = ScreenUtil._(width: size.width, height: size.height);
+    _initialized = true;
+  }
+
+  static double get scaleWidth => _initialized ? _instance.width / 390.0 : 1.0;
+  static double get scaleHeight => _initialized ? _instance.height / 844.0 : 1.0;
+  static double get scaleText => scaleWidth;
+}
+
+extension ScreenUtilExtension on num {
+  double get w => this * ScreenUtil.scaleWidth;
+  double get h => this * ScreenUtil.scaleHeight;
+  double get sp => this * ScreenUtil.scaleText;
+  double get r => this * ScreenUtil.scaleWidth;
 }
