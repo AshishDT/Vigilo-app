@@ -1414,7 +1414,6 @@ class SessionService {
     for (final event in sortedEvents) {
       if (event.type == SessionEventType.start) {
         startedAtUtc = event.occurredAtUtc;
-        break;
       }
     }
     startedAtUtc ??= snapshot.startedAtUtc;
