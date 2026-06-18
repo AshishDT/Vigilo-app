@@ -1,25 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'animated_scale_on_press.dart';
 
 class _PickerColors {
   final BuildContext context;
+
   _PickerColors(this.context);
 
   bool get isDark => Theme.of(context).brightness == Brightness.dark;
 
-  Color get panel =>
-      isDark ? const Color(0xFF10263D) : const Color(0xFFFFFFFF);
+  Color get panel => isDark ? const Color(0xFF10263D) : const Color(0xFFFFFFFF);
+
   Color get panel2 =>
       isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
+
   Color get line => isDark ? const Color(0xFF294867) : const Color(0xFFE2E8F0);
+
   Color get lineSoft =>
       isDark ? const Color(0xFF395B7D) : const Color(0xFFCBD5E1);
+
   Color get text => isDark ? const Color(0xFFF3F7FC) : const Color(0xFF0B253A);
+
   Color get textSoft =>
       isDark ? const Color(0xFFB6C7D8) : const Color(0xFF475569);
+
   Color get blue => isDark ? const Color(0xFF4B86F8) : const Color(0xFF2563EB);
+
   Color get blackWhite =>
       isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
+
   Color get timeCardBg =>
       isDark ? const Color(0xFF0F2236) : const Color(0xFFF8FAFC);
 }
@@ -35,7 +44,8 @@ class VigiloDurationPickerSheet extends StatefulWidget {
   });
 
   @override
-  State<VigiloDurationPickerSheet> createState() => _VigiloDurationPickerSheetState();
+  State<VigiloDurationPickerSheet> createState() =>
+      _VigiloDurationPickerSheetState();
 }
 
 class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
@@ -43,6 +53,9 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
   late int _minutes;
   late int _initialHours;
   late int _initialMinutes;
+
+  bool _showManualEntry = false;
+  late final TextEditingController _manualController;
 
   @override
   void initState() {
@@ -52,6 +65,19 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
     _minutes = parsed.$2;
     _initialHours = parsed.$1;
     _initialMinutes = parsed.$2;
+    _manualController = TextEditingController(text: _formatDuration(_hours, _minutes));
+  }
+
+  @override
+  void dispose() {
+    _manualController.dispose();
+    super.dispose();
+  }
+
+  String _formatDuration(int hours, int minutes) {
+    final hh = hours.toString().padLeft(2, '0');
+    final mm = minutes.toString().padLeft(2, '0');
+    return '$hh:$mm';
   }
 
   (int, int) _parseHHMM(String val) {
@@ -66,7 +92,7 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
 
   void _showHoursMenu(BuildContext context) async {
     final colors = _PickerColors(context);
-    final selected = await showGridPicker(
+    final selected = await _showGridPicker(
       context: context,
       title: "Select Hours",
       values: List.generate(10, (i) => i),
@@ -76,13 +102,14 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
     if (selected != null) {
       setState(() {
         _hours = selected;
+        _manualController.text = _formatDuration(_hours, _minutes);
       });
     }
   }
 
   void _showMinutesMenu(BuildContext context) async {
     final colors = _PickerColors(context);
-    final selected = await showGridPicker(
+    final selected = await _showGridPicker(
       context: context,
       title: "Select Minutes",
       values: List.generate(12, (i) => i * 5),
@@ -93,6 +120,7 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
     if (selected != null) {
       setState(() {
         _minutes = selected;
+        _manualController.text = _formatDuration(_hours, _minutes);
       });
     }
   }
@@ -102,18 +130,15 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
     final colors = _PickerColors(context);
     final hourStr = _hours.toString();
     final minuteStr = _minutes.toString().padLeft(2, '0');
+    final keyboardDepth = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
       margin: const EdgeInsets.only(top: 60),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, 20 + keyboardDepth),
       decoration: BoxDecoration(
         color: colors.panel,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(30),
-        ),
-        border: Border.all(
-          color: colors.lineSoft.withValues(alpha: 0.55),
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        border: Border.all(color: colors.lineSoft.withValues(alpha: 0.55)),
         boxShadow: const [
           BoxShadow(
             color: Colors.black54,
@@ -124,137 +149,245 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
       ),
       child: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 70,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: colors.lineSoft,
-                  borderRadius: BorderRadius.circular(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Pinned Header
+            Container(
+              width: 70,
+              height: 5,
+              decoration: BoxDecoration(
+                color: colors.lineSoft,
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Text(
+                  widget.title,
+                  style: TextStyle(
+                    color: colors.text,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Scrollable Content
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Builder(
+                            builder: (cellCtx) => _ValueCard(
+                              label: 'Hours',
+                              value: hourStr,
+                              colors: colors,
+                              onTap: () => _showHoursMenu(cellCtx),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Builder(
+                            builder: (cellCtx) => _ValueCard(
+                              label: 'Minutes',
+                              value: minuteStr,
+                              colors: colors,
+                              onTap: () => _showMinutesMenu(cellCtx),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          minimumSize: Size.zero,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _showManualEntry = !_showManualEntry;
+                          });
+                        },
+                        child: Text(
+                          _showManualEntry ? 'Hide manual entry' : 'Type manually',
+                          style: TextStyle(
+                            color: colors.blue,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                      child: _showManualEntry
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                                decoration: BoxDecoration(
+                                  color: colors.panel2,
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(color: colors.lineSoft),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Manual entry',
+                                      style: TextStyle(
+                                        color: colors.textSoft,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    TextField(
+                                      controller: _manualController,
+                                      keyboardType: TextInputType.number,
+                                      style: TextStyle(
+                                        color: colors.text,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                        _DurationInputFormatter(),
+                                      ],
+                                      decoration: InputDecoration(
+                                        hintText: 'HH:MM',
+                                        hintStyle: TextStyle(
+                                            color: colors.textSoft.withValues(alpha: 0.5)),
+                                        border: InputBorder.none,
+                                      ),
+                                      onChanged: (value) {
+                                        final parts = value.split(':');
+                                        if (parts.length == 2) {
+                                          final hour = int.tryParse(parts[0]);
+                                          final minute = int.tryParse(parts[1]);
+                                          if (hour != null &&
+                                              minute != null &&
+                                              hour >= 0 &&
+                                              hour <= 24 &&
+                                              minute >= 0 &&
+                                              minute <= 59) {
+                                            setState(() {
+                                              _hours = hour;
+                                              _minutes = hour == 24 ? 0 : minute;
+                                            });
+                                          }
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Text(
-                    widget.title,
-                    style: TextStyle(
-                      color: colors.text,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Builder(
-                      builder: (cellCtx) => _ValueCard(
-                        label: 'Hours',
-                        value: hourStr,
-                        colors: colors,
-                        onTap: () => _showHoursMenu(cellCtx),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Builder(
-                      builder: (cellCtx) => _ValueCard(
-                        label: 'Minutes',
-                        value: minuteStr,
-                        colors: colors,
-                        onTap: () => _showMinutesMenu(cellCtx),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: AnimatedScaleOnPress(
-                      child: SizedBox(
-                        height: 44,
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: colors.lineSoft),
-                            backgroundColor: colors.panel2.withValues(alpha: 0.62),
-                            shape: const StadiumBorder(),
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
+            ),
+            const SizedBox(height: 24),
+            // Pinned Bottom Actions
+            Row(
+              children: [
+                Expanded(
+                  child: AnimatedScaleOnPress(
+                    child: SizedBox(
+                      height: 44,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: colors.lineSoft),
+                          backgroundColor: colors.panel2.withValues(
+                            alpha: 0.62,
                           ),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'Cancel',
-                              softWrap: false,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: colors.blackWhite,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w900,
-                              ),
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Cancel',
+                            softWrap: false,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: colors.blackWhite,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: AnimatedScaleOnPress(
-                      isDisabled: !_isChanged,
-                      child: SizedBox(
-                        height: 44,
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: colors.blue,
-                            disabledBackgroundColor: colors.blue.withValues(
-                              alpha: 0.45,
-                            ),
-                            foregroundColor: Colors.white,
-                            disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
-                            shape: const StadiumBorder(),
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            elevation: !_isChanged ? 0 : 2,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: AnimatedScaleOnPress(
+                    isDisabled: !_isChanged,
+                    child: SizedBox(
+                      height: 44,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: colors.blue,
+                          disabledBackgroundColor: colors.blue.withValues(
+                            alpha: 0.45,
                           ),
-                          onPressed: _isChanged
-                              ? () {
-                                  final result = "${_hours.toString().padLeft(2, '0')}:${_minutes.toString().padLeft(2, '0')}";
-                                  Navigator.of(context).pop(result);
-                                }
-                              : null,
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'Save',
-                              textAlign: TextAlign.center,
-                              softWrap: false,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                              ),
+                          foregroundColor: Colors.white,
+                          disabledForegroundColor: Colors.white.withValues(
+                            alpha: 0.6,
+                          ),
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          elevation: !_isChanged ? 0 : 2,
+                        ),
+                        onPressed: _isChanged
+                            ? () {
+                                final result =
+                                    "${_hours.toString().padLeft(2, '0')}:${_minutes.toString().padLeft(2, '0')}";
+                                Navigator.of(context).pop(result);
+                              }
+                            : null,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Save',
+                            textAlign: TextAlign.center,
+                            softWrap: false,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -328,7 +461,7 @@ class _ValueCard extends StatelessWidget {
   }
 }
 
-Future<int?> showGridPicker({
+Future<int?> _showGridPicker({
   required BuildContext context,
   required String title,
   required List<int> values,
@@ -338,7 +471,7 @@ Future<int?> showGridPicker({
 }) {
   return showDialog<int>(
     context: context,
-    barrierColor: Colors.black.withOpacity(0.55),
+    barrierColor: Colors.black.withValues(alpha: 0.55),
     builder: (ctx) {
       return Dialog(
         backgroundColor: Colors.transparent,
@@ -351,12 +484,12 @@ Future<int?> showGridPicker({
             color: colors.panel,
             borderRadius: BorderRadius.circular(30),
             border: Border.all(
-              color: colors.line.withOpacity(0.9),
+              color: colors.line.withValues(alpha: 0.9),
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.45),
+                color: Colors.black.withValues(alpha: 0.45),
                 blurRadius: 28,
                 offset: const Offset(0, 14),
               ),
@@ -377,12 +510,13 @@ Future<int?> showGridPicker({
               Flexible(
                 child: SingleChildScrollView(
                   child: GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 1.6,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 1.6,
+                        ),
                     padding: EdgeInsets.zero,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -390,18 +524,26 @@ Future<int?> showGridPicker({
                     itemBuilder: (context, index) {
                       final val = values[index];
                       final isSelected = val == selectedVal;
-                      final displayStr = padLeft ? val.toString().padLeft(2, '0') : val.toString();
+                      final displayStr = padLeft
+                          ? val.toString().padLeft(2, '0')
+                          : val.toString();
                       return AnimatedScaleOnPress(
                         child: FilledButton(
                           style: FilledButton.styleFrom(
-                            backgroundColor: isSelected ? colors.blue : colors.panel2,
-                            foregroundColor: isSelected ? Colors.white : colors.text,
+                            backgroundColor: isSelected
+                                ? colors.blue
+                                : colors.panel2,
+                            foregroundColor: isSelected
+                                ? Colors.white
+                                : colors.text,
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                               side: BorderSide(
-                                color: isSelected ? Colors.transparent : colors.lineSoft,
+                                color: isSelected
+                                    ? Colors.transparent
+                                    : colors.lineSoft,
                               ),
                             ),
                             padding: EdgeInsets.zero,
@@ -413,7 +555,9 @@ Future<int?> showGridPicker({
                             displayStr,
                             style: TextStyle(
                               fontSize: 13,
-                              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                              fontWeight: isSelected
+                                  ? FontWeight.w900
+                                  : FontWeight.w700,
                             ),
                           ),
                         ),
@@ -449,3 +593,53 @@ Future<int?> showGridPicker({
     },
   );
 }
+
+class _DurationInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String newText = newValue.text;
+
+    // Handle backspace or empty input smoothly
+    if (newText.isEmpty) {
+      return newValue;
+    }
+
+    // Limit to maximum 4 digits (HHMM) — digitsOnly runs before this
+    if (newText.length > 4) {
+      newText = newText.substring(0, 4);
+    }
+
+    String formattedText;
+    int selectionIndex = newValue.selection.end;
+
+    // Build the formatted string based on length
+    if (newText.length <= 2) {
+      formattedText = newText;
+    } else {
+      // Splits into HH and MM and inserts the colon
+      formattedText = '${newText.substring(0, 2)}:${newText.substring(2)}';
+
+      // Always shift cursor past the colon if it's in the MM region.
+      // digitsOnly strips the colon so selectionIndex is in digit-space;
+      // we need to add 1 to map it back into formatted-string space.
+      if (selectionIndex > 2) {
+        selectionIndex++;
+      }
+    }
+
+    // Ensure cursor doesn't overshoot the length of the text
+    if (selectionIndex > formattedText.length) {
+      selectionIndex = formattedText.length;
+    }
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: selectionIndex),
+      composing: TextRange.empty,
+    );
+  }
+}
+
