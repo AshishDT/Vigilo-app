@@ -1,14 +1,35 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 
 import '../../enums/exam_phase.dart';
 import '../../models/exam_card_data.dart';
-import '../../utils/constants.dart';
 import 'animated_scale_on_press.dart';
 import 'ring_painter_widget.dart';
-import 'time_cell_widget.dart';
-import 'timing_cell_widget.dart';
 
-class ExamCard extends StatelessWidget {
+class VigiloColors {
+  final bool isDark;
+  const VigiloColors(this.isDark);
+
+  Color get bg => isDark ? const Color(0xFF071A2B) : const Color(0xFFEAF1F8);
+  Color get bg2 => isDark ? const Color(0xFF0C2238) : const Color(0xFFF7FAFD);
+  Color get panel => isDark ? const Color(0xFF10263D) : const Color(0xFFFFFFFF);
+  Color get panel3 => isDark ? const Color(0xFF0F2236) : const Color(0xFFF1F6FB);
+  Color get line => isDark ? const Color(0xFF294867) : const Color(0xFFC9D8E8);
+  Color get lineSoft => isDark ? const Color(0xFF395B7D) : const Color(0xFFAFC3D8);
+
+  Color get text => isDark ? const Color(0xFFF3F7FC) : const Color(0xFF10263D);
+  Color get textSoft => isDark ? const Color(0xFFB6C7D8) : const Color(0xFF50677F);
+  Color get textFaint => isDark ? const Color(0xFF7E98B2) : const Color(0xFF8297AC);
+
+  Color get blue => isDark ? const Color(0xFF4B86F8) : const Color(0xFF256BDB);
+  Color get blueSoft => isDark ? const Color(0xFF8FD4FF) : const Color(0xFF3F86F5);
+  Color get amber => isDark ? const Color(0xFFFFB64D) : const Color(0xFFE59422);
+  Color get finished => isDark ? const Color(0xFF8FA6BE) : const Color(0xFF7C91A8);
+  Color get green => isDark ? const Color(0xFF5ED68A) : const Color(0xFF249B62);
+}
+
+class ExamCard extends StatefulWidget {
   const ExamCard({
     super.key,
     required this.data,
@@ -45,6 +66,65 @@ class ExamCard extends StatelessWidget {
   final bool extraPulse;
   final double tapScale;
   final bool isExamCompleted;
+
+  @override
+  State<ExamCard> createState() => _ExamCardState();
+}
+
+class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin {
+  late AnimationController _expandController;
+  late Animation<double> _expandAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _expandController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _expandAnimation = CurvedAnimation(
+      parent: _expandController,
+      curve: Curves.easeInOut,
+    );
+    if (widget.data.expanded) {
+      _expandController.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ExamCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.data.expanded != oldWidget.data.expanded) {
+      if (widget.data.expanded) {
+        _expandController.forward();
+      } else {
+        _expandController.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _expandController.dispose();
+    super.dispose();
+  }
+
+  bool get isArchiveMode => widget.isArchiveMode;
+  ExamCardData get data => widget.data;
+  AnimationController get pulse => widget.pulse;
+  VoidCallback get onChevronTap => widget.onChevronTap;
+  VoidCallback get onEditDate => widget.onEditDate;
+  VoidCallback get onEditStartTime => widget.onEditStartTime;
+  VoidCallback get onEditDuration => widget.onEditDuration;
+  VoidCallback get onEditExtra => widget.onEditExtra;
+  VoidCallback get onSelect => widget.onSelect;
+  VoidCallback get onTimeTap => widget.onTimeTap;
+  ValueChanged<ExamCardData> get onUpdate => widget.onUpdate;
+  ValueChanged<double> get onProgressChangeEnd => widget.onProgressChangeEnd;
+  ValueChanged<bool> get onProgressDragState => widget.onProgressDragState;
+  bool get extraPulse => widget.extraPulse;
+  double get tapScale => widget.tapScale;
+  bool get isExamCompleted => widget.isExamCompleted;
 
   String _fmtHhMm(int seconds, {bool roundUp = false}) {
     final safeSeconds = seconds < 0 ? 0 : seconds;
@@ -90,51 +170,32 @@ class ExamCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
-    bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final labelColor = Theme.of(context).colorScheme.onSurface;
-    final subjectLine = data.subjectName.isEmpty
-        ? data.subject
-        : data.subjectName;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final vColors = VigiloColors(isDark);
+
+    final subjectLine = data.subjectName.isEmpty ? data.subject : data.subjectName;
     final organizationLine = data.resolvedCentreNumber.isEmpty
         ? (data.organizationName.isEmpty ? data.school : data.organizationName)
         : '${data.organizationName} (${data.resolvedCentreNumber})';
 
     late Color phaseColor;
-    late String phaseLabel;
     switch (data.phase) {
       case ExamPhase.normal:
-        phaseColor = kBlue;
-        phaseLabel = "NORMAL TIME";
+        phaseColor = vColors.blue;
         break;
       case ExamPhase.extra:
-        phaseColor = kAmber;
-        phaseLabel = "EXTRA TIME";
+        phaseColor = vColors.amber;
         break;
       case ExamPhase.finished:
-        phaseColor = kFinished;
-        phaseLabel = "FINISHED";
+        phaseColor = vColors.finished;
         break;
     }
 
-    final valueBlue = const TextStyle(
-      color: kBlue,
-      fontSize: 18,
-      fontWeight: FontWeight.w700,
-    );
-    final valueAmber = const TextStyle(
-      color: kAmber,
-      fontSize: 18,
-      fontWeight: FontWeight.w700,
-    );
-    final valueGrey = const TextStyle(
-      color: kFinished,
-      fontSize: 18,
-      fontWeight: FontWeight.w700,
-    );
     final phaseRemaining = _phaseRemainingSeconds();
     final phaseElapsed = _elapsedSecond();
     final usedPercent = (data.progress * 100).clamp(0, 100).round();
+    final collapsedExtra = data.phase == ExamPhase.extra && !data.expanded;
+    final showRunning = data.running || data.progress > 0.0;
 
     return AnimatedScale(
       scale: tapScale,
@@ -149,567 +210,707 @@ class ExamCard extends StatelessWidget {
           }
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 1500),
+          duration: const Duration(milliseconds: 350),
           curve: Curves.easeInOut,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: data.phase == ExamPhase.extra && !data.expanded
-                ? Border.all(width: 2, color: kAmber)
-                : (data.phase == ExamPhase.normal ||
-                          data.phase == ExamPhase.finished) &&
-                      !data.expanded
-                ? Border.all(width: 1, color: kFinished)
-                : null,
-            boxShadow: data.phase == ExamPhase.extra && !data.expanded
-                ? [
-                    BoxShadow(
-                      color: Colors.orange.withValues(
-                        alpha: extraPulse ? 0.45 : 0.25,
-                      ),
-                      blurRadius: extraPulse ? 10 : 6,
-                      spreadRadius: extraPulse ? 2 : 1,
-                    ),
-                  ]
-                : data.phase != ExamPhase.extra && !isDark
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 12,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
-                : null,
+            borderRadius: BorderRadius.circular(18),
+            border: collapsedExtra
+                ? Border.all(
+                    width: 1.4,
+                    color: vColors.amber.withOpacity(isDark ? 0.76 : 0.70),
+                  )
+                : !data.expanded
+                    ? Border.all(
+                        width: 1,
+                        color: vColors.lineSoft.withOpacity(isDark ? 0.42 : 0.54),
+                      )
+                    : Border.all(width: 1, color: phaseColor.withOpacity(isDark ? 0.26 : 0.34)),
+            boxShadow: [
+              BoxShadow(
+                color: phaseColor.withOpacity(collapsedExtra ? 0.14 : (isDark ? 0.055 : 0.075)),
+                blurRadius: collapsedExtra ? 12 : (isDark ? 9 : 10),
+                spreadRadius: collapsedExtra ? 1 : 0,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.22 : 0.08),
+                blurRadius: isDark ? 8 : 12,
+                offset: Offset(0, isDark ? 4.0 : 5.0),
+              ),
+            ],
           ),
           child: Card(
-            child: AnimatedSize(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                subjectLine,
-                                style: t.titleMedium?.copyWith(
-                                  fontSize: (t.titleMedium?.fontSize ?? 16) + 2,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                data.date,
-                                style: t.bodySmall?.copyWith(
-                                  fontSize: (t.bodySmall?.fontSize ?? 12) + 1,
-                                  color: isDark
-                                      ? Colors.white70
-                                      : Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                organizationLine,
-                                style: t.bodyMedium?.copyWith(
-                                  fontSize: (t.bodyMedium?.fontSize ?? 14) + 1,
-                                  color: isDark
-                                      ? Colors.white70
-                                      : Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Column(
+            margin: EdgeInsets.zero,
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            InkWell(
-                              onTap: () {
-                                if (!isArchiveMode) {
-                                  onChevronTap();
-                                }
-                              },
-                              borderRadius: BorderRadius.circular(12),
-                              child: AnimatedRotation(
-                                duration: const Duration(milliseconds: 200),
-                                turns: data.expanded ? 0.5 : 0.0,
-                                child: const Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Icon(Icons.expand_more),
-                                ),
+                            Text(
+                              subjectLine,
+                              style: TextStyle(
+                                color: vColors.text,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.15,
+                                height: 1.15,
                               ),
                             ),
-                            if (isArchiveMode)
-                              Icon(
+                            const SizedBox(height: 7),
+                            Text(
+                              data.date,
+                              style: TextStyle(
+                                color: vColors.textSoft,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              organizationLine,
+                              style: TextStyle(
+                                color: vColors.textSoft,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                height: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isArchiveMode)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: Icon(
                                 data.isSelected
                                     ? Icons.check_circle_rounded
                                     : Icons.radio_button_unchecked,
                                 color: data.isSelected
-                                    ? kGreen
-                                    : isDark
-                                    ? Colors.white54
-                                    : Colors.black87,
+                                    ? vColors.green
+                                    : vColors.textSoft,
                               ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Collapsed triplet
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TimeCell(
-                              label: "Start Time",
-                              value: _formatHeaderHm(data.start),
-                              style: data.phase == ExamPhase.finished
-                                  ? valueGrey
-                                  : valueBlue,
                             ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Duration",
-                                  style: t.bodySmall?.copyWith(
-                                    color: labelColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  data.duration,
-                                  style: data.phase == ExamPhase.finished
-                                      ? valueGrey
-                                      : valueBlue,
-                                ),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: TimeCell(
-                                label: "End Time",
-                                value: _formatHeaderHm(data.end),
-                                style: data.phase == ExamPhase.finished
-                                    ? valueGrey
-                                    : valueBlue,
+                          InkWell(
+                            onTap: () {
+                              if (!isArchiveMode) {
+                                onChevronTap();
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: AnimatedRotation(
+                              duration: const Duration(milliseconds: 200),
+                              turns: data.expanded ? 0.5 : 0.0,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(Icons.expand_more, color: vColors.textSoft),
                               ),
                             ),
                           ),
                         ],
-                      ),
-                    ),
-
-                    if (data.expanded) ...[
-                      const SizedBox(height: 16),
-                      Center(
-                        child: TweenAnimationBuilder<double>(
-                          key: ValueKey<bool>(data.expanded),
-                          tween: Tween(begin: 0.0, end: data.progress),
-                          duration: const Duration(milliseconds: 700),
-                          curve: Curves.easeOutCubic,
-                          builder: (context, v, _) => SizedBox(
-                            width: 220,
-                            height: 220,
-                            child: ScaleTransition(
-                              scale: Tween(begin: 0.98, end: 1.0).animate(
-                                CurvedAnimation(
-                                  parent: pulse,
-                                  curve: Curves.easeInOut,
-                                ),
-                              ),
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  CustomPaint(
-                                    size: const Size.square(220),
-                                    painter: RingPainter(
-                                      progress: v,
-                                      trackColor: isDark
-                                          ? const Color(0xFF27313B)
-                                          : const Color(0xFFE6ECF3),
-                                      progressColor: phaseColor,
-                                      strokeWidth: 12,
-                                    ),
-                                  ),
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      GestureDetector(
-                                        onTap: onTimeTap,
-                                        child: Text(
-                                          _fmtHhMm(
-                                            data.isActiveTime
-                                                ? phaseRemaining
-                                                : phaseElapsed,
-                                            roundUp: data.isActiveTime,
-                                          ),
-                                          style: t.titleLarge?.copyWith(
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: phaseColor,
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          phaseLabel,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Slider with % used label (read-only when running)
-                      Row(
-                        mainAxisAlignment:
-                            MediaQuery.of(context).orientation ==
-                                Orientation.landscape
-                            ? MainAxisAlignment.start
-                            : MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 260,
-                            child: Row(
-                              children: [
-                                Text("$usedPercent%"),
-                                Expanded(
-                                  child: IgnorePointer(
-                                    ignoring: isExamCompleted,
-                                    child: Slider(
-                                      value: data.progress,
-                                      onChangeStart: data.running
-                                          ? null
-                                          : (_) => onProgressDragState(true),
-                                      onChangeEnd: data.running
-                                          ? null
-                                          : (v) => onProgressChangeEnd(v),
-                                      onChanged: (data.running)
-                                          ? null
-                                          : (v) => onUpdate(
-                                                data.copyWith(
-                                                  progress: v,
-                                                  autoStart: false,
-                                                  autoStartUserModified: true,
-                                                ),
-                                              ),
-                                    ),
-                                  ),
-                                ),
-                                const Text("100%"),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // Start Now (only if not started)
-                      if (!data.running && data.progress == 0.0) ...[
-                        const SizedBox(height: 4),
-                        Center(
-                          child: FilledButton.icon(
-                            onPressed: () => onUpdate(
-                              data.copyWith(
-                                running: true,
-                                epochStart: DateTime.now(),
-                                pausedSeconds: 0,
-                              ),
-                            ),
-                            icon: const Icon(Icons.play_arrow),
-                            label: const Text('Start Now'),
-                          ),
-                        ),
-                      ],
-
-                      const SizedBox(height: 8),
-
-                      MediaQuery.of(context).orientation ==
-                              Orientation.landscape
-                          ? Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              alignment: WrapAlignment.center,
-                              children: [
-                                AnimatedScaleOnPress(
-                                  child: ElevatedButton.icon(
-                                    style: ButtonStyle(
-                                      side: WidgetStateProperty.all(
-                                        BorderSide(
-                                          color: kBlue.withValues(alpha: 0.45),
-                                          width: 1,
-                                        ),
-                                      ),
-                                    ),
-                                    onPressed: onEditDate,
-                                    icon: const Icon(Icons.event),
-                                    label: const Text("Date"),
-                                  ),
-                                ),
-                                AnimatedScaleOnPress(
-                                  child: ElevatedButton.icon(
-                                    style: ButtonStyle(
-                                      side: WidgetStateProperty.all(
-                                        BorderSide(
-                                          color: kBlue.withValues(alpha: 0.45),
-                                          width: 1,
-                                        ),
-                                      ),
-                                    ),
-                                    onPressed: onEditStartTime,
-                                    icon: const Icon(Icons.schedule),
-                                    label: const Text("Start Time"),
-                                  ),
-                                ),
-                                AnimatedScaleOnPress(
-                                  child: ElevatedButton.icon(
-                                    style: ButtonStyle(
-                                      side: WidgetStateProperty.all(
-                                        BorderSide(
-                                          color: kBlue.withValues(alpha: 0.45),
-                                          width: 1,
-                                        ),
-                                      ),
-                                    ),
-                                    onPressed: onEditDuration,
-                                    icon: const Icon(Icons.timer),
-                                    label: const Text("Duration"),
-                                  ),
-                                ),
-                                AnimatedScaleOnPress(
-                                  child: ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: kAmber,
-                                      foregroundColor: Colors.black,
-                                    ),
-                                    onPressed: onEditExtra,
-                                    icon: const Icon(Icons.more_time),
-                                    label: const Text("Extra Time"),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 95,
-                                      child: AnimatedScaleOnPress(
-                                        child: ElevatedButton.icon(
-                                          style: ButtonStyle(
-                                            padding: WidgetStateProperty.all(
-                                              EdgeInsets.all(4),
-                                            ),
-                                            side: WidgetStateProperty.all(
-                                              BorderSide(
-                                                color: kBlue.withValues(
-                                                  alpha: 0.45,
-                                                ),
-                                                width: 1,
-                                              ),
-                                            ),
-                                          ),
-                                          onPressed: onEditDate,
-                                          icon: const Icon(Icons.event),
-                                          label: const Text("Date"),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 6),
-                                    Expanded(
-                                      flex: 110,
-                                      child: AnimatedScaleOnPress(
-                                        child: ElevatedButton.icon(
-                                          style: ButtonStyle(
-                                            padding: WidgetStateProperty.all(
-                                              EdgeInsets.all(4),
-                                            ),
-                                            side: WidgetStateProperty.all(
-                                              BorderSide(
-                                                color: kBlue.withValues(
-                                                  alpha: 0.45,
-                                                ),
-                                                width: 1,
-                                              ),
-                                            ),
-                                          ),
-                                          onPressed: onEditStartTime,
-                                          icon: const Icon(Icons.schedule),
-                                          label: const Text("Start Time"),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 6),
-                                    Expanded(
-                                      flex: 95,
-                                      child: AnimatedScaleOnPress(
-                                        child: ElevatedButton.icon(
-                                          style: ButtonStyle(
-                                            padding: WidgetStateProperty.all(
-                                              EdgeInsets.all(4),
-                                            ),
-                                            side: WidgetStateProperty.all(
-                                              BorderSide(
-                                                color: kBlue.withValues(
-                                                  alpha: 0.45,
-                                                ),
-                                                width: 1,
-                                              ),
-                                            ),
-                                          ),
-                                          onPressed: onEditDuration,
-                                          icon: const Icon(Icons.timer),
-                                          label: const Text("Duration"),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 8),
-                                AnimatedScaleOnPress(
-                                  child: ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: kAmber,
-                                      foregroundColor: Colors.black,
-                                    ),
-                                    onPressed: onEditExtra,
-                                    icon: const Icon(Icons.more_time),
-                                    label: const Text("Extra Time"),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                      const SizedBox(height: 12),
-
-                      // Normal & Extra rows
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TimingCell(
-                                    label: "Start Time",
-                                    value: _formatHeaderHm(data.normalStart),
-                                    valueStyle: valueBlue,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        "Duration",
-                                        style: t.bodySmall?.copyWith(
-                                          color: labelColor,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        data.normalDuration,
-                                        style: valueBlue,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TimingCell(
-                                      label: "End Time",
-                                      value: _formatHeaderHm(data.normalEnd),
-                                      valueStyle: valueBlue,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TimingCell(
-                                    label: "Extra Time",
-                                    value: data.extraTime,
-                                    valueStyle: valueAmber,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        "Duration",
-                                        style: t.bodySmall?.copyWith(
-                                          color: labelColor,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        data.totalDuration,
-                                        style: valueAmber,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TimingCell(
-                                      label: "Extra End",
-                                      value: _formatHeaderHm(data.extraEnd),
-                                      valueStyle: valueAmber,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
                       ),
                     ],
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 16),
+                  _compactTimingBox(isDark, vColors),
+                  SizeTransition(
+                    sizeFactor: _expandAnimation,
+                    axisAlignment: -1.0,
+                    child: ClipRect(
+                      child: FadeTransition(
+                        opacity: _expandAnimation,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 16),
+                            _timerRing(isDark, vColors, phaseColor, phaseRemaining, phaseElapsed, usedPercent),
+                            const SizedBox(height: 8),
+                            _sliderRow(context, isDark, vColors, phaseColor, usedPercent),
+                            const SizedBox(height: 14),
+                            _editButtonRows(context, isDark, vColors, showRunning: showRunning),
+                            const SizedBox(height: 14),
+                            _fullTimingSummaryBox(isDark, vColors),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _compactTimingBox(bool isDark, VigiloColors vColors) {
+    final color = data.phase == ExamPhase.finished
+        ? vColors.finished
+        : vColors.blue;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 13),
+      decoration: BoxDecoration(
+        color: vColors.panel3.withOpacity(isDark ? 0.58 : 1.0),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: vColors.blue.withOpacity(isDark ? 0.44 : 0.30),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _compactTimeValue(vColors, 'ST', _formatHeaderHm(data.start), color)),
+          _verticalDivider(vColors, height: 30),
+          Expanded(child: _compactTimeValue(vColors, 'D', data.duration, color)),
+          _verticalDivider(vColors, height: 30),
+          Expanded(child: _compactTimeValue(vColors, 'ET', _formatHeaderHm(data.end), color)),
+        ],
+      ),
+    );
+  }
+
+  Widget _compactTimeValue(VigiloColors vColors, String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: vColors.textFaint,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.55,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 18.5,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.1,
+            height: 1,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _timerRing(bool isDark, VigiloColors vColors, Color phaseColor, int phaseRemaining, int phaseElapsed, int usedPercent) {
+    late String phaseLabel;
+    switch (data.phase) {
+      case ExamPhase.normal:
+        phaseLabel = 'NORMAL TIME';
+        break;
+      case ExamPhase.extra:
+        phaseLabel = 'EXTRA TIME';
+        break;
+      case ExamPhase.finished:
+        phaseLabel = 'FINISHED';
+        break;
+    }
+
+    return Center(
+      child: SizedBox(
+        width: 220,
+        height: 220,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: data.progress),
+          duration: const Duration(milliseconds: 700),
+          curve: Curves.easeOutCubic,
+          builder: (context, v, _) => ScaleTransition(
+            scale: data.running
+                ? Tween(begin: 0.98, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: pulse,
+                      curve: Curves.easeInOut,
+                    ),
+                  )
+                : const AlwaysStoppedAnimation(1.0),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CustomPaint(
+                  size: const Size.square(220),
+                  painter: RingPainter(
+                    progress: v,
+                    trackColor: isDark ? const Color(0xFF27313B) : vColors.line.withOpacity(0.62),
+                    progressColor: phaseColor,
+                    strokeWidth: 11,
+                    isRunning: data.running,
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: onTimeTap,
+                      child: Text(
+                        _fmtHhMm(
+                          data.isActiveTime ? phaseRemaining : phaseElapsed,
+                          roundUp: data.isActiveTime,
+                        ),
+                        style: TextStyle(
+                          color: vColors.text,
+                          fontSize: 23,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: phaseColor.withOpacity(0.88),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        phaseLabel,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 0.15,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$usedPercent%',
+                      style: TextStyle(
+                        color: phaseColor.withOpacity(data.running ? (isDark ? 1.0 : 0.78) : (isDark ? 1.0 : 0.95)),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.15,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sliderRow(BuildContext context, bool isDark, VigiloColors vColors, Color phaseColor, int usedPercent) {
+    final locked = data.running;
+
+    return Opacity(
+      opacity: locked ? 0.72 : 1.0,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 260,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 38,
+                  child: Text(
+                    '$usedPercent%',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: locked ? vColors.textFaint : vColors.textSoft,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: phaseColor.withOpacity(locked ? (isDark ? 1.0 : 0.52) : (isDark ? 1.0 : 0.95)),
+                      inactiveTrackColor: phaseColor.withOpacity(locked ? (isDark ? 0.16 : 0.10) : 0.16),
+                      thumbColor: phaseColor.withOpacity(locked ? (isDark ? 1.0 : 0.46) : (isDark ? 1.0 : 0.95)),
+                      overlayColor: phaseColor.withOpacity(0.08),
+                      trackHeight: locked ? 4.0 : 4.5,
+                      thumbShape: RoundSliderThumbShape(
+                        enabledThumbRadius: locked ? 7.2 : 8.5,
+                        disabledThumbRadius: 7.2,
+                      ),
+                      overlayShape: const RoundSliderOverlayShape(
+                        overlayRadius: 15,
+                      ),
+                    ),
+                    child: IgnorePointer(
+                      ignoring: isExamCompleted,
+                      child: Slider(
+                        value: data.progress,
+                        onChangeStart: data.running
+                            ? null
+                            : (_) => onProgressDragState(true),
+                        onChangeEnd: data.running
+                            ? null
+                            : (v) => onProgressChangeEnd(v),
+                        onChanged: (data.running)
+                            ? null
+                            : (v) => onUpdate(
+                                  data.copyWith(
+                                    progress: v,
+                                    autoStart: false,
+                                    autoStartUserModified: true,
+                                  ),
+                                ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 44,
+                  child: Text(
+                    '100%',
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      color: locked ? vColors.textFaint : vColors.textSoft,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _editButtonRows(BuildContext context, bool isDark, VigiloColors vColors, {required bool showRunning}) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: AnimatedScaleOnPress(
+                child: _editButton(isDark, vColors, 'Date', Icons.event, onEditDate),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: AnimatedScaleOnPress(
+                child: _editButton(isDark, vColors, 'Start Time', Icons.schedule, onEditStartTime),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: AnimatedScaleOnPress(
+                child: _editButton(isDark, vColors, 'Duration', Icons.timer, onEditDuration),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: AnimatedScaleOnPress(
+                child: _editButton(
+                  isDark,
+                  vColors,
+                  'Extra Time',
+                  Icons.more_time,
+                  onEditExtra,
+                  accent: vColors.amber,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: AnimatedScaleOnPress(
+                child: showRunning
+                    ? _runningButton(isDark, vColors)
+                    : _startNowButton(vColors, () {
+                        onUpdate(
+                          data.copyWith(
+                            running: true,
+                            epochStart: DateTime.now(),
+                            pausedSeconds: 0,
+                          ),
+                        );
+                      }),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _editButton(
+    bool isDark,
+    VigiloColors vColors,
+    String label,
+    IconData icon,
+    VoidCallback onPressed, {
+    Color? accent,
+  }) {
+    final activeAccent = accent ?? vColors.blueSoft;
+
+    return SizedBox(
+      height: 42,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isDark ? vColors.panel3.withOpacity(0.86) : vColors.panel3,
+          foregroundColor: vColors.text,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: BorderSide(color: activeAccent.withOpacity(isDark ? 0.36 : 0.34), width: 1),
+          ),
+        ),
+        onPressed: onPressed,
+        icon: Icon(icon, size: 17, color: activeAccent),
+        label: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+              letterSpacing: 0.05,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _startNowButton(VigiloColors vColors, VoidCallback onTap) {
+    return SizedBox(
+      height: 42,
+      child: FilledButton.icon(
+        style: FilledButton.styleFrom(
+          backgroundColor: vColors.blue,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+        onPressed: onTap,
+        icon: const Icon(Icons.play_arrow_rounded, size: 18),
+        label: const Text(
+          'Start Now',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 13,
+            letterSpacing: 0.05,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _runningButton(bool isDark, VigiloColors vColors) {
+    final bool completed = isExamCompleted || data.phase == ExamPhase.finished;
+    final String labelText = completed ? 'Finished' : 'Running';
+    final IconData iconData = completed ? Icons.check_circle_outline_rounded : Icons.lock_rounded;
+
+    return SizedBox(
+      height: 42,
+      child: FilledButton.icon(
+        style: FilledButton.styleFrom(
+          disabledBackgroundColor: completed 
+              ? vColors.finished.withOpacity(isDark ? 0.27 : 0.16)
+              : vColors.blue.withOpacity(isDark ? 0.27 : 0.16),
+          disabledForegroundColor: vColors.textSoft,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: BorderSide(
+              color: completed 
+                  ? vColors.finished.withOpacity(isDark ? 0.36 : 0.30)
+                  : vColors.blue.withOpacity(isDark ? 0.36 : 0.30),
+              width: 1,
+            ),
+          ),
+        ),
+        onPressed: null,
+        icon: Icon(iconData, size: 16),
+        label: Text(
+          labelText,
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 13,
+            letterSpacing: 0.05,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _fullTimingSummaryBox(bool isDark, VigiloColors vColors) {
+    final normalActive = data.phase == ExamPhase.normal;
+    final extraActive = data.phase == ExamPhase.extra;
+    final finished = data.phase == ExamPhase.finished;
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: vColors.panel3,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: finished
+              ? vColors.finished.withOpacity(isDark ? 0.32 : 0.34)
+              : vColors.line.withOpacity(isDark ? 0.58 : 0.76),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          _summaryRowBox(
+            isDark,
+            active: normalActive,
+            borderColor: finished ? vColors.finished : vColors.blue,
+            children: [
+              Expanded(
+                child: _summaryTimeValue(
+                  vColors,
+                  'Start Time',
+                  _formatHeaderHm(data.normalStart),
+                  finished ? vColors.finished : vColors.blue,
+                ),
+              ),
+              _verticalDivider(vColors, height: 30),
+              Expanded(
+                child: _summaryTimeValue(
+                  vColors,
+                  'Duration',
+                  data.normalDuration,
+                  finished ? vColors.finished : vColors.blue,
+                ),
+              ),
+              _verticalDivider(vColors, height: 30),
+              Expanded(
+                child: _summaryTimeValue(
+                  vColors,
+                  'End Time',
+                  _formatHeaderHm(data.normalEnd),
+                  finished ? vColors.finished : vColors.blue,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _summaryRowBox(
+            isDark,
+            active: extraActive,
+            borderColor: finished ? vColors.finished : vColors.amber,
+            children: [
+              Expanded(
+                child: _summaryTimeValue(
+                  vColors,
+                  'Extra Time',
+                  data.extraTime,
+                  finished ? vColors.finished : vColors.amber,
+                ),
+              ),
+              _verticalDivider(vColors, height: 30),
+              Expanded(
+                child: _summaryTimeValue(
+                  vColors,
+                  'Duration',
+                  data.totalDuration,
+                  finished ? vColors.finished : vColors.amber,
+                ),
+              ),
+              _verticalDivider(vColors, height: 30),
+              Expanded(
+                child: _summaryTimeValue(
+                  vColors,
+                  'Extra End',
+                  _formatHeaderHm(data.extraEnd),
+                  finished ? vColors.finished : vColors.amber,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRowBox(
+    bool isDark, {
+    required bool active,
+    required Color borderColor,
+    required List<Widget> children,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: active ? borderColor.withOpacity(isDark ? 0.56 : 0.46) : Colors.transparent,
+          width: 1,
+        ),
+        color: active ? borderColor.withOpacity(isDark ? 0.04 : 0.045) : Colors.transparent,
+      ),
+      child: Row(children: children),
+    );
+  }
+
+  Widget _summaryTimeValue(VigiloColors vColors, String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: vColors.textSoft,
+            fontSize: 11.7,
+            fontWeight: FontWeight.w700,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          value,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: color,
+            fontSize: 18.2,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.2,
+            height: 1,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _verticalDivider(VigiloColors vColors, {double height = 34}) {
+    return Container(
+      width: 1,
+      height: height,
+      color: vColors.line.withOpacity(vColors.isDark ? 0.50 : 0.74),
     );
   }
 }

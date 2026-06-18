@@ -660,6 +660,18 @@ class _HomeScreenState extends State<HomeScreen>
 
 
   Future<void> _openQuickAddWizard() async {
+    setState(() {
+      _lastSchool = null;
+      _lastCentre = null;
+      _lastSubject = null;
+      _lastBoard = null;
+      _lastStart = null;
+      _lastDuration = null;
+      _lastExtra = null;
+    });
+    await _seedOrganizationFromLicenseIfNeeded();
+    if (!mounted) return;
+
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -727,13 +739,13 @@ class _HomeScreenState extends State<HomeScreen>
 
           setState(() {
             _cards.insert(0, newCard);
-            _lastSchool = school;
-            _lastCentre = centre;
-            _lastSubject = subject;
-            _lastBoard = board;
-            _lastStart = normalizedStart;
-            _lastDuration = normalizedDuration;
-            _lastExtra = normalizedExtra;
+            _lastSchool = null;
+            _lastCentre = null;
+            _lastSubject = null;
+            _lastBoard = null;
+            _lastStart = null;
+            _lastDuration = null;
+            _lastExtra = null;
           });
           await _saveState();
           if (!mounted) return;
@@ -914,6 +926,7 @@ class _HomeScreenState extends State<HomeScreen>
               final i = idx - 1;
               final c = isArchiveView ? _archiveCards[i] : _cards[i];
               return ExamCard(
+                key: ValueKey(c.recordId),
                 data: c,
                 pulse: _pulse,
                 isExamCompleted: c.phase == ExamPhase.finished,
@@ -931,6 +944,7 @@ class _HomeScreenState extends State<HomeScreen>
                   });
                   try {
                     await _saveState();
+                    await _refreshCards();
                   } finally {
                     _isAdjustingProgress = false;
                   }

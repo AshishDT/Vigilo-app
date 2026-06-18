@@ -883,10 +883,16 @@ class SessionService {
       final snapshot = SessionSnapshot.fromMap(existingSnapshotMap);
       final scheduleAnchor = _scheduledDateTimeUtc(card);
       final desiredStatus = _statusFromCard(normalizedCard);
-      final startedAtUtc =
-          desiredStatus == SessionStatus.idle && scheduleAnchor != null
-          ? scheduleAnchor
-          : snapshot.startedAtUtc;
+      final isTransitionFromIdleToEnded =
+          snapshot.sessionStatus == SessionStatus.idle &&
+          desiredStatus == SessionStatus.ended;
+
+      final startedAtUtc = isTransitionFromIdleToEnded
+          ? nowUtc
+          : (desiredStatus == SessionStatus.idle && scheduleAnchor != null
+                ? scheduleAnchor
+                : snapshot.startedAtUtc);
+
       final endedAtUtc = desiredStatus == SessionStatus.ended
           ? (snapshot.endedAtUtc ??
                 startedAtUtc.add(
@@ -895,6 +901,35 @@ class SessionService {
                   ),
                 ))
           : null;
+
+      if (isTransitionFromIdleToEnded) {
+        final startEvent = await _buildEvent(
+          txn,
+          examRecordId: id,
+          type: SessionEventType.start,
+          occurredAtUtc: startedAtUtc,
+          payloadJson: jsonEncode({
+            'autoStart': false,
+            'restart': false,
+            'plannedDurationMs': plannedDurationMs,
+            'normalDurationMs': normalDurationMs,
+            'extraTimeMs': extraTimeMs,
+          }),
+        );
+        await _db.insertEvent(txn, startEvent);
+
+        final endEvent = await _buildEvent(
+          txn,
+          examRecordId: id,
+          type: SessionEventType.end,
+          occurredAtUtc:
+              endedAtUtc ??
+              nowUtc.add(Duration(milliseconds: plannedDurationMs)),
+          payloadJson: jsonEncode({'reason': 'manual_drag_complete'}),
+        );
+        await _db.insertEvent(txn, endEvent);
+      }
+
       final updatedSnapshot = SessionSnapshot(
         examRecordId: snapshot.examRecordId,
         sessionStatus: desiredStatus,
@@ -1008,87 +1043,6 @@ class SessionService {
         payloadJson: jsonEncode({'migrated': true}),
       );
       await _db.insertEvent(txn, endEvent);
-    }
-  }
-
-  Future<void> _endAnyOpenSessions(
-    DatabaseExecutor txn, {
-    required String exceptExamRecordId,
-  }) async {
-    final maps = await txn.rawQuery(
-      '''
-      SELECT s.*, r.*
-      FROM session_snapshot s
-      INNER JOIN exam_record r
-      ON r.exam_record_id = s.exam_record_id
-      WHERE r.record_status = ?
-      AND s.session_status IN (?, ?)
-      AND s.exam_record_id != ?
-      ORDER BY r.created_at_utc DESC
-      ''',
-      [
-        RecordStatus.open.code,
-        SessionStatus.running.code,
-        SessionStatus.paused.code,
-        exceptExamRecordId,
-      ],
-    );
-
-    final nowUtc = DateTime.now().toUtc();
-    for (final map in maps) {
-      final snapshot = SessionSnapshot.fromMap(map);
-      final record = ExamRecord.fromMap(map);
-
-      await _syncCoreTimeBoundaryEvents(
-        txn,
-        snapshot: snapshot,
-        nowUtc: nowUtc,
-        latestCoreEventUtc: nowUtc.subtract(const Duration(milliseconds: 1)),
-        force: true,
-      );
-
-      int totalPausedMs = snapshot.totalPausedMs;
-      if (snapshot.sessionStatus == SessionStatus.paused &&
-          snapshot.pauseStartedAtUtc != null) {
-        totalPausedMs += nowUtc
-            .difference(snapshot.pauseStartedAtUtc!)
-            .inMilliseconds;
-      }
-
-      final endEvent = await _buildEvent(
-        txn,
-        examRecordId: record.id,
-        type: SessionEventType.end,
-        occurredAtUtc: nowUtc,
-        payloadJson: jsonEncode({'reason': 'single_active_enforced'}),
-      );
-      await _db.insertEvent(txn, endEvent);
-
-      final updatedSnapshot = SessionSnapshot(
-        examRecordId: snapshot.examRecordId,
-        sessionStatus: SessionStatus.ended,
-        startedAtUtc: snapshot.startedAtUtc,
-        pauseStartedAtUtc: null,
-        totalPausedMs: totalPausedMs,
-        plannedDurationMs: snapshot.plannedDurationMs,
-        endedAtUtc: nowUtc,
-        lastCheckpointAtUtc: nowUtc,
-        lastKnownNowUtc: nowUtc,
-        integrityFlag: snapshot.integrityFlag,
-      );
-      final updatedRecord = ExamRecord(
-        id: record.id,
-        examName: record.examName,
-        examCenter: record.examCenter,
-        createdBy: record.createdBy,
-        createdAtUtc: record.createdAtUtc,
-        closedAtUtc: nowUtc,
-        recordStatus: RecordStatus.closed,
-        schemaVersion: record.schemaVersion,
-      );
-
-      await _db.updateSnapshot(txn, updatedSnapshot);
-      await _db.updateExamRecord(txn, updatedRecord);
     }
   }
 
