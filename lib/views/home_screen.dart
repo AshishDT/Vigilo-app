@@ -19,6 +19,7 @@ import 'widgets/add_exam_sheet.dart';
 import 'widgets/confirmation_dialog.dart';
 import 'widgets/exam_card_widget.dart';
 import 'widgets/footer_widget.dart';
+import 'widgets/home_empty_state_widget.dart';
 import 'widgets/license_required_view.dart';
 import 'widgets/stat_chip_widget.dart';
 import 'widgets/vigilo_date_picker.dart';
@@ -876,71 +877,40 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       body: Stack(
         children: [
-          ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
-            itemCount: isArchiveView
-                ? _archiveCards.length + 1
-                : _cards.length + 1,
-            separatorBuilder: (_, index) => const SizedBox(height: 16),
-            itemBuilder: (context, idx) {
-              if (idx == 0) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    StatChip(
-                      invigilatorsOnDuty: allInvigilators,
-                      activeExams: isArchiveView
-                          ? _archiveCards.length
-                          : _activeExamCount,
-                      isArchiveView: isArchiveView,
-                    ),
-                    if (!isArchiveView && _cards.isEmpty) ...[
-                      const SizedBox(height: 28),
-                      Center(
-                        child: Column(
-                          children: [
-                            const Text(
-                              "Vigilo",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 24,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              "Exam Room Control",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 18,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              "No exams yet",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Tap + Exam to create your first exam",
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color:
-                                        Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.white70
-                                        : const Color(0xFF5B708A),
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                );
-              }
+          if (!isArchiveView && _cards.isEmpty)
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: StatChip(
+                    invigilatorsOnDuty: allInvigilators,
+                    activeExams: 0,
+                    isArchiveView: false,
+                  ),
+                ),
+                const Spacer(),
+                const HomeEmptyStateWidget(),
+                const Spacer(),
+                const SizedBox(height: 60),
+              ],
+            )
+          else
+            ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+              itemCount: isArchiveView
+                  ? _archiveCards.length + 1
+                  : _cards.length + 1,
+              separatorBuilder: (_, index) => const SizedBox(height: 16),
+              itemBuilder: (context, idx) {
+                if (idx == 0) {
+                  return StatChip(
+                    invigilatorsOnDuty: allInvigilators,
+                    activeExams: isArchiveView
+                        ? _archiveCards.length
+                        : _activeExamCount,
+                    isArchiveView: isArchiveView,
+                  );
+                }
               final i = idx - 1;
               final c = isArchiveView ? _archiveCards[i] : _cards[i];
               return ExamCard(
