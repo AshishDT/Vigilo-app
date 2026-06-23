@@ -208,6 +208,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
       isScrollControlled: true,
       builder: (_) => VigiloTimePickerSheet(
         initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
+        showIcons: true,
       ),
     );
     if (picked != null) {
@@ -223,7 +224,10 @@ class _AddExamSheetState extends State<AddExamSheet> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => VigiloDatePickerSheet(initialDate: _selectedDate),
+      builder: (_) => VigiloDatePickerSheet(
+        initialDate: _selectedDate,
+        showIcons: true,
+      ),
     );
     if (picked != null) {
       setState(() {
@@ -240,6 +244,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
       builder: (_) => VigiloDurationPickerSheet(
         initialDuration: time,
         title: title,
+        showIcons: true,
       ),
     );
     return res ?? "";
@@ -431,36 +436,42 @@ class _AddExamSheetState extends State<AddExamSheet> {
 
   Widget _primaryButton({
     required String label,
+    required IconData icon,
     required VoidCallback? onTap,
   }) {
     final colors = _SheetColors(context);
     return AnimatedScaleOnPress(
       isDisabled: onTap == null,
       child: SizedBox(
-        height: 44,
+        height: 52,
         child: FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: colors.blue,
             disabledBackgroundColor: colors.blue.withValues(alpha: 0.45),
             foregroundColor: Colors.white,
             disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
-            shape: const StadiumBorder(),
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(26),
+            ),
             elevation: onTap == null ? 0 : 2,
           ),
           onPressed: onTap,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              softWrap: false,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 20, color: Colors.white),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -469,33 +480,39 @@ class _AddExamSheetState extends State<AddExamSheet> {
 
   Widget _secondaryButton({
     required String label,
+    required IconData icon,
     required VoidCallback onTap,
   }) {
     final colors = _SheetColors(context);
     return AnimatedScaleOnPress(
       child: SizedBox(
-        height: 44,
+        height: 52,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: colors.lineSoft),
-            backgroundColor: colors.panel2.withValues(alpha: 0.62),
-            shape: const StadiumBorder(),
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            side: BorderSide(color: colors.blue, width: 1.5),
+            foregroundColor: colors.blue,
+            backgroundColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(26),
+            ),
           ),
           onPressed: onTap,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              label,
-              softWrap: false,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colors.blackWhite,
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: colors.blue),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -706,6 +723,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                       Expanded(
                         child: _secondaryButton(
                           label: 'Cancel',
+                          icon: Icons.close_rounded,
                           onTap: () => Navigator.pop(context, false),
                         ),
                       ),
@@ -713,13 +731,14 @@ class _AddExamSheetState extends State<AddExamSheet> {
                       Expanded(
                         child: _primaryButton(
                           label: 'Save',
+                          icon: Icons.check_rounded,
                           onTap: _isValidToSave()
                               ? () async {
                                   final school = _schoolCtl.text.trim();
                                   final centre = _centreCtl.text.trim();
                                   final subj = _subjectCtl.text.trim();
                                   final board = _boardCtl.text.trim();
-
+ 
                                   await widget.onSave(
                                     school: school,
                                     centre: centre,

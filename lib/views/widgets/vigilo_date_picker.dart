@@ -26,10 +26,12 @@ class _PickerColors {
 
 class VigiloDatePickerSheet extends StatefulWidget {
   final DateTime initialDate;
+  final bool showIcons;
 
   const VigiloDatePickerSheet({
     super.key,
     required this.initialDate,
+    this.showIcons = false,
   });
 
   @override
@@ -243,21 +245,21 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
     final keyboardDepth = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
-      margin: const EdgeInsets.only(top: 60),
-      padding: EdgeInsets.fromLTRB(20, 12, 20, 20 + keyboardDepth),
+      margin: EdgeInsets.fromLTRB(16, 60, 16, 16 + keyboardDepth),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       decoration: BoxDecoration(
         color: colors.panel,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(30),
+          top: Radius.circular(32),
         ),
         border: Border.all(
-          color: colors.lineSoft.withValues(alpha: 0.55),
+          color: colors.line,
         ),
         boxShadow: const [
           BoxShadow(
-            color: Colors.black54,
+            color: Colors.black45,
             blurRadius: 24,
-            offset: Offset(0, -8),
+            offset: Offset(0, -6),
           ),
         ],
       ),
@@ -268,10 +270,10 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
           children: [
             // Pinned Header
             Container(
-              width: 70,
-              height: 5,
+              width: 68,
+              height: 6,
               decoration: BoxDecoration(
-                color: colors.lineSoft,
+                color: colors.line,
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
@@ -286,6 +288,14 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
+                if (widget.showIcons) ...[
+                  const Spacer(),
+                  Icon(
+                    Icons.tune_rounded,
+                    color: colors.textSoft,
+                    size: 22,
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 16),
@@ -513,41 +523,44 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
                 Expanded(
                   child: AnimatedScaleOnPress(
                     child: SizedBox(
-                      height: 44,
+                      height: 52,
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: colors.lineSoft),
-                          backgroundColor: colors.panel2.withValues(alpha: 0.62),
-                          shape: const StadiumBorder(),
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          side: BorderSide(color: colors.blue, width: 1.5),
+                          foregroundColor: colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(26),
+                          ),
                         ),
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Cancel',
-                            softWrap: false,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: colors.blackWhite,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                            ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (widget.showIcons) ...[
+                                Icon(Icons.close_rounded, size: 18, color: colors.blue),
+                                const SizedBox(width: 10),
+                              ],
+                              Text(
+                                'Cancel',
+                                style: const TextStyle(fontWeight: FontWeight.w800),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 14),
                 Expanded(
                   child: AnimatedScaleOnPress(
                     isDisabled: !_isChanged,
                     child: SizedBox(
-                      height: 44,
+                      height: 52,
                       child: FilledButton(
                         style: FilledButton.styleFrom(
                           backgroundColor: colors.blue,
@@ -556,8 +569,9 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
                           ),
                           foregroundColor: Colors.white,
                           disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
-                          shape: const StadiumBorder(),
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(26),
+                          ),
                           elevation: !_isChanged ? 0 : 2,
                         ),
                         onPressed: _isChanged
@@ -567,15 +581,18 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
                             : null,
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Save',
-                            textAlign: TextAlign.center,
-                            softWrap: false,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w900,
-                            ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (widget.showIcons) ...[
+                                const Icon(Icons.check_rounded, size: 20, color: Colors.white),
+                                const SizedBox(width: 10),
+                              ],
+                              Text(
+                                'Save',
+                                style: const TextStyle(fontWeight: FontWeight.w800),
+                              ),
+                            ],
                           ),
                         ),
                       ),
