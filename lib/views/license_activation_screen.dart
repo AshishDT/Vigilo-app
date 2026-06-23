@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../services/license_key_codec.dart';
 import '../services/license_service.dart';
+import 'widgets/animated_scale_on_press.dart';
 
 class LicenseActivationScreen extends StatefulWidget {
   const LicenseActivationScreen({super.key});
@@ -349,27 +350,189 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
     final paragraphs = _dialogParagraphs(content);
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(title),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var index = 0; index < paragraphs.length; index++) ...[
-                Text(paragraphs[index], style: const TextStyle(height: 1.6)),
-                if (index < paragraphs.length - 1) const SizedBox(height: 14),
-              ],
-            ],
+      barrierColor: Colors.black.withValues(alpha: 0.68),
+      builder: (dialogContext) {
+        final media = MediaQuery.of(context);
+        return AnimatedPadding(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Material(
+                color: Colors.transparent,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxHeight: media.size.height * 0.82,
+                    ),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _VigiloPalette.panel,
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: _VigiloPalette.line),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black45,
+                          blurRadius: 18,
+                          offset: Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ── Header ──────────────────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: 8,
+                            left: 8,
+                            right: 4,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: _VigiloPalette.signalBlue
+                                      .withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: _VigiloPalette.signalBlue
+                                        .withValues(alpha: 0.70),
+                                    width: .7,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  Icons.description_outlined,
+                                  color: _VigiloPalette.signalBlue,
+                                  size: 26,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        title,
+                                        maxLines: 1,
+                                        style: const TextStyle(
+                                          color: _VigiloPalette.text,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              // Inline close button
+                              Tooltip(
+                                message: 'Close',
+                                child: InkWell(
+                                  onTap: () =>
+                                      Navigator.of(dialogContext).pop(),
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: _VigiloPalette.panel2,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: _VigiloPalette.lineSoft,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.close_rounded,
+                                      size: 24,
+                                      color: _VigiloPalette.textSoft,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        // ── Scrollable body ──────────────────────────────
+                        Flexible(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (var i = 0; i < paragraphs.length; i++) ...[
+                                  Text(
+                                    paragraphs[i],
+                                    style: const TextStyle(
+                                      color: _VigiloPalette.textSoft,
+                                      fontSize: 15,
+                                      height: 1.6,
+                                    ),
+                                  ),
+                                  if (i < paragraphs.length - 1)
+                                    const SizedBox(height: 14),
+                                ],
+                                const SizedBox(height: 24),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // ── Footer button ────────────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: AnimatedScaleOnPress(
+                              child: SizedBox(
+                                height: 44,
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                      color: _VigiloPalette.lineSoft,
+                                    ),
+                                    backgroundColor: _VigiloPalette.panel2
+                                        .withValues(alpha: 0.62),
+                                    shape: const StadiumBorder(),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                    ),
+                                  ),
+                                  onPressed: () =>
+                                      Navigator.of(dialogContext).pop(),
+                                  child: const Text(
+                                    'Close',
+                                    style: TextStyle(
+                                      color: _VigiloPalette.text,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
