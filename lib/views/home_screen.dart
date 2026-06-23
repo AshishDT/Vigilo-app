@@ -885,7 +885,7 @@ class _HomeScreenState extends State<HomeScreen>
                               Spacer(),
                               HomeEmptyStateWidget(),
                               Spacer(),
-                              SizedBox(height: 60),
+                              SizedBox(height: 100),
                             ],
                           )
                         : ListView.separated(
