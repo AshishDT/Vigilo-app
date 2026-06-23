@@ -1684,7 +1684,8 @@ class SessionService {
 
       switch (event.type) {
         case SessionEventType.start:
-          if (keptStart) continue;
+          final isRestart = payload['restart'] == true;
+          if (keptStart && !isRestart) continue;
           keptStart = true;
           filtered.add(event);
           continue;

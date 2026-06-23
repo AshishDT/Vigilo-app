@@ -130,16 +130,25 @@ class CsvExportService {
     final sessionSnapshot = snapshot.sessionSnapshot;
     final events = snapshot.events;
     final fallbackStartLocal = snapshot.fallbackStartLocal;
-    final startEvent = events.isNotEmpty ? events.first : null;
-    final normalEndEvent = _firstEventByType(
-      events,
-      SessionEventType.endNormalTime,
-    );
-    final extraStartEvent = _firstEventByType(
-      events,
-      SessionEventType.startExtraTime,
-    );
-    final examEndEvent = _firstTerminationEvent(events);
+    SessionEvent? activeStartEvent;
+    for (final event in events) {
+      if (event.type == SessionEventType.start) {
+        activeStartEvent = event;
+      }
+    }
+    final primaryStartEvent = activeStartEvent ?? (events.isNotEmpty ? events.first : null);
+    final activeStartUtc = primaryStartEvent?.occurredAtUtc;
+
+    final normalEndEvent = activeStartUtc == null
+        ? null
+        : _firstEventByTypeAfter(events, SessionEventType.endNormalTime, activeStartUtc);
+    final extraStartEvent = activeStartUtc == null
+        ? null
+        : _firstEventByTypeAfter(events, SessionEventType.startExtraTime, activeStartUtc);
+    final examEndEvent = activeStartUtc == null
+        ? null
+        : _firstTerminationEventAfter(events, activeStartUtc);
+
     final organization = _organizationInfo(
       record,
       card,
@@ -154,9 +163,9 @@ class CsvExportService {
       examSessionId: sessionId,
       exportedAtLocal: exportedAtLocal,
     );
-    final actualStartLocal = (startEvent?.occurredAtUtc ?? record.createdAtUtc)
+    final actualStartLocal = (primaryStartEvent?.occurredAtUtc ?? record.createdAtUtc)
         .toLocal();
-    final startType = _startType(startEvent);
+    final startType = _startType(primaryStartEvent);
     final logRows = _buildExportLogRows(snapshot);
     final actualEndLocal =
         (examEndEvent?.occurredAtUtc ?? sessionSnapshot.endedAtUtc)?.toLocal();
@@ -978,7 +987,8 @@ class CsvExportService {
 
       switch (event.type) {
         case SessionEventType.start:
-          if (keptStart) continue;
+          final isRestart = payload['restart'] == true;
+          if (keptStart && !isRestart) continue;
           keptStart = true;
           filtered.add(event);
           continue;
@@ -1054,6 +1064,31 @@ class CsvExportService {
     if (message.isEmpty) return false;
     return _normalizeAuditMessage(message) ==
         _normalizeAuditMessage(_auditInvigilatorUpdateMessage);
+  }
+
+  SessionEvent? _firstEventByTypeAfter(
+    List<SessionEvent> events,
+    SessionEventType type,
+    DateTime afterUtc,
+  ) {
+    for (final event in events) {
+      if (event.type == type && !event.occurredAtUtc.isBefore(afterUtc)) {
+        return event;
+      }
+    }
+    return null;
+  }
+
+  SessionEvent? _firstTerminationEventAfter(
+    List<SessionEvent> events,
+    DateTime afterUtc,
+  ) {
+    for (final event in events) {
+      if (_isTerminationEvent(event.type) && !event.occurredAtUtc.isBefore(afterUtc)) {
+        return event;
+      }
+    }
+    return null;
   }
 }
 

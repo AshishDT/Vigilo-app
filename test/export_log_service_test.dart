@@ -469,6 +469,95 @@ void main() {
         expect(text, contains('Room(s): None'));
       },
     );
+
+    test('handles exam restarts properly in export summary and timing calculations', () async {
+      const recordId = 'record-restart-test';
+      final card = ExamCardData(
+        recordId: recordId,
+        school: 'Battersea Academy',
+        centreNumber: '12345',
+        date: '10/03/2026',
+        subject: 'Maths GCSE (AQA)',
+        start: '09:00',
+        duration: '01:00',
+        end: '10:00',
+        normalStart: '09:00',
+        normalDuration: '01:00',
+        normalEnd: '10:00',
+        extraTime: '00:00',
+        totalDuration: '01:00',
+        extraEnd: '10:00',
+        roomsSnapshot: 'Room A',
+      );
+
+      await sessionService.persistHomeState(
+        cards: [card],
+        archiveCards: const [],
+        lastUsed: _emptyLastUsed(),
+      );
+
+      // 1. Initial Start at 09:00
+      final initialStart = DateTime(2026, 3, 10, 9, 0, 0);
+      await sessionService.startSession(
+        examRecordId: recordId,
+        startedAt: initialStart.toUtc(),
+      );
+
+      // 2. Incident during initial session at 09:02
+      await sessionService.appendIncident(
+        examRecordId: recordId,
+        incident: Incident(
+          'Toilet break',
+          incidentType: 'Toilet',
+          room: 'Room A',
+          studentID: 'Student-1',
+          time: DateTime(2026, 3, 10, 9, 2, 0),
+        ),
+      );
+
+      // 3. Restart at 09:10
+      final restartStart = DateTime(2026, 3, 10, 9, 10, 0);
+      await sessionService.startSession(
+        examRecordId: recordId,
+        startedAt: restartStart.toUtc(),
+        restart: true,
+      );
+
+      // 4. Incident during restarted session at 09:12
+      await sessionService.appendIncident(
+        examRecordId: recordId,
+        incident: Incident(
+          'Medical incident',
+          incidentType: 'Medical',
+          room: 'Room A',
+          studentID: 'Student-2',
+          time: DateTime(2026, 3, 10, 9, 12, 0),
+        ),
+      );
+
+      // 5. Complete exam manually
+      await sessionService.endSession(
+        recordId,
+        manual: true,
+        reason: 'manual_end',
+      );
+
+      final text = await exportService.buildRecordCsvText(
+        examRecordId: recordId,
+      );
+
+      // Verify header summary: Actual Start Time must be 09:10:00 (restart time)
+      expect(text, contains('Actual Start Time: 09:10:00'));
+      expect(text, contains('Exam Ended:'));
+      
+      // Verify Event Log contains ALL events (original, restart, incidents, restarts)
+      expect(text, contains('09:00:00,Core,Normal Time,Exam started'));
+      expect(text, contains('09:02:00,Incident,Normal Time,Toilet visit'));
+      expect(text, contains('09:10:00,Control,Normal Time,Exam restarted'));
+      expect(text, contains('09:10:00,Core,Normal Time,Exam started'));
+      expect(text, contains('09:12:00,Incident,Normal Time,Medical incident'));
+      expect(text, contains(',Core,Normal Time,Exam ended'));
+    });
   });
 }
 
