@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../utils/constants.dart';
 import 'animated_scale_on_press.dart';
 
 class _PickerColors {
@@ -8,21 +9,15 @@ class _PickerColors {
 
   bool get isDark => Theme.of(context).brightness == Brightness.dark;
 
-  Color get panel =>
-      isDark ? const Color(0xFF10263D) : const Color(0xFFFFFFFF);
-  Color get panel2 =>
-      isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
-  Color get line => isDark ? const Color(0xFF294867) : const Color(0xFFE2E8F0);
-  Color get lineSoft =>
-      isDark ? const Color(0xFF395B7D) : const Color(0xFFCBD5E1);
-  Color get text => isDark ? const Color(0xFFF3F7FC) : const Color(0xFF0B253A);
-  Color get textSoft =>
-      isDark ? const Color(0xFFB6C7D8) : const Color(0xFF475569);
-  Color get blue => isDark ? const Color(0xFF4B86F8) : const Color(0xFF2563EB);
-  Color get blackWhite =>
-      isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
-  Color get timeCardBg =>
-      isDark ? const Color(0xFF0F2236) : const Color(0xFFF8FAFC);
+  Color get panel => VigiloUiColors.panel(isDark);
+  Color get panel2 => isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
+  Color get line => VigiloUiColors.line(isDark);
+  Color get lineSoft => VigiloUiColors.lineSoft(isDark);
+  Color get text => VigiloUiColors.text(isDark);
+  Color get textSoft => VigiloUiColors.textSoft(isDark);
+  Color get blue => VigiloUiColors.blue(isDark);
+  Color get blackWhite => isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
+  Color get timeCardBg => isDark ? const Color(0xFF0F2236) : const Color(0xFFF8FAFC);
 }
 
 class VigiloTimePickerSheet extends StatefulWidget {
@@ -168,7 +163,7 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                       decoration: BoxDecoration(
                         color: colors.panel2,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: colors.lineSoft),
+                        border: Border.all(color: colors.line),
                       ),
                       child: Column(
                         children: [
@@ -227,7 +222,7 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                             decoration: BoxDecoration(
                               color: colors.timeCardBg,
                               borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: colors.lineSoft),
+                              border: Border.all(color: colors.line),
                             ),
                             child: Center(
                               child: Row(
@@ -362,7 +357,7 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                                 decoration: BoxDecoration(
                                   color: colors.panel2,
                                   borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(color: colors.lineSoft),
+                                  border: Border.all(color: colors.line),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -541,7 +536,7 @@ class _QuickBtn extends StatelessWidget {
         height: 40,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: colors.lineSoft),
+            side: BorderSide(color: colors.line),
             foregroundColor: colors.text,
             backgroundColor: colors.timeCardBg,
             shape: RoundedRectangleBorder(

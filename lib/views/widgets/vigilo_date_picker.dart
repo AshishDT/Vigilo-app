@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/constants.dart';
 import 'animated_scale_on_press.dart';
 
 class _PickerColors {
@@ -7,21 +8,15 @@ class _PickerColors {
 
   bool get isDark => Theme.of(context).brightness == Brightness.dark;
 
-  Color get panel =>
-      isDark ? const Color(0xFF10263D) : const Color(0xFFFFFFFF);
-  Color get panel2 =>
-      isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
-  Color get line => isDark ? const Color(0xFF294867) : const Color(0xFFE2E8F0);
-  Color get lineSoft =>
-      isDark ? const Color(0xFF395B7D) : const Color(0xFFCBD5E1);
-  Color get text => isDark ? const Color(0xFFF3F7FC) : const Color(0xFF0B253A);
-  Color get textSoft =>
-      isDark ? const Color(0xFFB6C7D8) : const Color(0xFF475569);
-  Color get blue => isDark ? const Color(0xFF4B86F8) : const Color(0xFF2563EB);
-  Color get blackWhite =>
-      isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
-  Color get calendarBg =>
-      isDark ? const Color(0xFF0F2236) : const Color(0xFFF8FAFC);
+  Color get panel => VigiloUiColors.panel(isDark);
+  Color get panel2 => isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
+  Color get line => VigiloUiColors.line(isDark);
+  Color get lineSoft => VigiloUiColors.lineSoft(isDark);
+  Color get text => VigiloUiColors.text(isDark);
+  Color get textSoft => VigiloUiColors.textSoft(isDark);
+  Color get blue => VigiloUiColors.blue(isDark);
+  Color get blackWhite => isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
+  Color get calendarBg => isDark ? const Color(0xFF0F2236) : const Color(0xFFF8FAFC);
 }
 
 class VigiloDatePickerSheet extends StatefulWidget {
@@ -311,7 +306,7 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
                       decoration: BoxDecoration(
                         color: colors.panel2,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: colors.lineSoft),
+                        border: Border.all(color: colors.line),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,7 +334,7 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
                             decoration: BoxDecoration(
                               color: colors.calendarBg,
                               borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: colors.lineSoft),
+                              border: Border.all(color: colors.line),
                             ),
                             child: Column(
                               children: [
@@ -451,7 +446,7 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
                                 decoration: BoxDecoration(
                                   color: colors.panel2,
                                   borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(color: colors.lineSoft),
+                                  border: Border.all(color: colors.line),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,7 +742,7 @@ Future<int?> _showYearGridPicker({
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                               side: BorderSide(
-                                color: isSelected ? Colors.transparent : colors.lineSoft,
+                                color: isSelected ? Colors.transparent : colors.line,
                               ),
                             ),
                             padding: EdgeInsets.zero,
@@ -774,7 +769,7 @@ Future<int?> _showYearGridPicker({
                 height: 44,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: colors.lineSoft),
+                    side: BorderSide(color: colors.line),
                     backgroundColor: colors.panel2.withValues(alpha: 0.62),
                     shape: const StadiumBorder(),
                   ),
