@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vigilo/services/license_service.dart';
 import 'package:vigilo/views/license_activation_screen.dart';
@@ -11,6 +12,13 @@ void main() {
     bool resetPrefs = true,
     bool scrollToActivation = true,
   }) async {
+    PackageInfo.setMockInitialValues(
+      appName: 'vigilo',
+      packageName: 'com.example.vigilo',
+      version: '1.0.0',
+      buildNumber: '1',
+      buildSignature: 'buildSignature',
+    );
     if (resetPrefs) {
       SharedPreferences.setMockInitialValues({});
     }
@@ -88,7 +96,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(inputByHint('Enter organisation name'), findsOneWidget);
       expect(
-        inputByHint('Enter organisation code from licence'),
+        inputByHint('Enter organisation code'),
         findsOneWidget,
       );
     },
@@ -243,7 +251,7 @@ void main() {
         'Spring Academy',
       );
       await tester.enterText(
-        inputByHint('Enter organisation code from licence'),
+        inputByHint('Enter organisation code'),
         'sa',
       );
       await tester.pumpAndSettle();
@@ -285,7 +293,7 @@ void main() {
       );
       expect(find.byType(TextField), findsNothing);
       expect(inputByHint('Enter organisation name'), findsNothing);
-      expect(inputByHint('Enter organisation code from licence'), findsNothing);
+      expect(inputByHint('Enter organisation code'), findsNothing);
 
       final snapshot = await LicenseService.getSnapshot();
       expect(snapshot.licenceCode, fullKey);
@@ -311,7 +319,7 @@ void main() {
         'Spring Academy',
       );
       await tester.enterText(
-        inputByHint('Enter organisation code from licence'),
+        inputByHint('Enter organisation code'),
         'sa',
       );
       await tester.pumpAndSettle();
@@ -374,11 +382,11 @@ void main() {
     expect(find.text(coreKey), findsNothing);
     expect(find.byType(TextField), findsNothing);
     expect(inputByHint('Enter organisation name'), findsNothing);
-    expect(inputByHint('Enter organisation code from licence'), findsNothing);
+    expect(inputByHint('Enter organisation code'), findsNothing);
   });
 
   testWidgets(
-    'keeps the activation form hidden when an expired licence is stored',
+    'shows the activation form when an expired licence is stored',
     (tester) async {
       final activationDate = DateTime.now().subtract(
         const Duration(days: LicenseService.pilotTrialDurationDays + 5),
@@ -409,16 +417,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Licence Expired'), findsOneWidget);
-      expect(find.byType(TextField), findsNothing);
-      expect(inputByHint('Enter organisation name'), findsNothing);
-      expect(inputByHint('Enter organisation code from licence'), findsNothing);
+      expect(find.byType(TextField), findsAtLeastNWidgets(1));
+      expect(inputByHint('Enter organisation name'), findsOneWidget);
+      expect(inputByHint('Enter organisation code'), findsOneWidget);
     },
   );
 
   testWidgets('displays Pilot as the stored licence tier in the status card', (
     tester,
   ) async {
-    final activationDate = DateTime(2026, 3, 11, 9, 30);
+    final activationDate = DateTime.now();
     final expiryYear = fixedPilotExpiry(activationDate).year;
     final pilotKey = generatedKey(
       organizationCode: 'SA',

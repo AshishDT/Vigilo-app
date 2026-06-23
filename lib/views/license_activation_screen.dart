@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/license_key_codec.dart';
@@ -42,6 +43,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
   bool _loading = true;
   String? _activationMessage;
   bool _activationError = false;
+  String _appVersion = '1.0.0';
+  String _buildNumber = '1';
 
   @override
   void initState() {
@@ -81,8 +84,17 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
     if (!isExpired) {
       _applySnapshotToForm(snapshot);
     }
+    String version = '1.0.0';
+    String build = '1';
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      version = packageInfo.version;
+      build = packageInfo.buildNumber;
+    } catch (_) {}
     setState(() {
       _snapshot = snapshot;
+      _appVersion = version;
+      _buildNumber = build;
       _loading = false;
     });
   }
@@ -918,7 +930,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                             const SizedBox(height: 6),
                             _InputField(
                               controller: _schoolNumberController,
-                              hintText: 'Enter organisation code from licence',
+                              hintText: 'Enter organisation code',
                               textInputAction: TextInputAction.next,
                               textCapitalization: TextCapitalization.characters,
                               inputFormatters: [
@@ -984,10 +996,10 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                       title: 'Application Information',
                       child: Column(
                         children: [
-                          const _StaticInfoRow('App Version', '1.0.0'),
-                          const _StaticInfoRow('Build', '1'),
+                          _StaticInfoRow('App Version', _appVersion),
+                          _StaticInfoRow('Build', _buildNumber),
                           _StaticInfoRow('Platform', _platformLabel),
-                          const _StaticInfoRow('Mode', 'Offline-first'),
+                          const _StaticInfoRow('Operation Mode', 'Offline-first'),
                         ],
                       ),
                     ),
@@ -998,7 +1010,23 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'All exam session data should remain on the device unless explicitly exported by the user. Core operation should not depend on cloud storage.',
+                            'All exam session data is stored locally on this device.\nData is not transmitted to any external server.',
+                            style: TextStyle(
+                              color: _VigiloPalette.textSoft,
+                              height: 1.6,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _SectionCard(
+                      title: 'Data & Export',
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Exam session data is stored locally on this device.',
                             style: TextStyle(
                               color: _VigiloPalette.textSoft,
                               height: 1.6,
@@ -1007,10 +1035,21 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           SizedBox(height: 12),
                           _StaticInfoRow('Data Storage', 'Local device only'),
                           _StaticInfoRow(
-                            'Cloud Requirement',
-                            'None for core use',
+                            'Export Responsibility',
+                            'User must export required records',
                           ),
-                          _StaticInfoRow('Export Method', 'Generated locally'),
+                          _StaticInfoRow(
+                            'Recommended Action',
+                            'Export logs after each exam session',
+                          ),
+                          _StaticInfoRow(
+                            'Licence Changes',
+                            'Data remains after upgrade, but access may be affected if the licence expires or the app is removed',
+                          ),
+                          _StaticInfoRow(
+                            'Important',
+                            'Export logs required for reporting or compliance before licence expiry or device changes',
+                          ),
                         ],
                       ),
                     ),
@@ -1179,8 +1218,8 @@ class _SectionCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Divider(
-            color: _VigiloPalette.lineSoft.withValues(alpha: 0.65),
-            thickness: 1,
+            color: _VigiloPalette.lineSoft.withValues(alpha: 0.8),
+            thickness: 2.0,
             height: 1,
           ),
           const SizedBox(height: 18),
