@@ -823,23 +823,35 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (_licenseRequired) {
       return Scaffold(
+        extendBodyBehindAppBar: true,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
           title: InkWell(
             borderRadius: BorderRadius.circular(8),
             onTap: _openLicenseActivation,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-              child: Text('Vigilo ERC'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+              child: Text(
+                'Vigilo ERC',
+                style: TextStyle(
+                  color: VigiloUiColors.text(dark),
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.4,
+                ),
+              ),
             ),
           ),
           actions: [
-            const SizedBox(width: 8),
-            IconButton(
-              tooltip: dark ? 'Light theme' : 'Dark theme',
-              icon: Icon(dark ? Icons.wb_sunny : Icons.nights_stay),
-              onPressed: widget.onToggleTheme,
+            _headerIcon(
+              dark,
+              dark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
+              onTap: widget.onToggleTheme,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 20),
           ],
         ),
         body: const LicenseRequiredView(),

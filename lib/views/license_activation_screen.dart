@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../utils/constants.dart';
 
 import '../services/license_key_codec.dart';
 import '../services/license_service.dart';
@@ -16,6 +17,8 @@ class LicenseActivationScreen extends StatefulWidget {
 }
 
 class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
+  _VigiloColors get colors => _VigiloColors(context);
+
   static const String _privacyNoticeText =
       'Vigilo ERC stores exam data locally on the device and does not send it to any external server.\n\n'
       'The organisation remains responsible for the retention, export, archiving, and deletion of records in line with its own policies, JCQ guidance, and applicable data protection requirements.\n\n'
@@ -371,9 +374,9 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: _VigiloPalette.panel,
+                      color: colors.panel,
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: _VigiloPalette.line),
+                      border: Border.all(color: colors.line),
                       boxShadow: const [
                         BoxShadow(
                           color: Colors.black45,
@@ -399,19 +402,19 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                 width: 50,
                                 height: 50,
                                 decoration: BoxDecoration(
-                                  color: _VigiloPalette.signalBlue
+                                  color: colors.signalBlue
                                       .withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: _VigiloPalette.signalBlue
+                                    color: colors.signalBlue
                                         .withValues(alpha: 0.70),
                                     width: .7,
                                   ),
                                 ),
                                 alignment: Alignment.center,
-                                child: const Icon(
+                                child: Icon(
                                   Icons.description_outlined,
-                                  color: _VigiloPalette.signalBlue,
+                                  color: colors.signalBlue,
                                   size: 26,
                                 ),
                               ),
@@ -425,8 +428,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                       child: Text(
                                         title,
                                         maxLines: 1,
-                                        style: const TextStyle(
-                                          color: _VigiloPalette.text,
+                                        style: TextStyle(
+                                          color: colors.text,
                                           fontSize: 22,
                                           fontWeight: FontWeight.w900,
                                         ),
@@ -447,16 +450,16 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                     width: 44,
                                     height: 44,
                                     decoration: BoxDecoration(
-                                      color: _VigiloPalette.panel2,
+                                      color: colors.panel2,
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
-                                        color: _VigiloPalette.lineSoft,
+                                        color: colors.lineSoft,
                                       ),
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.close_rounded,
                                       size: 24,
-                                      color: _VigiloPalette.textSoft,
+                                      color: colors.textSoft,
                                     ),
                                   ),
                                 ),
@@ -475,8 +478,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                 for (var i = 0; i < paragraphs.length; i++) ...[
                                   Text(
                                     paragraphs[i],
-                                    style: const TextStyle(
-                                      color: _VigiloPalette.textSoft,
+                                    style: TextStyle(
+                                      color: colors.textSoft,
                                       fontSize: 15,
                                       height: 1.6,
                                     ),
@@ -499,10 +502,10 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                 height: 44,
                                 child: OutlinedButton(
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(
-                                      color: _VigiloPalette.lineSoft,
+                                    side: BorderSide(
+                                      color: colors.lineSoft,
                                     ),
-                                    backgroundColor: _VigiloPalette.panel2
+                                    backgroundColor: colors.panel2
                                         .withValues(alpha: 0.62),
                                     shape: const StadiumBorder(),
                                     padding: const EdgeInsets.symmetric(
@@ -511,10 +514,10 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                   ),
                                   onPressed: () =>
                                       Navigator.of(dialogContext).pop(),
-                                  child: const Text(
+                                  child: Text(
                                     'Close',
                                     style: TextStyle(
-                                      color: _VigiloPalette.text,
+                                      color: colors.text,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w900,
                                     ),
@@ -616,11 +619,11 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
   Color get _statusColor {
     switch (_displayState) {
       case _LicenceDisplayState.active:
-        return _VigiloPalette.green;
+        return colors.green;
       case _LicenceDisplayState.expired:
-      // return _VigiloPalette.red;
+      // return colors.red;
       case _LicenceDisplayState.required:
-        return _VigiloPalette.amber;
+        return colors.amber;
     }
   }
 
@@ -691,14 +694,14 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _VigiloPalette.panel2,
+        color: colors.panel2,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _VigiloPalette.line),
+        border: Border.all(color: colors.line),
       ),
       child: Text(
         _activationMessage!,
         style: TextStyle(
-          color: _activationError ? _VigiloPalette.red : _VigiloPalette.green,
+          color: _activationError ? colors.red : colors.green,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -748,8 +751,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                   inputFormatters: [
                     LengthLimitingTextInputFormatter(index == 0 ? 32 : 1),
                   ],
-                  style: const TextStyle(
-                    color: _VigiloPalette.text,
+                  style: TextStyle(
+                    color: colors.text,
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
@@ -757,21 +760,21 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                   decoration: InputDecoration(
                     counterText: '',
                     filled: true,
-                    fillColor: _VigiloPalette.panel2,
+                    fillColor: colors.panel2,
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(vertical: 18),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: _VigiloPalette.line),
+                      borderSide: BorderSide(color: colors.line),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: _VigiloPalette.line),
+                      borderSide: BorderSide(color: colors.line),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: _VigiloPalette.signalBlue,
+                      borderSide: BorderSide(
+                        color: colors.signalBlue,
                         width: 1.4,
                       ),
                     ),
@@ -793,11 +796,11 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
             children.add(
               SizedBox(
                 width: dashWidth,
-                child: const Text(
+                child: Text(
                   '-',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: _VigiloPalette.signalBlueSoft,
+                    color: colors.signalBlueSoft,
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
                   ),
@@ -817,16 +820,15 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       },
     );
   }
-
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
+      return Scaffold(
         body: _GradientScaffold(
           child: SafeArea(
             child: Center(
               child: CircularProgressIndicator(
-                color: _VigiloPalette.signalBlue,
+                color: colors.signalBlue,
               ),
             ),
           ),
@@ -846,26 +848,26 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                     IconButton(
                       onPressed: () => Navigator.of(context).maybePop(),
                       icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      color: _VigiloPalette.text,
+                      color: colors.text,
                     ),
                     const SizedBox(width: 14),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Vigilo ERC',
                             style: TextStyle(
-                              color: _VigiloPalette.text,
+                              color: colors.text,
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
                             'Licence & Information',
                             style: TextStyle(
-                              color: _VigiloPalette.textSoft,
+                              color: colors.textSoft,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.4,
@@ -888,10 +890,10 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                         children: [
                           _LicenceTypePanel(
                             title: LicenseService.pilotLicenceType,
-                            subtitle: const Text(
+                            subtitle: Text(
                               '30-day evaluation licence for schools testing Vigilo ERC.',
                               style: TextStyle(
-                                color: _VigiloPalette.textSoft,
+                                color: colors.textSoft,
                                 fontSize: 15,
                                 height: 1.5,
                               ),
@@ -901,10 +903,10 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           const SizedBox(height: 16),
                           _LicenceTypePanel(
                             title: LicenseService.coreLicenceType,
-                            subtitle: const Text(
+                            subtitle: Text(
                               'Full operational licence for schools running examinations.',
                               style: TextStyle(
-                                color: _VigiloPalette.textSoft,
+                                color: colors.textSoft,
                                 fontSize: 15,
                                 height: 1.5,
                               ),
@@ -914,22 +916,22 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           const SizedBox(height: 16),
                           _LicenceTypePanel(
                             title: LicenseService.proLicenceType,
-                            subtitle: const Text.rich(
+                            subtitle: Text.rich(
                               TextSpan(
                                 text:
                                     'Includes everything in Core plus additional coordination features ',
                                 children: [
-                                  TextSpan(
+                                  const TextSpan(
                                     text: '(coming soon)',
                                     style: TextStyle(
                                       fontStyle: FontStyle.italic,
                                     ),
                                   ),
-                                  TextSpan(text: '.'),
+                                  const TextSpan(text: '.'),
                                 ],
                               ),
                               style: TextStyle(
-                                color: _VigiloPalette.textSoft,
+                                color: colors.textSoft,
                                 fontSize: 15,
                                 height: 1.5,
                               ),
@@ -984,8 +986,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                         const SizedBox(height: 8),
                                         Text(
                                           _statusLabelText!,
-                                          style: const TextStyle(
-                                            color: _VigiloPalette.text,
+                                          style: TextStyle(
+                                            color: colors.text,
                                             fontSize: 13,
                                             fontWeight: FontWeight.w800,
                                             letterSpacing: 0.3,
@@ -995,8 +997,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                       const SizedBox(height: 10),
                                       Text(
                                         _statusSupportText,
-                                        style: const TextStyle(
-                                          color: _VigiloPalette.textSoft,
+                                        style: TextStyle(
+                                          color: colors.textSoft,
                                           height: 1.5,
                                         ),
                                       ),
@@ -1014,9 +1016,9 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                               vertical: 15,
                             ),
                             decoration: BoxDecoration(
-                              color: _VigiloPalette.panel2,
+                              color: colors.panel2,
                               borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: _VigiloPalette.line),
+                              border: Border.all(color: colors.line),
                             ),
                             child: Text(
                               _hasStoredLicence && _activationMessage != null
@@ -1065,16 +1067,16 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                   ? 'Your previous licence has expired. Enter your organisation details and a new activation code below.'
                                   : 'Enter your organisation details and the 6-character activation code issued by Vigilo.',
                               style: TextStyle(
-                                color: _VigiloPalette.textSoft,
+                                color: colors.textSoft,
                                 fontSize: 15,
                                 height: 1.5,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
+                            Text(
                               'Codes are displayed as XXX-XXX for readability.',
                               style: TextStyle(
-                                color: _VigiloPalette.textFaint,
+                                color: colors.textFaint,
                                 fontSize: 14,
                                 height: 1.45,
                               ),
@@ -1125,7 +1127,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                               width: double.infinity,
                               child: FilledButton(
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: _VigiloPalette.signalBlue,
+                                  backgroundColor: colors.signalBlue,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 15,
@@ -1169,13 +1171,13 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                     const SizedBox(height: 16),
                     _SectionCard(
                       title: 'Data & Privacy',
-                      child: const Column(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'All exam session data is stored locally on this device.\nData is not transmitted to any external server.',
                             style: TextStyle(
-                              color: _VigiloPalette.textSoft,
+                              color: colors.textSoft,
                               height: 1.6,
                             ),
                           ),
@@ -1185,31 +1187,31 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                     const SizedBox(height: 16),
                     _SectionCard(
                       title: 'Data & Export',
-                      child: const Column(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Exam session data is stored locally on this device.',
                             style: TextStyle(
-                              color: _VigiloPalette.textSoft,
+                              color: colors.textSoft,
                               height: 1.6,
                             ),
                           ),
-                          SizedBox(height: 12),
-                          _StaticInfoRow('Data Storage', 'Local device only'),
-                          _StaticInfoRow(
+                          const SizedBox(height: 12),
+                          const _StaticInfoRow('Data Storage', 'Local device only'),
+                          const _StaticInfoRow(
                             'Export Responsibility',
                             'User must export required records',
                           ),
-                          _StaticInfoRow(
+                          const _StaticInfoRow(
                             'Recommended Action',
                             'Export logs after each exam session',
                           ),
-                          _StaticInfoRow(
+                          const _StaticInfoRow(
                             'Licence Changes',
                             'Data remains after upgrade, but access may be affected if the licence expires or the app is removed',
                           ),
-                          _StaticInfoRow(
+                          const _StaticInfoRow(
                             'Important',
                             'Export logs required for reporting or compliance before licence expiry or device changes',
                           ),
@@ -1258,7 +1260,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const _SectionCard(
+                    _SectionCard(
                       title: 'About Vigilo ERC',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1266,17 +1268,17 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           Text(
                             _aboutText,
                             style: TextStyle(
-                              color: _VigiloPalette.textSoft,
+                              color: colors.textSoft,
                               height: 1.6,
                             ),
                           ),
-                          SizedBox(height: 18),
+                          const SizedBox(height: 18),
                           Center(
                             child: Text(
                               _aboutLegalText,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: _VigiloPalette.textFaint,
+                                color: colors.textFaint,
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
                                 height: 1.55,
@@ -1318,24 +1320,29 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
 
 enum _LicenceDisplayState { required, active, expired }
 
-class _VigiloPalette {
-  static const Color bg = Color(0xFF081A2B);
-  static const Color bg2 = Color(0xFF0B2135);
-  static const Color panel = Color(0xFF10263D);
-  static const Color panel2 = Color(0xFF16314D);
-  static const Color line = Color(0xFF284867);
-  static const Color lineSoft = Color(0xFF1B3853);
+class _VigiloColors {
+  final BuildContext context;
+  _VigiloColors(this.context);
 
-  static const Color signalBlue = Color(0xFF2EA7FF);
-  static const Color signalBlueSoft = Color(0xFF8FD4FF);
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
 
-  static const Color green = Color(0xFF2EAD66);
-  static const Color amber = Color(0xFFFFC857);
-  static const Color red = Color(0xFFE85D75);
+  Color get bg => VigiloUiColors.bg(isDark);
+  Color get bg2 => VigiloUiColors.bg2(isDark);
+  Color get panel => VigiloUiColors.panel(isDark);
+  Color get panel2 => isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
+  Color get line => VigiloUiColors.line(isDark);
+  Color get lineSoft => VigiloUiColors.lineSoft(isDark);
 
-  static const Color text = Color(0xFFF3F7FC);
-  static const Color textSoft = Color(0xFFB6C7D8);
-  static const Color textFaint = Color(0xFF7F9AB5);
+  Color get signalBlue => isDark ? const Color(0xFF2EA7FF) : const Color(0xFF256BDB);
+  Color get signalBlueSoft => VigiloUiColors.blueSoft(isDark);
+
+  Color get green => VigiloUiColors.green(isDark);
+  Color get amber => VigiloUiColors.amber(isDark);
+  Color get red => isDark ? const Color(0xFFE85D75) : const Color(0xFFDC2626);
+
+  Color get text => VigiloUiColors.text(isDark);
+  Color get textSoft => VigiloUiColors.textSoft(isDark);
+  Color get textFaint => VigiloUiColors.textFaint(isDark);
 }
 
 class _GradientScaffold extends StatelessWidget {
@@ -1345,10 +1352,11 @@ class _GradientScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _VigiloColors(context);
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_VigiloPalette.bg, _VigiloPalette.bg2],
+          colors: [colors.bg, colors.bg2],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -1366,14 +1374,15 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _VigiloColors(context);
     return _BlueprintPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title.toUpperCase(),
-            style: const TextStyle(
-              color: _VigiloPalette.signalBlueSoft,
+            style: TextStyle(
+              color: colors.signalBlueSoft,
               fontSize: 13,
               fontWeight: FontWeight.w900,
               letterSpacing: 1.1,
@@ -1381,7 +1390,7 @@ class _SectionCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Divider(
-            color: _VigiloPalette.lineSoft.withValues(alpha: 0.8),
+            color: colors.lineSoft.withValues(alpha: 0.8),
             thickness: 2.0,
             height: 1,
           ),
@@ -1400,12 +1409,13 @@ class _BlueprintPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _VigiloColors(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(
-        color: _VigiloPalette.panel.withValues(alpha: 0.96),
+        color: colors.panel.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: _VigiloPalette.line),
+        border: Border.all(color: colors.line),
         boxShadow: const [
           BoxShadow(
             color: Colors.black26,
@@ -1434,6 +1444,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _VigiloColors(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
@@ -1443,8 +1454,8 @@ class _InfoRow extends StatelessWidget {
             width: 135,
             child: Text(
               label,
-              style: const TextStyle(
-                color: _VigiloPalette.textSoft,
+              style: TextStyle(
+                color: colors.textSoft,
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
               ),
@@ -1459,8 +1470,8 @@ class _InfoRow extends StatelessWidget {
                     child: Text(
                       value,
                       softWrap: false,
-                      style: const TextStyle(
-                        color: _VigiloPalette.text,
+                      style: TextStyle(
+                        color: colors.text,
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
                         height: 1.45,
@@ -1471,8 +1482,8 @@ class _InfoRow extends StatelessWidget {
                     value,
                     softWrap: !singleLine,
                     overflow: singleLine ? TextOverflow.fade : null,
-                    style: const TextStyle(
-                      color: _VigiloPalette.text,
+                    style: TextStyle(
+                      color: colors.text,
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
                       height: 1.45,
@@ -1498,21 +1509,22 @@ class _LicenceTypePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _VigiloColors(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(
-        color: _VigiloPalette.panel2,
+        color: colors.panel2,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _VigiloPalette.line),
+        border: Border.all(color: colors.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: _VigiloPalette.text,
+            style: TextStyle(
+              color: colors.text,
               fontSize: 20,
               fontWeight: FontWeight.w900,
             ),
@@ -1533,25 +1545,26 @@ class _FeatureBullet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _VigiloColors(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 7),
+          Padding(
+            padding: const EdgeInsets.only(top: 7),
             child: Icon(
               Icons.circle,
               size: 8,
-              color: _VigiloPalette.signalBlueSoft,
+              color: colors.signalBlueSoft,
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                color: _VigiloPalette.text,
+              style: TextStyle(
+                color: colors.text,
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 height: 1.45,
@@ -1595,10 +1608,11 @@ class _FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _VigiloColors(context);
     return Text(
       label,
-      style: const TextStyle(
-        color: _VigiloPalette.textSoft,
+      style: TextStyle(
+        color: colors.textSoft,
         fontSize: 15,
         fontWeight: FontWeight.w800,
       ),
@@ -1614,21 +1628,22 @@ class _ReadOnlyField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _VigiloColors(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       decoration: BoxDecoration(
-        color: _VigiloPalette.panel2,
+        color: colors.panel2,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _VigiloPalette.line),
+        border: Border.all(color: colors.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: _VigiloPalette.textSoft,
+            style: TextStyle(
+              color: colors.textSoft,
               fontSize: 14,
               fontWeight: FontWeight.w800,
             ),
@@ -1636,8 +1651,8 @@ class _ReadOnlyField extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             value,
-            style: const TextStyle(
-              color: _VigiloPalette.text,
+            style: TextStyle(
+              color: colors.text,
               fontSize: 16,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.4,
@@ -1657,12 +1672,13 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _VigiloColors(context);
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
         style: OutlinedButton.styleFrom(
-          foregroundColor: _VigiloPalette.text,
-          side: const BorderSide(color: _VigiloPalette.line),
+          foregroundColor: colors.text,
+          side: BorderSide(color: colors.line),
           padding: const EdgeInsets.symmetric(vertical: 20),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -1697,41 +1713,42 @@ class _InputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _VigiloColors(context);
     return TextField(
       controller: controller,
       textInputAction: textInputAction,
       textCapitalization: textCapitalization,
       inputFormatters: inputFormatters,
       onChanged: onChanged,
-      style: const TextStyle(
-        color: _VigiloPalette.text,
+      style: TextStyle(
+        color: colors.text,
         fontWeight: FontWeight.w800,
       ),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(
-          color: _VigiloPalette.textFaint,
+        hintStyle: TextStyle(
+          color: colors.textFaint,
           fontSize: 15,
           fontWeight: FontWeight.w700,
         ),
         filled: true,
-        fillColor: _VigiloPalette.panel2,
+        fillColor: colors.panel2,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 18,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: _VigiloPalette.line),
+          borderSide: BorderSide(color: colors.line),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: _VigiloPalette.line),
+          borderSide: BorderSide(color: colors.line),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(
-            color: _VigiloPalette.signalBlue,
+          borderSide: BorderSide(
+            color: colors.signalBlue,
             width: 1.4,
           ),
         ),
