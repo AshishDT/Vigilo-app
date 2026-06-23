@@ -4,6 +4,7 @@ import 'vigilo_date_picker.dart';
 import 'vigilo_time_picker.dart';
 import 'vigilo_duration_picker.dart';
 import 'animated_scale_on_press.dart';
+import '../../utils/screen_util.dart';
 
 class _SheetColors {
   final BuildContext context;
@@ -765,29 +766,4 @@ class _AddExamSheetState extends State<AddExamSheet> {
   }
 }
 
-class ScreenUtil {
-  static late ScreenUtil _instance;
-  static bool _initialized = false;
 
-  final double width;
-  final double height;
-
-  ScreenUtil._({required this.width, required this.height});
-
-  static void init(BuildContext context, {double designWidth = 390, double designHeight = 844}) {
-    final size = MediaQuery.of(context).size;
-    _instance = ScreenUtil._(width: size.width, height: size.height);
-    _initialized = true;
-  }
-
-  static double get scaleWidth => _initialized ? _instance.width / 390.0 : 1.0;
-  static double get scaleHeight => _initialized ? _instance.height / 844.0 : 1.0;
-  static double get scaleText => scaleWidth;
-}
-
-extension ScreenUtilExtension on num {
-  double get w => this * ScreenUtil.scaleWidth;
-  double get h => this * ScreenUtil.scaleHeight;
-  double get sp => this * ScreenUtil.scaleText;
-  double get r => this * ScreenUtil.scaleWidth;
-}

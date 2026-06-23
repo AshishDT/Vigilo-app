@@ -22,8 +22,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
 
   static const String _termsOfUseText =
       'Vigilo ERC is intended for use by authorised examination staff within an organisation or examination centre.\n\n'
-      'Use of the application is subject to the Vigilo licence agreement and the organisation\'s own examination, data protection, and device management policies.\n\n'
-      'The organisation is responsible for keeping local devices and any exported records secure.';
+      'Use of the application is subject to the Vigilo licence agreement and the organisation’s own examination, data protection, and device management policies.\n\n'
+      'The organisation is responsible for ensuring that local devices and any exported records are kept secure.';
 
   static const String _aboutText =
       'Vigilo ERC is a digital exam room control system for exam officers and invigilators. '

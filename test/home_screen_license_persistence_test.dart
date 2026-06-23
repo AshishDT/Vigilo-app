@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -43,6 +44,13 @@ void main() {
     });
 
     setUp(() async {
+      PackageInfo.setMockInitialValues(
+        appName: 'vigilo',
+        packageName: 'com.example.vigilo',
+        version: '1.0.0',
+        buildNumber: '1',
+        buildSignature: 'buildSignature',
+      );
       SharedPreferences.setMockInitialValues({});
       await SharedPreferences.getInstance();
       sessionService = SessionService();
