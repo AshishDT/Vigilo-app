@@ -8,12 +8,14 @@ class RingPainter extends CustomPainter {
     required this.progressColor,
     required this.strokeWidth,
     this.isRunning = false,
+    this.isDark = false,
   });
 
   final double progress;
   final Color trackColor, progressColor;
   final double strokeWidth;
   final bool isRunning;
+  final bool isDark;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -25,17 +27,23 @@ class RingPainter extends CustomPainter {
       ..color = trackColor
       ..strokeCap = StrokeCap.round;
 
+    final glowOpacity = isDark ? 0.10 : (isRunning ? 0.07 : 0.09);
+    final glowWidth = isDark ? (strokeWidth + 3) : (strokeWidth + 2);
+    final glowBlur = isDark ? 4.0 : 3.0;
+
     final glow = Paint()
-      ..color = progressColor.withValues(alpha:isRunning ? 0.07 : 0.09)
+      ..color = progressColor.withValues(alpha: glowOpacity)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth + 2
+      ..strokeWidth = glowWidth
       ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowBlur);
+
+    final progOpacity = isDark ? 1.0 : (isRunning ? 0.90 : 1.0);
 
     final prog = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..color = progressColor.withValues(alpha:isRunning ? 0.90 : 1.0)
+      ..color = progressColor.withValues(alpha: progOpacity)
       ..strokeCap = StrokeCap.round;
 
     canvas.drawCircle(center, r, track);
@@ -54,5 +62,6 @@ class RingPainter extends CustomPainter {
       old.progressColor != progressColor ||
       old.trackColor != trackColor ||
       old.strokeWidth != strokeWidth ||
-      old.isRunning != isRunning;
+      old.isRunning != isRunning ||
+      old.isDark != isDark;
 }

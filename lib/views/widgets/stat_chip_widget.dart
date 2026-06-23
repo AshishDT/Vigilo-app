@@ -16,82 +16,100 @@ class StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? kDarkCard
-            : kLightBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kBlue.withValues(alpha: 0.9), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: kBlue.withValues(alpha: 0.25),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        color: VigiloUiColors.panel(dark).withOpacity(dark ? 0.80 : 0.94),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: dark
+              ? VigiloUiColors.line(dark).withOpacity(0.78)
+              : VigiloUiColors.line(dark),
+        ),
+        boxShadow: dark
+            ? [
+                BoxShadow(
+                  color: VigiloUiColors.blue(dark).withOpacity(0.045),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: VigiloUiColors.blue(dark).withOpacity(0.08),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.07),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Active Exams
-          Row(
-            children: [
-              Container(
-                width: 18,
-                height: 18,
-                decoration: const BoxDecoration(
-                  color: kBlue,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.play_arrow,
-                  color: Colors.white,
-                  size: 12,
-                ),
-              ),
-              const SizedBox(width: 6),
-              _infoText(
-                isArchiveView ? 'Archived Exams' : 'Active Exams',
-                '$activeExams',
-                color: kBlue,
-              ),
-            ],
+          Expanded(
+            child: _topStat(
+              dark,
+              Icons.play_circle_fill_rounded,
+              isArchiveView ? 'Archived Exams' : 'Active Exams',
+              '$activeExams',
+            ),
           ),
-
-          // Invigilators
-          Row(
-            children: [
-              const Icon(Icons.people_alt, color: kBlue, size: 22),
-              const SizedBox(width: 6),
-              _infoText('Invigilators', '$invigilatorsOnDuty', color: kBlue),
-            ],
+          Container(
+            width: 1,
+            height: 30,
+            color: dark
+                ? VigiloUiColors.line(dark).withOpacity(0.52)
+                : VigiloUiColors.line(dark).withOpacity(0.75),
+          ),
+          Expanded(
+            child: _topStat(
+              dark,
+              Icons.groups_2_rounded,
+              'Invigilators',
+              '$invigilatorsOnDuty',
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _infoText(String label, String value, {required Color color}) {
+  Widget _topStat(bool dark, IconData icon, String label, String value) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-        ),
-        const SizedBox(width: 4),
+        Icon(icon, color: VigiloUiColors.blue(dark), size: 26),
+        const SizedBox(width: 10),
         Text(
           value,
           style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
+            color: VigiloUiColors.text(dark),
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.2,
+          ),
+        ),
+        const SizedBox(width: 7),
+        Flexible(
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: VigiloUiColors.textSoft(dark),
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              height: 1.1,
+            ),
           ),
         ),
       ],
     );
   }
 }
+

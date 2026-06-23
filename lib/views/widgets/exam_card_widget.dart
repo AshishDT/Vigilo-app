@@ -240,6 +240,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             ],
           ),
           child: Card(
+            color: isDark ? vColors.panel.withOpacity(0.96) : vColors.panel,
             margin: EdgeInsets.zero,
             clipBehavior: Clip.antiAlias,
             shape: RoundedRectangleBorder(
@@ -451,10 +452,11 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                   size: const Size.square(220),
                   painter: RingPainter(
                     progress: v,
-                    trackColor: isDark ? const Color(0xFF27313B) : vColors.line.withOpacity(0.62),
+                    trackColor: isDark ? vColors.line.withOpacity(0.42) : vColors.line.withOpacity(0.62),
                     progressColor: phaseColor,
                     strokeWidth: 11,
                     isRunning: data.running,
+                    isDark: isDark,
                   ),
                 ),
                 Column(
@@ -545,14 +547,14 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                       activeTrackColor: phaseColor.withOpacity(locked ? (isDark ? 1.0 : 0.52) : (isDark ? 1.0 : 0.95)),
                       inactiveTrackColor: phaseColor.withOpacity(locked ? (isDark ? 0.16 : 0.10) : 0.16),
                       thumbColor: phaseColor.withOpacity(locked ? (isDark ? 1.0 : 0.46) : (isDark ? 1.0 : 0.95)),
-                      overlayColor: phaseColor.withOpacity(0.08),
+                      overlayColor: phaseColor.withOpacity(isDark ? 0.10 : 0.08),
                       trackHeight: locked ? 4.0 : 4.5,
                       thumbShape: RoundSliderThumbShape(
                         enabledThumbRadius: locked ? 7.2 : 8.5,
                         disabledThumbRadius: 7.2,
                       ),
-                      overlayShape: const RoundSliderOverlayShape(
-                        overlayRadius: 15,
+                      overlayShape: RoundSliderOverlayShape(
+                        overlayRadius: isDark ? 17.0 : 15.0,
                       ),
                     ),
                     child: IgnorePointer(
@@ -773,7 +775,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: vColors.panel3,
+        color: isDark ? vColors.panel3.withOpacity(0.58) : vColors.panel3,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: finished
