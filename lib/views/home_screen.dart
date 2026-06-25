@@ -764,6 +764,9 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
       builder: (_) => VigiloDurationPickerSheet(
         initialDuration: time,
         title: title,
@@ -858,20 +861,261 @@ class _HomeScreenState extends State<HomeScreen>
       );
     }
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              VigiloUiColors.bg(dark),
-              VigiloUiColors.bg2(dark),
-              VigiloUiColors.bg(dark),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            VigiloUiColors.bg(dark),
+            VigiloUiColors.bg2(dark),
+            VigiloUiColors.bg(dark),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        floatingActionButton: AnimatedSlide(
+          offset: anyOpen ? const Offset(0, 2) : Offset.zero,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+          child: AnimatedOpacity(
+            opacity: anyOpen ? 0 : 1,
+            duration: const Duration(milliseconds: 250),
+            child: FloatingActionButton.extended(
+              tooltip: 'Quick Add',
+              elevation: 4,
+              backgroundColor: VigiloUiColors.blue(dark),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              onPressed: _openQuickAddWizard,
+              label: const Text(
+                "+ Exam",
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.05,
+                ),
+              ),
+            ),
           ),
         ),
-        child: SafeArea(
+        bottomNavigationBar: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+            child: FooterWidget(
+              onVibrate: () async {
+                if (!isArchiveView) {
+                  int i = getExpandedCardIndex();
+                  if (i != -1) {
+                    final c = _cards[i];
+                    final nowOn = !c.vibrateOn;
+                    setState(() => _cards[i] = c.copyWith(vibrateOn: nowOn));
+                    _saveState();
+                    if (nowOn) {
+                      try {
+                        _toast("Vibration on for this exam");
+                        await HapticFeedback.vibrate();
+                      } catch (_) {}
+                    } else {
+                      _toast("Vibration off for this exam");
+                    }
+                  } else {
+                    _toast("Open an exam to use Vibrate");
+                  }
+                }
+              },
+              onArchive: () {
+                if (!isArchiveView) {
+                  if (isArchiveMode) {
+                    int archivedCount = 0;
+                    final remaining = <ExamCardData>[];
+                    for (final item in _cards) {
+                      if (item.isSelected && _isArchivableExam(item)) {
+                        _archiveCards.add(
+                          item.copyWith(isSelected: false, expanded: false),
+                        );
+                        archivedCount++;
+                      } else {
+                        remaining.add(item.copyWith(isSelected: false));
+                      }
+                    }
+                    _cards
+                      ..clear()
+                      ..addAll(remaining);
+                    _saveState();
+                    if (archivedCount > 0) {
+                      _toast(
+                        archivedCount == 1
+                            ? "Exam archived"
+                            : "$archivedCount exams archived",
+                      );
+                    } else {
+                      _toast("No finished selected exams to archive");
+                    }
+                    _toast("Archive mode off");
+                    isArchiveMode = false;
+                    setState(() {});
+                    return;
+                  }
+
+                  if (_cards.isEmpty) {
+                    _toast("No exams available to archive");
+                    return;
+                  }
+                  if (_archivableExamCount == 0) {
+                    _toast("Only finished exams can be archived");
+                    return;
+                  }
+                  _toast("Archive mode is on - tap finished exams to archive");
+                  isArchiveMode = true;
+                  setState(() {});
+                }
+              },
+              onBriefings: () async {
+                await showBriefingsLibrarySheet(context);
+              },
+              onOfficerTools: () {
+                if (!isArchiveView) {
+                  int i = getExpandedCardIndex();
+                  if (i != -1) {
+                    final c = _cards[i];
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(30),
+                        ),
+                      ),
+                      builder: (_) => OfficerToolsSheet(
+                        data: _cards[i],
+                        isExamCompleted: _cards[i].phase == ExamPhase.finished,
+                        onLog: (inc) {
+                          _log(_cards[i], inc);
+                        },
+                        onSaveData: _saveState,
+                        onReStart: () async {
+                          final ok = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => confirmationDialog(
+                              context: ctx,
+                              title: "Restart Exam?",
+                              message: _cards[i].progress == 0.0
+                                  ? 'The exam has not started yet. You cannot restart it'
+                                  : _cards[i].phase == ExamPhase.finished
+                                  ? 'This exam has already been completed. Restarting or modifying it is not allowed'
+                                  : "This will restart the exam from the beginning",
+                              okTitle: "Restart",
+                              onCancel: () => Navigator.pop(ctx, false),
+                              onConfirm: () => Navigator.pop(ctx, true),
+                              shouldNotRestart:
+                                  _cards[i].progress == 0.0 ||
+                                  _cards[i].phase == ExamPhase.finished,
+                            ),
+                          );
+                          if (ok == true) {
+                            _onReStart(i);
+                          }
+                        },
+                        onPause: () {
+                          _onPause(i);
+                        },
+                        onEnd: () async {
+                          final ok = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => confirmationDialog(
+                              context: ctx,
+                              title: "End Exam ?",
+                              message:
+                                  "This action will end the exam session and record the final finish time",
+                              okTitle: "End Exam",
+                              onCancel: () => Navigator.pop(ctx, false),
+                              onConfirm: () => Navigator.pop(ctx, true),
+                            ),
+                          );
+                          if (ok == true) {
+                            _onEnd(i);
+                          }
+                        },
+                        onExportCopy: () => exportCopy(_cards[i], context),
+                        onExportCsvDownload: () =>
+                            exportCsvDownload(_cards[i], context),
+                        onExportCsvShare: () =>
+                            exportCsvShare(_cards[i], context),
+                        onToggleAutoStart: (v) {
+                          setState(
+                            () => _cards[i] = _cards[i].copyWith(
+                              autoStart: v,
+                              autoStartUserModified: true,
+                            ),
+                          );
+                          if (v) {
+                            _toast("Auto-start at the scheduled time");
+                          } else {
+                            _toast("Auto start is off");
+                          }
+                          _saveState();
+                        },
+                        onUpdateData: (updated) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (!mounted || i < 0 || i >= _cards.length) return;
+                            final current = _cards[i];
+                            setState(() {
+                              _cards[i] = _mergeOfficerToolsUpdate(
+                                current: current,
+                                updated: updated,
+                              );
+                            });
+                            _saveState();
+                          });
+                        },
+                        onDeleteData: () async {
+                          final ok = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => confirmationDialog(
+                              context: ctx,
+                              title: "Delete Exam Data",
+                              message:
+                                  "This action will permanently remove data for this exam only",
+                              okTitle: "Delete",
+                              onCancel: () => Navigator.pop(ctx, false),
+                              onConfirm: () => Navigator.pop(ctx, true),
+                            ),
+                          );
+                          if (!context.mounted) return;
+                          if (ok == true) {
+                            final deleteRecordId = c.recordId;
+                            if (deleteRecordId != null) {
+                              _cards.removeWhere(
+                                (card) => card.recordId == deleteRecordId,
+                              );
+                            } else if (i >= 0 && i < _cards.length) {
+                              _cards.removeAt(i);
+                            }
+                            Navigator.of(context).pop();
+                            _saveState();
+                            setState(() {});
+                          }
+                        },
+                      ),
+                    );
+                  } else {
+                    _toast("Open an exam to use Officer Tools");
+                  }
+                }
+              },
+              isVibrateOn: checkVibrateOn(),
+              isArchiveMode: isArchiveMode,
+            ),
+          ),
+        ),
+        body: SafeArea(
           child: Stack(
             children: [
               Column(
@@ -901,7 +1145,7 @@ class _HomeScreenState extends State<HomeScreen>
                             ],
                           )
                         : ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
+                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
                             itemCount: isArchiveView
                                 ? _archiveCards.length
                                 : _cards.length,
@@ -976,6 +1220,9 @@ class _HomeScreenState extends State<HomeScreen>
                                     context: context,
                                     backgroundColor: Colors.transparent,
                                     isScrollControlled: true,
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                                    ),
                                     builder: (_) => VigiloDatePickerSheet(initialDate: initial),
                                   );
                                   if (picked != null) {
@@ -995,6 +1242,9 @@ class _HomeScreenState extends State<HomeScreen>
                                     context: context,
                                     backgroundColor: Colors.transparent,
                                     isScrollControlled: true,
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                                    ),
                                     builder: (_) => VigiloTimePickerSheet(
                                       initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
                                     ),
@@ -1160,249 +1410,6 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ],
               ),
-              Positioned(
-                bottom: 92,
-                right: 18,
-                child: AnimatedSlide(
-                  offset: anyOpen ? const Offset(0, 2) : Offset.zero,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOut,
-                  child: AnimatedOpacity(
-                    opacity: anyOpen ? 0 : 1,
-                    duration: const Duration(milliseconds: 250),
-                    child: FloatingActionButton.extended(
-                      tooltip: 'Quick Add',
-                      elevation: 4,
-                      backgroundColor: VigiloUiColors.blue(dark),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      onPressed: _openQuickAddWizard,
-                      label: const Text(
-                        "+ Exam",
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.05,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 14,
-                child: FooterWidget(
-                  onVibrate: () async {
-                    if (!isArchiveView) {
-                      int i = getExpandedCardIndex();
-                      if (i != -1) {
-                        final c = _cards[i];
-                        final nowOn = !c.vibrateOn;
-                        setState(() => _cards[i] = c.copyWith(vibrateOn: nowOn));
-                        _saveState();
-                        if (nowOn) {
-                          try {
-                            _toast("Vibration on for this exam");
-                            await HapticFeedback.vibrate();
-                          } catch (_) {}
-                        } else {
-                          _toast("Vibration off for this exam");
-                        }
-                      } else {
-                        _toast("Open an exam to use Vibrate");
-                      }
-                    }
-                  },
-                  onArchive: () {
-                    if (!isArchiveView) {
-                      if (isArchiveMode) {
-                        int archivedCount = 0;
-                        final remaining = <ExamCardData>[];
-                        for (final item in _cards) {
-                          if (item.isSelected && _isArchivableExam(item)) {
-                            _archiveCards.add(
-                              item.copyWith(isSelected: false, expanded: false),
-                            );
-                            archivedCount++;
-                          } else {
-                            remaining.add(item.copyWith(isSelected: false));
-                          }
-                        }
-                        _cards
-                          ..clear()
-                          ..addAll(remaining);
-                        _saveState();
-                        if (archivedCount > 0) {
-                          _toast(
-                            archivedCount == 1
-                                ? "Exam archived"
-                                : "$archivedCount exams archived",
-                          );
-                        } else {
-                          _toast("No finished selected exams to archive");
-                        }
-                        _toast("Archive mode off");
-                        isArchiveMode = false;
-                        setState(() {});
-                        return;
-                      }
-
-                      if (_cards.isEmpty) {
-                        _toast("No exams available to archive");
-                        return;
-                      }
-                      if (_archivableExamCount == 0) {
-                        _toast("Only finished exams can be archived");
-                        return;
-                      }
-                      _toast("Archive mode is on - tap finished exams to archive");
-                      isArchiveMode = true;
-                      setState(() {});
-                    }
-                  },
-                  onBriefings: () async {
-                    await showBriefingsLibrarySheet(context);
-                  },
-                  onOfficerTools: () {
-                    if (!isArchiveView) {
-                      int i = getExpandedCardIndex();
-                      if (i != -1) {
-                        final c = _cards[i];
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Theme.of(context).colorScheme.surface,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(30),
-                            ),
-                          ),
-                          builder: (_) => OfficerToolsSheet(
-                            data: _cards[i],
-                            isExamCompleted: _cards[i].phase == ExamPhase.finished,
-                            onLog: (inc) {
-                              _log(_cards[i], inc);
-                            },
-                            onSaveData: _saveState,
-                            onReStart: () async {
-                              final ok = await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => confirmationDialog(
-                                  context: ctx,
-                                  title: "Restart Exam?",
-                                  message: _cards[i].progress == 0.0
-                                      ? 'The exam has not started yet. You cannot restart it'
-                                      : _cards[i].phase == ExamPhase.finished
-                                      ? 'This exam has already been completed. Restarting or modifying it is not allowed'
-                                      : "This will restart the exam from the beginning",
-                                  okTitle: "Restart",
-                                  onCancel: () => Navigator.pop(ctx, false),
-                                  onConfirm: () => Navigator.pop(ctx, true),
-                                  shouldNotRestart:
-                                      _cards[i].progress == 0.0 ||
-                                      _cards[i].phase == ExamPhase.finished,
-                                ),
-                              );
-                              if (ok == true) {
-                                _onReStart(i);
-                              }
-                            },
-                            onPause: () {
-                              _onPause(i);
-                            },
-                            onEnd: () async {
-                              final ok = await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => confirmationDialog(
-                                  context: ctx,
-                                  title: "End Exam ?",
-                                  message:
-                                      "This action will end the exam session and record the final finish time",
-                                  okTitle: "End Exam",
-                                  onCancel: () => Navigator.pop(ctx, false),
-                                  onConfirm: () => Navigator.pop(ctx, true),
-                                ),
-                              );
-                              if (ok == true) {
-                                _onEnd(i);
-                              }
-                            },
-                            onExportCopy: () => exportCopy(_cards[i], context),
-                            onExportCsvDownload: () =>
-                                exportCsvDownload(_cards[i], context),
-                            onExportCsvShare: () =>
-                                exportCsvShare(_cards[i], context),
-                            onToggleAutoStart: (v) {
-                              setState(
-                                () => _cards[i] = _cards[i].copyWith(
-                                  autoStart: v,
-                                  autoStartUserModified: true,
-                                ),
-                              );
-                              if (v) {
-                                _toast("Auto-start at the scheduled time");
-                              } else {
-                                _toast("Auto start is off");
-                              }
-                              _saveState();
-                            },
-                            onUpdateData: (updated) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (!mounted || i < 0 || i >= _cards.length) return;
-                                final current = _cards[i];
-                                setState(() {
-                                  _cards[i] = _mergeOfficerToolsUpdate(
-                                    current: current,
-                                    updated: updated,
-                                  );
-                                });
-                                _saveState();
-                              });
-                            },
-                            onDeleteData: () async {
-                              final ok = await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => confirmationDialog(
-                                  context: ctx,
-                                  title: "Delete Exam Data",
-                                  message:
-                                      "This action will permanently remove data for this exam only",
-                                  okTitle: "Delete",
-                                  onCancel: () => Navigator.pop(ctx, false),
-                                  onConfirm: () => Navigator.pop(ctx, true),
-                                ),
-                              );
-                              if (!context.mounted) return;
-                              if (ok == true) {
-                                final deleteRecordId = c.recordId;
-                                if (deleteRecordId != null) {
-                                  _cards.removeWhere(
-                                    (card) => card.recordId == deleteRecordId,
-                                  );
-                                } else if (i >= 0 && i < _cards.length) {
-                                  _cards.removeAt(i);
-                                }
-                                Navigator.of(context).pop();
-                                _saveState();
-                                setState(() {});
-                              }
-                            },
-                          ),
-                        );
-                      } else {
-                        _toast("Open an exam to use Officer Tools");
-                      }
-                    }
-                  },
-                  isVibrateOn: checkVibrateOn(),
-                  isArchiveMode: isArchiveMode,
-                ),
-              ),
             ],
           ),
         ),
@@ -1432,21 +1439,23 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           const Spacer(),
-          _headerIcon(
-            dark,
-            isArchiveView ? Icons.archive : Icons.archive_outlined,
-            color: isArchiveView ? VigiloUiColors.green(dark) : null,
-            onTap: () => setState(() {
-              isArchiveView = !isArchiveView;
-              isArchiveMode = false;
-              if (isArchiveView) {
-                _toast(" Viewing archived exams");
-              } else {
-                _toast(" Viewing active exams");
-              }
-            }),
-          ),
-          const SizedBox(width: 10),
+          if (_archiveCards.isNotEmpty || isArchiveView) ...[
+            _headerIcon(
+              dark,
+              isArchiveView ? Icons.archive : Icons.archive_outlined,
+              color: isArchiveView ? VigiloUiColors.green(dark) : null,
+              onTap: () => setState(() {
+                isArchiveView = !isArchiveView;
+                isArchiveMode = false;
+                if (isArchiveView) {
+                  _toast(" Viewing archived exams");
+                } else {
+                  _toast(" Viewing active exams");
+                }
+              }),
+            ),
+            const SizedBox(width: 10),
+          ],
           _headerIcon(
             dark,
             dark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,

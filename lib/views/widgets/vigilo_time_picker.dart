@@ -95,15 +95,11 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
     final keyboardDepth = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
-      margin: EdgeInsets.fromLTRB(16, 60, 16, 16 + keyboardDepth),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      margin: EdgeInsets.only(bottom: keyboardDepth),
       decoration: BoxDecoration(
         color: colors.panel,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(32),
-        ),
-        border: Border.all(
-          color: colors.line,
         ),
         boxShadow: const [
           BoxShadow(
@@ -113,10 +109,17 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
           ),
         ],
       ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      child: CustomPaint(
+        painter: _SheetBorderPainter(
+          color: colors.line,
+          radius: 32,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
           children: [
             // ── Pinned Header ──────────────────────────────────────
             Container(
@@ -512,7 +515,9 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
 
@@ -614,5 +619,48 @@ class _TimeInputFormatter extends TextInputFormatter {
       selection: TextSelection.collapsed(offset: selectionIndex),
       composing: TextRange.empty,
     );
+  }
+}
+
+class _SheetBorderPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+  final double width;
+
+  _SheetBorderPainter({
+    required this.color,
+    required this.radius,
+    this.width = 1.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = width;
+
+    final path = Path()
+      ..moveTo(0, size.height)
+      ..lineTo(0, radius)
+      ..arcToPoint(
+        Offset(radius, 0),
+        radius: Radius.circular(radius),
+      )
+      ..lineTo(size.width - radius, 0)
+      ..arcToPoint(
+        Offset(size.width, radius),
+        radius: Radius.circular(radius),
+      )
+      ..lineTo(size.width, size.height);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SheetBorderPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.radius != radius ||
+        oldDelegate.width != width;
   }
 }

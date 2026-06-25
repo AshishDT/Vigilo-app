@@ -4,19 +4,31 @@ import 'animated_scale_on_press.dart';
 
 class _PickerColors {
   final BuildContext context;
+
   _PickerColors(this.context);
 
   bool get isDark => Theme.of(context).brightness == Brightness.dark;
 
   Color get panel => VigiloUiColors.panel(isDark);
-  Color get panel2 => isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
+
+  Color get panel2 =>
+      isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
+
   Color get line => VigiloUiColors.line(isDark);
+
   Color get lineSoft => VigiloUiColors.lineSoft(isDark);
+
   Color get text => VigiloUiColors.text(isDark);
+
   Color get textSoft => VigiloUiColors.textSoft(isDark);
+
   Color get blue => VigiloUiColors.blue(isDark);
-  Color get blackWhite => isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
-  Color get calendarBg => isDark ? const Color(0xFF0F2236) : const Color(0xFFF8FAFC);
+
+  Color get blackWhite =>
+      isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
+
+  Color get calendarBg =>
+      isDark ? const Color(0xFF0F2236) : const Color(0xFFF8FAFC);
 }
 
 class VigiloDatePickerSheet extends StatefulWidget {
@@ -43,8 +55,18 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
   late final TextEditingController _manualController;
 
   final List<String> _months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   @override
@@ -86,7 +108,8 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
 
   int _daysInMonth(int year, int month) {
     if (month == 2) {
-      final isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+      final isLeapYear =
+          (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
       return isLeapYear ? 29 : 28;
     }
     const days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -139,10 +162,12 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
   void _showYearPickerMenu(BuildContext context) async {
     final colors = _PickerColors(context);
     final int currentYear = _minDate.year;
-    
+
     // Show current and 5 future years (total 6 years).
     // If the manually typed year is even further, extend list to include it.
-    final int maxYearToShow = _selectedDate.year > currentYear + 5 ? _selectedDate.year : currentYear + 5;
+    final int maxYearToShow = _selectedDate.year > currentYear + 5
+        ? _selectedDate.year
+        : currentYear + 5;
     final int count = maxYearToShow - currentYear + 1;
     final List<int> years = List.generate(count, (i) => currentYear + i);
 
@@ -174,7 +199,11 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
         _currentMonth = DateTime(selectedYear, newMonth);
         final maxDays = _daysInMonth(selectedYear, _selectedDate.month);
         final newDay = _selectedDate.day.clamp(1, maxDays);
-        var newSelectedDate = DateTime(selectedYear, _selectedDate.month, newDay);
+        var newSelectedDate = DateTime(
+          selectedYear,
+          _selectedDate.month,
+          newDay,
+        );
 
         if (newSelectedDate.isBefore(_minDate)) {
           newSelectedDate = _minDate;
@@ -190,8 +219,18 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
   String _formatSelectedDate(DateTime date) {
     final daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     final monthsShort = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final dayName = daysOfWeek[date.weekday % 7];
     final monthName = monthsShort[date.month - 1];
@@ -202,7 +241,10 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
   Widget build(BuildContext context) {
     final colors = _PickerColors(context);
     final int daysCount = _daysInMonth(_currentMonth.year, _currentMonth.month);
-    final int startOffset = _firstWeekdayOfMonth(_currentMonth.year, _currentMonth.month);
+    final int startOffset = _firstWeekdayOfMonth(
+      _currentMonth.year,
+      _currentMonth.month,
+    );
 
     final List<Widget> dayWidgets = [];
 
@@ -216,7 +258,8 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
       final isAfterMax = dayDate.isAfter(_maxDate);
       final isDisabled = isBeforeToday || isAfterMax;
 
-      final isSelected = _selectedDate.year == _currentMonth.year &&
+      final isSelected =
+          _selectedDate.year == _currentMonth.year &&
           _selectedDate.month == _currentMonth.month &&
           _selectedDate.day == d;
 
@@ -226,7 +269,11 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
               ? null
               : () {
                   setState(() {
-                    _selectedDate = DateTime(_currentMonth.year, _currentMonth.month, d);
+                    _selectedDate = DateTime(
+                      _currentMonth.year,
+                      _currentMonth.month,
+                      d,
+                    );
                     _manualController.text = _formatDate(_selectedDate);
                   });
                 },
@@ -240,16 +287,10 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
     final keyboardDepth = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
-      margin: EdgeInsets.fromLTRB(16, 60, 16, 16 + keyboardDepth),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      margin: EdgeInsets.only(bottom: keyboardDepth),
       decoration: BoxDecoration(
         color: colors.panel,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(32),
-        ),
-        border: Border.all(
-          color: colors.line,
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: const [
           BoxShadow(
             color: Colors.black45,
@@ -258,345 +299,418 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
           ),
         ],
       ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Pinned Header
-            Container(
-              width: 68,
-              height: 6,
-              decoration: BoxDecoration(
-                color: colors.line,
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
+      child: CustomPaint(
+        painter: _SheetBorderPainter(color: colors.line, radius: 32),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Select Date',
-                  style: TextStyle(
-                    color: colors.text,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                // Pinned Header
+                Container(
+                  width: 68,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: colors.line,
+                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                if (widget.showIcons) ...[
-                  const Spacer(),
-                  Icon(
-                    Icons.tune_rounded,
-                    color: colors.textSoft,
-                    size: 22,
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Scrollable Content
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                const SizedBox(height: 16),
+                Row(
                   children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                      decoration: BoxDecoration(
-                        color: colors.panel2,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: colors.line),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Selected date',
-                            style: TextStyle(
-                              color: colors.textSoft,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            _formatSelectedDate(_selectedDate),
-                            style: TextStyle(
-                              color: colors.text,
-                              fontSize: 34,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: colors.calendarBg,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: colors.line),
-                            ),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () => _showYearPickerMenu(context),
-                                      behavior: HitTestBehavior.opaque,
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            '${_months[_currentMonth.month - 1]} ${_currentMonth.year}',
-                                            style: TextStyle(
-                                              color: colors.text,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Icon(
-                                            Icons.arrow_drop_down_rounded,
-                                            color: colors.textSoft,
-                                            size: 24,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    GestureDetector(
-                                      onTap: _canPrevMonth ? _prevMonth : null,
-                                      child: Icon(
-                                        Icons.chevron_left,
-                                        color: _canPrevMonth ? colors.textSoft : colors.textSoft.withValues(alpha: 0.3),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    GestureDetector(
-                                      onTap: _canNextMonth ? _nextMonth : null,
-                                      child: Icon(
-                                        Icons.chevron_right,
-                                        color: _canNextMonth ? colors.textSoft : colors.textSoft.withValues(alpha: 0.3),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 14),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    _WeekLabel('S', colors),
-                                    _WeekLabel('M', colors),
-                                    _WeekLabel('T', colors),
-                                    _WeekLabel('W', colors),
-                                    _WeekLabel('T', colors),
-                                    _WeekLabel('F', colors),
-                                    _WeekLabel('S', colors),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                GridView.count(
-                                  crossAxisCount: 7,
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  mainAxisSpacing: 8,
-                                  crossAxisSpacing: 8,
-                                  childAspectRatio: 1,
-                                  children: dayWidgets,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                    Text(
+                      'Select Date',
+                      style: TextStyle(
+                        color: colors.text,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          minimumSize: Size.zero,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _showManualEntry = !_showManualEntry;
-                          });
-                        },
-                        child: Text(
-                          _showManualEntry ? 'Hide manual entry' : 'Type manually',
-                          style: TextStyle(
-                            color: colors.blue,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+                    if (widget.showIcons) ...[
+                      const Spacer(),
+                      Icon(
+                        Icons.tune_rounded,
+                        color: colors.textSoft,
+                        size: 22,
                       ),
-                    ),
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeInOut,
-                      child: _showManualEntry
-                          ? Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Scrollable Content
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                          decoration: BoxDecoration(
+                            color: colors.panel2,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: colors.line),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Selected date',
+                                style: TextStyle(
+                                  color: colors.textSoft,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                _formatSelectedDate(_selectedDate),
+                                style: TextStyle(
+                                  color: colors.text,
+                                  fontSize: 34,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              Container(
+                                padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: colors.panel2,
+                                  color: colors.calendarBg,
                                   borderRadius: BorderRadius.circular(18),
                                   border: Border.all(color: colors.line),
                                 ),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      'Manual entry',
-                                      style: TextStyle(
-                                        color: colors.textSoft,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                    Row(
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () =>
+                                              _showYearPickerMenu(context),
+                                          behavior: HitTestBehavior.opaque,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '${_months[_currentMonth.month - 1]} ${_currentMonth.year}',
+                                                style: TextStyle(
+                                                  color: colors.text,
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Icon(
+                                                Icons.arrow_drop_down_rounded,
+                                                color: colors.textSoft,
+                                                size: 24,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        GestureDetector(
+                                          onTap: _canPrevMonth
+                                              ? _prevMonth
+                                              : null,
+                                          child: Icon(
+                                            Icons.chevron_left,
+                                            color: _canPrevMonth
+                                                ? colors.textSoft
+                                                : colors.textSoft.withValues(
+                                                    alpha: 0.3,
+                                                  ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        GestureDetector(
+                                          onTap: _canNextMonth
+                                              ? _nextMonth
+                                              : null,
+                                          child: Icon(
+                                            Icons.chevron_right,
+                                            color: _canNextMonth
+                                                ? colors.textSoft
+                                                : colors.textSoft.withValues(
+                                                    alpha: 0.3,
+                                                  ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 8),
-                                    TextField(
-                                      controller: _manualController,
-                                      style: TextStyle(
-                                        color: colors.text,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText: 'DD/MM/YYYY',
-                                        hintStyle: TextStyle(
-                                            color: colors.textSoft.withValues(alpha: 0.5)),
-                                        border: InputBorder.none,
-                                      ),
-                                      onChanged: (value) {
-                                        final parts = value.split('/');
-                                        if (parts.length == 3) {
-                                          final day = int.tryParse(parts[0]);
-                                          final month = int.tryParse(parts[1]);
-                                          final year = int.tryParse(parts[2]);
-                                          if (day != null && month != null && year != null) {
-                                            try {
-                                              final parsed = DateTime(year, month, day);
-                                              if (parsed.day == day &&
-                                                  parsed.month == month &&
-                                                  parsed.year == year) {
-                                                if (!parsed.isBefore(_minDate) && parsed.year < 3000) {
-                                                  setState(() {
-                                                    _selectedDate = parsed;
-                                                    _currentMonth =
-                                                        DateTime(parsed.year, parsed.month);
-                                                    if (parsed.isAfter(_maxDate)) {
-                                                      _maxDate = DateTime(parsed.year, 12, 31);
-                                                    }
-                                                  });
-                                                }
-                                              }
-                                            } catch (_) {}
-                                          }
-                                        }
-                                      },
+                                    const SizedBox(height: 14),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        _WeekLabel('S', colors),
+                                        _WeekLabel('M', colors),
+                                        _WeekLabel('T', colors),
+                                        _WeekLabel('W', colors),
+                                        _WeekLabel('T', colors),
+                                        _WeekLabel('F', colors),
+                                        _WeekLabel('S', colors),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    GridView.count(
+                                      crossAxisCount: 7,
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      mainAxisSpacing: 8,
+                                      crossAxisSpacing: 8,
+                                      childAspectRatio: 1,
+                                      children: dayWidgets,
                                     ),
                                   ],
                                 ),
                               ),
-                            )
-                          : const SizedBox.shrink(),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              minimumSize: Size.zero,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _showManualEntry = !_showManualEntry;
+                              });
+                            },
+                            child: Text(
+                              _showManualEntry
+                                  ? 'Hide manual entry'
+                                  : 'Type manually',
+                              style: TextStyle(
+                                color: colors.blue,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ),
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                          child: _showManualEntry
+                              ? Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      14,
+                                      16,
+                                      14,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: colors.panel2,
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(color: colors.line),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Manual entry',
+                                          style: TextStyle(
+                                            color: colors.textSoft,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        TextField(
+                                          controller: _manualController,
+                                          style: TextStyle(
+                                            color: colors.text,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: 'DD/MM/YYYY',
+                                            hintStyle: TextStyle(
+                                              color: colors.textSoft.withValues(
+                                                alpha: 0.5,
+                                              ),
+                                            ),
+                                            border: InputBorder.none,
+                                          ),
+                                          onChanged: (value) {
+                                            final parts = value.split('/');
+                                            if (parts.length == 3) {
+                                              final day = int.tryParse(
+                                                parts[0],
+                                              );
+                                              final month = int.tryParse(
+                                                parts[1],
+                                              );
+                                              final year = int.tryParse(
+                                                parts[2],
+                                              );
+                                              if (day != null &&
+                                                  month != null &&
+                                                  year != null) {
+                                                try {
+                                                  final parsed = DateTime(
+                                                    year,
+                                                    month,
+                                                    day,
+                                                  );
+                                                  if (parsed.day == day &&
+                                                      parsed.month == month &&
+                                                      parsed.year == year) {
+                                                    if (!parsed.isBefore(
+                                                          _minDate,
+                                                        ) &&
+                                                        parsed.year < 3000) {
+                                                      setState(() {
+                                                        _selectedDate = parsed;
+                                                        _currentMonth =
+                                                            DateTime(
+                                                              parsed.year,
+                                                              parsed.month,
+                                                            );
+                                                        if (parsed.isAfter(
+                                                          _maxDate,
+                                                        )) {
+                                                          _maxDate = DateTime(
+                                                            parsed.year,
+                                                            12,
+                                                            31,
+                                                          );
+                                                        }
+                                                      });
+                                                    }
+                                                  }
+                                                } catch (_) {}
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                // Pinned Bottom Actions
+                Row(
+                  children: [
+                    Expanded(
+                      child: AnimatedScaleOnPress(
+                        child: SizedBox(
+                          height: 52,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: colors.blue, width: 1.5),
+                              foregroundColor: colors.blue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(26),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (widget.showIcons) ...[
+                                    Icon(
+                                      Icons.close_rounded,
+                                      size: 18,
+                                      color: colors.blue,
+                                    ),
+                                    const SizedBox(width: 10),
+                                  ],
+                                  Text(
+                                    'Cancel',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: AnimatedScaleOnPress(
+                        isDisabled: !_isChanged,
+                        child: SizedBox(
+                          height: 52,
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: colors.blue,
+                              disabledBackgroundColor: colors.blue.withValues(
+                                alpha: 0.45,
+                              ),
+                              foregroundColor: Colors.white,
+                              disabledForegroundColor: Colors.white.withValues(
+                                alpha: 0.6,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(26),
+                              ),
+                              elevation: !_isChanged ? 0 : 2,
+                            ),
+                            onPressed: _isChanged
+                                ? () {
+                                    Navigator.of(context).pop(_selectedDate);
+                                  }
+                                : null,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (widget.showIcons) ...[
+                                    const Icon(
+                                      Icons.check_rounded,
+                                      size: 20,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 10),
+                                  ],
+                                  Text(
+                                    'Save',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ),
-            const SizedBox(height: 18),
-            // Pinned Bottom Actions
-            Row(
-              children: [
-                Expanded(
-                  child: AnimatedScaleOnPress(
-                    child: SizedBox(
-                      height: 52,
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: colors.blue, width: 1.5),
-                          foregroundColor: colors.blue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(26),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (widget.showIcons) ...[
-                                Icon(Icons.close_rounded, size: 18, color: colors.blue),
-                                const SizedBox(width: 10),
-                              ],
-                              Text(
-                                'Cancel',
-                                style: const TextStyle(fontWeight: FontWeight.w800),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: AnimatedScaleOnPress(
-                    isDisabled: !_isChanged,
-                    child: SizedBox(
-                      height: 52,
-                      child: FilledButton(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: colors.blue,
-                          disabledBackgroundColor: colors.blue.withValues(
-                            alpha: 0.45,
-                          ),
-                          foregroundColor: Colors.white,
-                          disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(26),
-                          ),
-                          elevation: !_isChanged ? 0 : 2,
-                        ),
-                        onPressed: _isChanged
-                            ? () {
-                                Navigator.of(context).pop(_selectedDate);
-                              }
-                            : null,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (widget.showIcons) ...[
-                                const Icon(Icons.check_rounded, size: 20, color: Colors.white),
-                                const SizedBox(width: 10),
-                              ],
-                              Text(
-                                'Save',
-                                style: const TextStyle(fontWeight: FontWeight.w800),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -606,6 +720,7 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
 class _WeekLabel extends StatelessWidget {
   final String text;
   final _PickerColors colors;
+
   const _WeekLabel(this.text, this.colors);
 
   @override
@@ -625,6 +740,7 @@ class _DayChip extends StatelessWidget {
   final String text;
   final _PickerColors colors;
   final bool isDisabled;
+
   const _DayChip(this.text, this.colors, {this.isDisabled = false});
 
   @override
@@ -635,7 +751,9 @@ class _DayChip extends StatelessWidget {
         child: Text(
           text,
           style: TextStyle(
-            color: isDisabled ? colors.textSoft.withValues(alpha: 0.35) : colors.text,
+            color: isDisabled
+                ? colors.textSoft.withValues(alpha: 0.35)
+                : colors.text,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -648,15 +766,13 @@ class _DayChip extends StatelessWidget {
 class _SelectedDayChip extends StatelessWidget {
   final String text;
   final _PickerColors colors;
+
   const _SelectedDayChip(this.text, this.colors);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: colors.blue,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: colors.blue, shape: BoxShape.circle),
       child: Center(
         child: Text(
           text,
@@ -719,12 +835,13 @@ Future<int?> _showYearGridPicker({
               Flexible(
                 child: SingleChildScrollView(
                   child: GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 1.6,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 1.6,
+                        ),
                     padding: EdgeInsets.zero,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -735,14 +852,20 @@ Future<int?> _showYearGridPicker({
                       return AnimatedScaleOnPress(
                         child: FilledButton(
                           style: FilledButton.styleFrom(
-                            backgroundColor: isSelected ? colors.blue : colors.panel2,
-                            foregroundColor: isSelected ? Colors.white : colors.text,
+                            backgroundColor: isSelected
+                                ? colors.blue
+                                : colors.panel2,
+                            foregroundColor: isSelected
+                                ? Colors.white
+                                : colors.text,
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                               side: BorderSide(
-                                color: isSelected ? Colors.transparent : colors.line,
+                                color: isSelected
+                                    ? Colors.transparent
+                                    : colors.line,
                               ),
                             ),
                             padding: EdgeInsets.zero,
@@ -754,7 +877,9 @@ Future<int?> _showYearGridPicker({
                             val.toString(),
                             style: TextStyle(
                               fontSize: 13,
-                              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                              fontWeight: isSelected
+                                  ? FontWeight.w900
+                                  : FontWeight.w700,
                             ),
                           ),
                         ),
@@ -789,4 +914,41 @@ Future<int?> _showYearGridPicker({
       );
     },
   );
+}
+
+class _SheetBorderPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+  final double width;
+
+  _SheetBorderPainter({
+    required this.color,
+    required this.radius,
+    this.width = 1.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = width;
+
+    final path = Path()
+      ..moveTo(0, size.height)
+      ..lineTo(0, radius)
+      ..arcToPoint(Offset(radius, 0), radius: Radius.circular(radius))
+      ..lineTo(size.width - radius, 0)
+      ..arcToPoint(Offset(size.width, radius), radius: Radius.circular(radius))
+      ..lineTo(size.width, size.height);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SheetBorderPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.radius != radius ||
+        oldDelegate.width != width;
+  }
 }

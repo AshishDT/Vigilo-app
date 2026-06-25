@@ -20,7 +20,8 @@ class StatChip extends StatelessWidget {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+      height: 76,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: VigiloUiColors.panel(dark).withOpacity(dark ? 0.80 : 0.94),
         borderRadius: BorderRadius.circular(22),
@@ -56,7 +57,7 @@ class StatChip extends StatelessWidget {
             child: _topStat(
               dark,
               Icons.play_circle_fill_rounded,
-              isArchiveView ? 'Archived Exams' : 'Active Exams',
+              isArchiveView ? 'Archived' : 'Active Exams',
               '$activeExams',
             ),
           ),
@@ -97,14 +98,18 @@ class StatChip extends StatelessWidget {
         ),
         const SizedBox(width: 7),
         Flexible(
-          child: Text(
-            label,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: VigiloUiColors.textSoft(dark),
-              fontSize: 13.5,
-              fontWeight: FontWeight.w700,
-              height: 1.1,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              label,
+              maxLines: 1,
+              style: TextStyle(
+                color: VigiloUiColors.textSoft(dark),
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+                height: 1.1,
+              ),
             ),
           ),
         ),

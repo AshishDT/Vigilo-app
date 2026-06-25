@@ -201,6 +201,9 @@ class _AddExamSheetState extends State<AddExamSheet> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
       builder: (_) => VigiloTimePickerSheet(
         initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
         showIcons: true,
@@ -219,6 +222,9 @@ class _AddExamSheetState extends State<AddExamSheet> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
       builder: (_) => VigiloDatePickerSheet(
         initialDate: _selectedDate,
         showIcons: true,
@@ -236,6 +242,9 @@ class _AddExamSheetState extends State<AddExamSheet> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
       builder: (_) => VigiloDurationPickerSheet(
         initialDuration: time,
         title: title,
@@ -533,7 +542,6 @@ class _AddExamSheetState extends State<AddExamSheet> {
             decoration: BoxDecoration(
               color: colors.panel.withValues(alpha: 0.985),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-              border: Border.all(color: colors.line),
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black38,
@@ -542,7 +550,12 @@ class _AddExamSheetState extends State<AddExamSheet> {
                 ),
               ],
             ),
-            child: Column(
+            child: CustomPaint(
+              painter: _SheetBorderPainter(
+                color: colors.line,
+                radius: 32,
+              ),
+              child: Column(
               children: [
                 // Pinned Header & Drag Handle
                 GestureDetector(
@@ -753,10 +766,54 @@ class _AddExamSheetState extends State<AddExamSheet> {
                 ),
               ],
             ),
-          );
-        },
+          ),
+        );
+      },
       ),
     );
+  }
+}
+
+class _SheetBorderPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+  final double width;
+
+  _SheetBorderPainter({
+    required this.color,
+    required this.radius,
+    this.width = 1.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = width;
+
+    final path = Path()
+      ..moveTo(0, size.height)
+      ..lineTo(0, radius)
+      ..arcToPoint(
+        Offset(radius, 0),
+        radius: Radius.circular(radius),
+      )
+      ..lineTo(size.width - radius, 0)
+      ..arcToPoint(
+        Offset(size.width, radius),
+        radius: Radius.circular(radius),
+      )
+      ..lineTo(size.width, size.height);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SheetBorderPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.radius != radius ||
+        oldDelegate.width != width;
   }
 }
 

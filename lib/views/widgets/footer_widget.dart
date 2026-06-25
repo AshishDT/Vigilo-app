@@ -51,7 +51,7 @@ class _FooterWidgetState extends State<FooterWidget>
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: VigiloUiColors.panel(dark).withOpacity(0.96),
         borderRadius: BorderRadius.circular(18),
@@ -141,13 +141,13 @@ class _FooterWidgetState extends State<FooterWidget>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 3),
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 color: VigiloUiColors.textSoft(dark),
-                fontSize: 11.5,
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 height: 1.1,
               ),
