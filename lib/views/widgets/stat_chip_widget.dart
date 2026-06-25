@@ -21,7 +21,6 @@ class StatChip extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       height: 76,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: VigiloUiColors.panel(dark).withOpacity(dark ? 0.80 : 0.94),
         borderRadius: BorderRadius.circular(22),
