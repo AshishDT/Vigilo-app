@@ -20,8 +20,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
   _VigiloColors get colors => _VigiloColors(context);
 
   static const String _privacyNoticeText =
-      'Vigilo ERC stores exam data locally on the device and does not send it to any external server.\n\n'
-      'The organisation remains responsible for the retention, export, archiving, and deletion of records in line with its own policies, JCQ guidance, and applicable data protection requirements.\n\n'
+      'Vigilo ERC stores exam data locally on the device and does not transmit it to any external server.\n\n'
+      'The organisation is responsible for the retention, export, archiving, and deletion of records in accordance with its own policies, relevant examination regulations (such as JCQ where applicable), and applicable data protection requirements.\n\n'
       'This application should only be used by authorised staff during examinations.';
 
   static const String _termsOfUseText =
@@ -33,8 +33,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       'Vigilo ERC is a digital exam room control system for exam officers and invigilators. '
       'It supports live timing, structured event logging, incident capture, and exportable records while remaining offline-first for core operation.';
   static const String _aboutLegalText =
-      'Vigilo® is a registered trademark of Vigilo.\n'
-      'Copyright © 2026 Vigilo. All rights reserved.';
+      'Copyright © 2026 Vigilo Platforms Ltd. All rights reserved.\n'
+      'Vigilo® is a registered trademark of Vigilo Platforms Ltd.';
   static const String _segmentedLicenceMessage =
       'Enter the organisation name, organisation code, and 6-character activation code issued by Vigilo.';
 
@@ -884,7 +884,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                   padding: const EdgeInsets.fromLTRB(18, 10, 18, 28),
                   children: [
                     _SectionCard(
-                      title: 'Licence Types',
+                      title: 'Licence Type',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -915,21 +915,9 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           ),
                           const SizedBox(height: 16),
                           _LicenceTypePanel(
-                            title: LicenseService.proLicenceType,
-                            subtitle: Text.rich(
-                              TextSpan(
-                                text:
-                                    'Includes everything in Core plus additional coordination features ',
-                                children: [
-                                  const TextSpan(
-                                    text: '(coming soon)',
-                                    style: TextStyle(
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                  const TextSpan(text: '.'),
-                                ],
-                              ),
+                            title: 'Licence and information (Pro)',
+                            subtitle: Text(
+                              'Includes everything in Core plus additional coordination features.\n(Available in a future update.)',
                               style: TextStyle(
                                 color: colors.textSoft,
                                 fontSize: 15,
