@@ -20,28 +20,27 @@ class StatChip extends StatelessWidget {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      height: 76,
+      height: 64,
       decoration: BoxDecoration(
-        color: VigiloUiColors.panel(dark).withOpacity(dark ? 0.80 : 0.94),
-        borderRadius: BorderRadius.circular(22),
+        color: VigiloUiColors.panel(dark).withOpacity(0.96),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: dark
-              ? VigiloUiColors.line(dark).withOpacity(0.78)
-              : VigiloUiColors.line(dark),
+          color: VigiloUiColors.blue(dark).withOpacity(dark ? 0.30 : 0.26),
+          width: 0.7,
         ),
         boxShadow: dark
             ? [
                 BoxShadow(
-                  color: VigiloUiColors.blue(dark).withOpacity(0.045),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  color: VigiloUiColors.blue(dark).withOpacity(0.07),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: VigiloUiColors.blue(dark).withOpacity(0.08),
-                  blurRadius: 14,
-                  offset: const Offset(0, 5),
+                  color: VigiloUiColors.blue(dark).withOpacity(0.10),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
                 BoxShadow(
                   color: Colors.black.withOpacity(0.07),
