@@ -733,34 +733,37 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     final String labelText = completed ? 'Finished' : 'Running';
     final IconData iconData = completed ? Icons.check_circle_outline_rounded : Icons.lock_rounded;
 
-    return SizedBox(
-      height: 42,
-      child: FilledButton.icon(
-        style: FilledButton.styleFrom(
-          disabledBackgroundColor: completed 
-              ? vColors.finished.withOpacity(isDark ? 0.27 : 0.16)
-              : vColors.blue.withOpacity(isDark ? 0.27 : 0.16),
-          disabledForegroundColor: vColors.textSoft,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: BorderSide(
-              color: completed 
-                  ? vColors.finished.withOpacity(isDark ? 0.36 : 0.30)
-                  : vColors.blue.withOpacity(isDark ? 0.36 : 0.30),
-              width: 1,
+    return GestureDetector(
+      onTap: () {},
+      child: SizedBox(
+        height: 42,
+        child: FilledButton.icon(
+          style: FilledButton.styleFrom(
+            disabledBackgroundColor: completed 
+                ? vColors.finished.withOpacity(isDark ? 0.27 : 0.16)
+                : vColors.blue.withOpacity(isDark ? 0.27 : 0.16),
+            disabledForegroundColor: vColors.textSoft,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+              side: BorderSide(
+                color: completed 
+                    ? vColors.finished.withOpacity(isDark ? 0.36 : 0.30)
+                    : vColors.blue.withOpacity(isDark ? 0.36 : 0.30),
+                width: 1,
+              ),
             ),
           ),
-        ),
-        onPressed: null,
-        icon: Icon(iconData, size: 16),
-        label: Text(
-          labelText,
-          style: const TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 13,
-            letterSpacing: 0.05,
+          onPressed: null,
+          icon: Icon(iconData, size: 16),
+          label: Text(
+            labelText,
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 13,
+              letterSpacing: 0.05,
+            ),
           ),
         ),
       ),
