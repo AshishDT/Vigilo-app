@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../enums/exam_phase.dart';
 import '../../models/exam_card_data.dart';
 import 'animated_scale_on_press.dart';
+import 'elapsed_remaining_line.dart';
 import 'ring_painter_widget.dart';
 
 class VigiloColors {
@@ -340,8 +341,8 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                             const SizedBox(height: 16),
                             _timerRing(isDark, vColors, phaseColor, phaseRemaining, phaseElapsed, usedPercent),
                             const SizedBox(height: 8),
-                            _sliderRow(context, isDark, vColors, phaseColor, usedPercent),
-                            const SizedBox(height: 14),
+                            _elapsedRemainingRow(context, isDark, vColors),
+                            const SizedBox(height: 24),
                             _editButtonRows(context, isDark, vColors, showRunning: showRunning),
                             const SizedBox(height: 14),
                             _fullTimingSummaryBox(isDark, vColors),
@@ -430,8 +431,8 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
 
     return Center(
       child: SizedBox(
-        width: 220,
-        height: 220,
+        width: 228,
+        height: 228,
         child: TweenAnimationBuilder<double>(
           tween: Tween(begin: 0.0, end: data.progress),
           duration: const Duration(milliseconds: 700),
@@ -449,12 +450,12 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
               alignment: Alignment.center,
               children: [
                 CustomPaint(
-                  size: const Size.square(220),
+                  size: const Size.square(228),
                   painter: RingPainter(
                     progress: v,
                     trackColor: isDark ? vColors.line.withOpacity(0.42) : vColors.line.withOpacity(0.62),
                     progressColor: phaseColor,
-                    strokeWidth: 11,
+                    strokeWidth: 12,
                     isRunning: data.running,
                     isDark: isDark,
                   ),
@@ -471,40 +472,38 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                         ),
                         style: TextStyle(
                           color: vColors.text,
-                          fontSize: 23,
+                          fontSize: 36,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: -0.2,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+                        horizontal: 18,
+                        vertical: 9,
                       ),
                       decoration: BoxDecoration(
                         color: phaseColor.withOpacity(0.88),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(
                         phaseLabel,
                         style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
                           color: Colors.white,
-                          letterSpacing: 0.15,
+                          letterSpacing: 0.4,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     Text(
                       '$usedPercent%',
                       style: TextStyle(
                         color: phaseColor.withOpacity(data.running ? (isDark ? 1.0 : 0.78) : (isDark ? 1.0 : 0.95)),
-                        fontSize: 13,
+                        fontSize: 18,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 0.15,
                       ),
                     ),
                   ],
@@ -517,86 +516,11 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _sliderRow(BuildContext context, bool isDark, VigiloColors vColors, Color phaseColor, int usedPercent) {
-    final locked = data.running;
-
-    return Opacity(
-      opacity: locked ? 0.72 : 1.0,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 260,
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 38,
-                  child: Text(
-                    '$usedPercent%',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: locked ? vColors.textFaint : vColors.textSoft,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: phaseColor.withOpacity(locked ? (isDark ? 1.0 : 0.52) : (isDark ? 1.0 : 0.95)),
-                      inactiveTrackColor: phaseColor.withOpacity(locked ? (isDark ? 0.16 : 0.10) : 0.16),
-                      thumbColor: phaseColor.withOpacity(locked ? (isDark ? 1.0 : 0.46) : (isDark ? 1.0 : 0.95)),
-                      overlayColor: phaseColor.withOpacity(isDark ? 0.10 : 0.08),
-                      trackHeight: locked ? 4.0 : 4.5,
-                      thumbShape: RoundSliderThumbShape(
-                        enabledThumbRadius: locked ? 7.2 : 8.5,
-                        disabledThumbRadius: 7.2,
-                      ),
-                      overlayShape: RoundSliderOverlayShape(
-                        overlayRadius: isDark ? 17.0 : 15.0,
-                      ),
-                    ),
-                    child: IgnorePointer(
-                      ignoring: isExamCompleted,
-                      child: Slider(
-                        value: data.progress,
-                        onChangeStart: data.running
-                            ? null
-                            : (_) => onProgressDragState(true),
-                        onChangeEnd: data.running
-                            ? null
-                            : (v) => onProgressChangeEnd(v),
-                        onChanged: (data.running)
-                            ? null
-                            : (v) => onUpdate(
-                                  data.copyWith(
-                                    progress: v,
-                                    autoStart: false,
-                                    autoStartUserModified: true,
-                                  ),
-                                ),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 44,
-                  child: Text(
-                    '100%',
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                      color: locked ? vColors.textFaint : vColors.textSoft,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+  Widget _elapsedRemainingRow(BuildContext context, bool isDark, VigiloColors vColors) {
+    return ElapsedRemainingLine(
+      elapsedStr: _fmtHhMm(_elapsedSecond()),
+      remainingStr: _fmtHhMm(_phaseRemainingSeconds(), roundUp: data.isActiveTime),
+      vColors: vColors,
     );
   }
 
