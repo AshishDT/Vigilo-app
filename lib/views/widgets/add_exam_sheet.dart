@@ -632,12 +632,27 @@ class _AddExamSheetState extends State<AddExamSheet> {
                               ),
                             ),
                             const Spacer(),
-                            GestureDetector(
-                              onTap: () => Navigator.pop(context, false),
-                              child: Icon(
-                                Icons.close_rounded,
-                                color: colors.text,
-                                size: 34,
+                            Tooltip(
+                              message: 'Close',
+                              child: InkWell(
+                                onTap: () => Navigator.pop(context, false),
+                                borderRadius: BorderRadius.circular(14),
+                                child: Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: colors.panel2,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: colors.lineSoft,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.close_rounded,
+                                    size: 24,
+                                    color: colors.textSoft,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
