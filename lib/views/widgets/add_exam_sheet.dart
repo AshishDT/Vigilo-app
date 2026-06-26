@@ -36,6 +36,7 @@ class AddExamSheet extends StatefulWidget {
     this.lastStart,
     this.lastDuration,
     this.lastExtra,
+    this.knownCentres = const {},
     required this.onSave,
   });
 
@@ -46,6 +47,7 @@ class AddExamSheet extends StatefulWidget {
   final String? lastStart;
   final String? lastDuration;
   final String? lastExtra;
+  final Map<String, String> knownCentres;
   final Future<void> Function({
     required String school,
     required String centre,
@@ -85,8 +87,20 @@ class _AddExamSheetState extends State<AddExamSheet> {
     _centreCtl = TextEditingController(text: widget.lastCentre ?? "");
     _subjectCtl = TextEditingController(text: widget.lastSubject ?? "");
     _boardCtl = TextEditingController(text: widget.lastBoard ?? "");
+    _previousSchoolText = _schoolCtl.text.trim();
 
-    _schoolCtl.addListener(_onTextChanged);
+    if (_centreCtl.text.trim().isEmpty && _previousSchoolText.isNotEmpty) {
+      debugPrint("[AddExamSheet] initState: _centreCtl is empty, checking if '$_previousSchoolText' is known...");
+      final known = widget.knownCentres[_previousSchoolText];
+      if (known != null && known.isNotEmpty) {
+        _centreCtl.text = known;
+        debugPrint("[AddExamSheet] initState: Auto-populated centre number with '$known'");
+      } else {
+        debugPrint("[AddExamSheet] initState: '$_previousSchoolText' not found in knownCentres.");
+      }
+    }
+
+    _schoolCtl.addListener(_onSchoolTextChanged);
     _centreCtl.addListener(_onTextChanged);
     _subjectCtl.addListener(_onTextChanged);
     _boardCtl.addListener(_onTextChanged);
@@ -110,6 +124,24 @@ class _AddExamSheetState extends State<AddExamSheet> {
       allowZero: false,
     );
     _extraHHMM = _normalizeHHMM(widget.lastExtra, fallback: "00:15");
+  }
+
+  String _previousSchoolText = "";
+
+  void _onSchoolTextChanged() {
+    final currentSchool = _schoolCtl.text.trim();
+    if (currentSchool != _previousSchoolText) {
+      debugPrint("[AddExamSheet] _onSchoolTextChanged: School changed from '$_previousSchoolText' to '$currentSchool'");
+      _previousSchoolText = currentSchool;
+      final known = widget.knownCentres[currentSchool];
+      if (known != null && known.isNotEmpty) {
+        _centreCtl.text = known;
+        debugPrint("[AddExamSheet] _onSchoolTextChanged: Auto-populated centre number with '$known' for school '$currentSchool'");
+      } else {
+        debugPrint("[AddExamSheet] _onSchoolTextChanged: '$currentSchool' not found in knownCentres.");
+      }
+    }
+    setState(() {});
   }
 
   void _onTextChanged() {
@@ -140,7 +172,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
 
   @override
   void dispose() {
-    _schoolCtl.removeListener(_onTextChanged);
+    _schoolCtl.removeListener(_onSchoolTextChanged);
     _centreCtl.removeListener(_onTextChanged);
     _subjectCtl.removeListener(_onTextChanged);
     _boardCtl.removeListener(_onTextChanged);

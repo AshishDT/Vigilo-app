@@ -660,6 +660,23 @@ class _HomeScreenState extends State<HomeScreen>
 
 
   Future<void> _openQuickAddWizard() async {
+    final Map<String, String> knownCentres = {};
+    debugPrint("[QuickAdd] Building knownCentres map from ${_archiveCards.length} archive cards and ${_cards.length} active cards...");
+    for (final card in [..._archiveCards.reversed, ..._cards.reversed]) {
+      final school = card.school.trim();
+      final centre = card.resolvedCentreNumber.trim();
+      if (school.isNotEmpty && centre.isNotEmpty) {
+        knownCentres[school] = centre;
+        debugPrint("[QuickAdd] Mapped from card: '$school' -> '$centre'");
+      }
+    }
+    if (_lastSchool != null && _lastSchool!.trim().isNotEmpty &&
+        _lastCentre != null && _lastCentre!.trim().isNotEmpty) {
+      knownCentres[_lastSchool!.trim()] = _lastCentre!.trim();
+      debugPrint("[QuickAdd] Mapped from last session variables: '${_lastSchool!.trim()}' -> '${_lastCentre!.trim()}'");
+    }
+    debugPrint("[QuickAdd] Final knownCentres map: $knownCentres");
+
     setState(() {
       _lastSchool = null;
       _lastCentre = null;
@@ -684,6 +701,7 @@ class _HomeScreenState extends State<HomeScreen>
         lastStart: _lastStart,
         lastDuration: _lastDuration,
         lastExtra: _lastExtra,
+        knownCentres: knownCentres,
         onSave: ({
           required String school,
           required String centre,
