@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/constants.dart';
+import '../utils/app_config.dart';
 import '../utils/id_generator.dart';
 import '../utils/screen_util.dart';
 import '../utils/notifications.dart';
@@ -1118,7 +1119,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                         children: [
                           _StaticInfoRow('App Version', _appVersion),
                           _StaticInfoRow('Build', _buildNumber),
-                          const _StaticInfoRow('Release Date', '26 June 2026'),
+                          const _StaticInfoRow('Release Date', AppConfig.releaseDate),
                           const _StaticInfoRow('Storage', 'Local Device', paddingBottom: 0),
                         ],
                       ),
