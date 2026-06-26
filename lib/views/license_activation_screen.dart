@@ -36,8 +36,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       'Vigilo ERC is a digital exam room control system for exam officers and invigilators. '
       'It supports live timing, structured event logging, incident capture, and exportable records while remaining offline-first for core operation.';
   static const String _aboutLegalText =
-      'Copyright © 2026 Vigilo Platforms Ltd. All rights reserved.\n'
-      'Vigilo® is a registered trademark of Vigilo Platforms Ltd.';
+      'Copyright © 2026 Vigilo Platforms Ltd. All rights reserved. Vigilo® is a registered trademark of Vigilo Platforms Ltd.';
   static const String _segmentedLicenceMessage =
       'Enter the organisation name, organisation code, and 6-character activation code issued by Vigilo.';
 
@@ -296,7 +295,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       setState(() {
         _snapshot = snapshot;
         _activationError = false;
-        _activationMessage = 'Licence successfully activated.';
+        _activationMessage = 'Licence activated successfully.';
       });
     } on FormatException catch (error) {
       setState(() {
@@ -490,43 +489,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                   if (i < paragraphs.length - 1)
                                     const SizedBox(height: 14),
                                 ],
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 8),
                               ],
-                            ),
-                          ),
-                        ),
-                        // ── Footer button ────────────────────────────────
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: AnimatedScaleOnPress(
-                              child: SizedBox(
-                                height: 44,
-                                child: OutlinedButton(
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide(
-                                      color: colors.lineSoft,
-                                    ),
-                                    backgroundColor: colors.panel2
-                                        .withValues(alpha: 0.62),
-                                    shape: const StadiumBorder(),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                    ),
-                                  ),
-                                  onPressed: () =>
-                                      Navigator.of(dialogContext).pop(),
-                                  child: Text(
-                                    'Close',
-                                    style: TextStyle(
-                                      color: colors.text,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ),
                           ),
                         ),
@@ -611,7 +575,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
   String get _statusBannerText {
     switch (_displayState) {
       case _LicenceDisplayState.active:
-        return 'Licence successfully activated.';
+        return 'Licence activated successfully.';
       case _LicenceDisplayState.expired:
         return 'Enter a new licence to continue using the app.';
       case _LicenceDisplayState.required:
@@ -918,9 +882,9 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           ),
                           const SizedBox(height: 16),
                           _LicenceTypePanel(
-                            title: 'Licence and information (Pro)',
+                            title: 'Pro',
                             subtitle: Text(
-                              'Includes everything in Core plus additional coordination features.\n(Available in a future update.)',
+                              'Includes everything in Core plus additional coordination features.\n(Available in a future update)',
                               style: TextStyle(
                                 color: colors.textSoft,
                                 fontSize: 15,
@@ -1041,7 +1005,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                             _InfoRow('Issued By', _issuedByValue),
                             _InfoRow('Valid Until', _validUntilValue),
                             _InfoRow('Devices', _devicesValue),
-                            _InfoRow('Users', _usersValue),
+                            _InfoRow('Users', _usersValue, paddingBottom: 0),
                           ],
                         ],
                       ),
@@ -1149,13 +1113,13 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                     ],
                     const SizedBox(height: 16),
                     _SectionCard(
-                      title: 'Application Information',
+                      title: 'App Information',
                       child: Column(
                         children: [
                           _StaticInfoRow('App Version', _appVersion),
                           _StaticInfoRow('Build', _buildNumber),
-                          _StaticInfoRow('Platform', _platformLabel),
-                          const _StaticInfoRow('Operation Mode', 'Offline-first'),
+                          const _StaticInfoRow('Release Date', '26 June 2026'),
+                          const _StaticInfoRow('Storage', 'Local Device', paddingBottom: 0),
                         ],
                       ),
                     ),
@@ -1166,7 +1130,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'All exam session data is stored locally on this device.\nData is not transmitted to any external server.',
+                            'All exam session data is stored locally on this device. Data is not transmitted to any external server.',
                             style: TextStyle(
                               color: colors.textSoft,
                               height: 1.6,
@@ -1205,6 +1169,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           const _StaticInfoRow(
                             'Important',
                             'Export logs required for reporting or compliance before licence expiry or device changes',
+                            paddingBottom: 0,
                           ),
                         ],
                       ),
@@ -1382,7 +1347,7 @@ class _SectionCard extends StatelessWidget {
           const SizedBox(height: 12),
           Divider(
             color: colors.lineSoft.withValues(alpha: 0.8),
-            thickness: 2.0,
+            thickness: 1.0,
             height: 1,
           ),
           const SizedBox(height: 18),
@@ -1426,18 +1391,20 @@ class _InfoRow extends StatelessWidget {
     this.value, {
     this.singleLine = false,
     this.scaleDownValue = false,
+    this.paddingBottom = 14.0,
   });
 
   final String label;
   final String value;
   final bool singleLine;
   final bool scaleDownValue;
+  final double paddingBottom;
 
   @override
   Widget build(BuildContext context) {
     final colors = _VigiloColors(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: EdgeInsets.only(bottom: paddingBottom),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1522,7 +1489,12 @@ class _LicenceTypePanel extends StatelessWidget {
           ),
           if (subtitle != null) ...[const SizedBox(height: 10), subtitle!],
           const SizedBox(height: 14),
-          ...features.map(_FeatureBullet.new),
+          ...List.generate(features.length, (index) {
+            return _FeatureBullet(
+              features[index],
+              paddingBottom: index == features.length - 1 ? 0 : 10.0,
+            );
+          }),
         ],
       ),
     );
@@ -1530,15 +1502,16 @@ class _LicenceTypePanel extends StatelessWidget {
 }
 
 class _FeatureBullet extends StatelessWidget {
-  const _FeatureBullet(this.label);
+  const _FeatureBullet(this.label, {this.paddingBottom = 10.0});
 
   final String label;
+  final double paddingBottom;
 
   @override
   Widget build(BuildContext context) {
     final colors = _VigiloColors(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.only(bottom: paddingBottom),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1574,12 +1547,14 @@ class _StaticInfoRow extends StatelessWidget {
     this.value, {
     this.singleLine = false,
     this.scaleDownValue = false,
+    this.paddingBottom = 14.0,
   });
 
   final String label;
   final String value;
   final bool singleLine;
   final bool scaleDownValue;
+  final double paddingBottom;
 
   @override
   Widget build(BuildContext context) {
@@ -1588,6 +1563,7 @@ class _StaticInfoRow extends StatelessWidget {
       value,
       singleLine: singleLine,
       scaleDownValue: scaleDownValue,
+      paddingBottom: paddingBottom,
     );
   }
 }
