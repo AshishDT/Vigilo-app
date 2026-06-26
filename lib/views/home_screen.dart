@@ -14,6 +14,8 @@ import '../utils/export_logs.dart';
 import '../utils/id_generator.dart';
 import 'briefings_library_sheet.dart';
 import 'license_activation_screen.dart';
+import '../utils/screen_util.dart';
+import '../utils/notifications.dart';
 import 'officer_tools_screen.dart';
 import 'widgets/add_exam_sheet.dart';
 import 'widgets/confirmation_dialog.dart';
@@ -557,13 +559,14 @@ class _HomeScreenState extends State<HomeScreen>
     _saveState();
   });
 
-  void _toast(String msg) => ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(msg),
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(seconds: 3),
-    ),
-  );
+  void _toast(String title, [String? subtitle, IconData? icon]) {
+    NotificationService.show(
+      context,
+      title: title,
+      subtitle: subtitle,
+      icon: icon ?? Icons.info_outline_rounded,
+    );
+  }
 
   void _log(ExamCardData data, Incident inc) {
     final recordId = data.recordId;
@@ -585,11 +588,11 @@ class _HomeScreenState extends State<HomeScreen>
     final c = _cards[i];
     final recordId = c.recordId;
     if (recordId == null) {
-      _toast("Exam is not ready yet");
+      _toast("Not Ready", "Exam is not ready yet", Icons.warning_amber_rounded);
       return;
     }
     if (c.totalSeconds <= 0) {
-      _toast("Set Duration/Extra Time first");
+      _toast("Missing Information", "Set Duration/Extra Time first", Icons.warning_amber_rounded);
       return;
     }
 
@@ -617,7 +620,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
     _normalTimeWarningVibrationSent.remove(recordId);
     await _refreshCards();
-    _toast("Exam restarted");
+    _toast("Exam Restarted", "The exam timer has been reset", Icons.restart_alt_rounded);
     if (mounted) Navigator.pop(context);
   }
 
@@ -628,10 +631,10 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (c.isPaused) {
       await _sessionService.resumeSession(recordId);
-      _toast("Exam resumed");
+      _toast("Exam Resumed", "The exam timer has resumed", Icons.play_circle_fill_rounded);
     } else {
       await _sessionService.pauseSession(recordId);
-      _toast("Exam paused");
+      _toast("Exam Paused", "The exam timer has been paused", Icons.pause_circle_filled_rounded);
     }
 
     await _refreshCards();
@@ -648,7 +651,7 @@ class _HomeScreenState extends State<HomeScreen>
       reason: 'manual_end',
     );
     await _refreshCards();
-    _toast("Exam end");
+    _toast("Exam Ended", "The exam has been marked as finished", Icons.stop_circle_rounded);
     if (mounted) Navigator.pop(context);
   }
 
@@ -727,7 +730,7 @@ class _HomeScreenState extends State<HomeScreen>
           );
 
           if (_toMin(normalizedDuration) <= 0) {
-            _toast("Set a valid exam duration before saving.");
+            _toast("Invalid Duration", "Set a valid exam duration before saving.", Icons.warning_amber_rounded);
             return;
           }
 
@@ -773,7 +776,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
 
     if (result == true) {
-      _toast("Exam created");
+      _toast("Exam Created", "New exam successfully created", Icons.check_circle_rounded);
     }
   }
 
@@ -936,14 +939,14 @@ class _HomeScreenState extends State<HomeScreen>
                     _saveState();
                     if (nowOn) {
                       try {
-                        _toast("Vibration on for this exam");
+                        _toast("Vibration Enabled", "Vibration is on for this exam", Icons.vibration_rounded);
                         await HapticFeedback.vibrate();
                       } catch (_) {}
                     } else {
-                      _toast("Vibration off for this exam");
+                      _toast("Vibration Disabled", "Vibration is off for this exam", Icons.phonelink_erase_rounded);
                     }
                   } else {
-                    _toast("Open an exam to use Vibrate");
+                    _toast("Action Required", "Open an exam to use Vibrate", Icons.touch_app_rounded);
                   }
                 }
               },
@@ -973,23 +976,23 @@ class _HomeScreenState extends State<HomeScreen>
                             : "$archivedCount exams archived",
                       );
                     } else {
-                      _toast("No finished selected exams to archive");
+                      _toast("Archive Failed", "No finished selected exams to archive", Icons.archive_rounded);
                     }
-                    _toast("Archive mode off");
+                    _toast("Archive Mode", "Archive mode has been disabled", Icons.archive_outlined);
                     isArchiveMode = false;
                     setState(() {});
                     return;
                   }
 
                   if (_cards.isEmpty) {
-                    _toast("No exams available to archive");
+                    _toast("Archive Failed", "No exams available to archive", Icons.archive_rounded);
                     return;
                   }
                   if (_archivableExamCount == 0) {
-                    _toast("Only finished exams can be archived");
+                    _toast("Action Restricted", "Only finished exams can be archived", Icons.block_rounded);
                     return;
                   }
-                  _toast("Archive mode is on - tap finished exams to archive");
+                  _toast("Archive Mode", "Tap finished exams to archive them", Icons.archive_rounded);
                   isArchiveMode = true;
                   setState(() {});
                 }
@@ -1074,9 +1077,9 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                           );
                           if (v) {
-                            _toast("Auto-start at the scheduled time");
+                            _toast("Auto-Start Enabled", "The exam will auto-start at the scheduled time", Icons.timer_rounded);
                           } else {
-                            _toast("Auto start is off");
+                            _toast("Auto-Start Disabled", "Auto start is off", Icons.timer_off_rounded);
                           }
                           _saveState();
                         },
@@ -1124,7 +1127,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     );
                   } else {
-                    _toast("Open an exam to use Officer Tools");
+                    _toast("Action Required", "Open an exam to use Officer Tools", Icons.touch_app_rounded);
                   }
                 }
               },
@@ -1197,7 +1200,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 onSelect: () {
                                   if (!isArchiveView) {
                                     if (!_isArchivableExam(c)) {
-                                      _toast("Only finished exams can be archived");
+                                      _toast("Action Restricted", "Only finished exams can be archived", Icons.block_rounded);
                                       return;
                                     }
                                     setState(() {
@@ -1216,7 +1219,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     if (_archiveCards.isEmpty) {
                                       isArchiveView = false;
                                     }
-                                    _toast("Exam restored");
+                                    _toast("Exam Restored", "The exam has been successfully restored", Icons.settings_backup_restore_rounded);
                                     _saveState();
                                     setState(() {});
                                   }
@@ -1466,9 +1469,9 @@ class _HomeScreenState extends State<HomeScreen>
                 isArchiveView = !isArchiveView;
                 isArchiveMode = false;
                 if (isArchiveView) {
-                  _toast(" Viewing archived exams");
+                  _toast("Viewing Archived Exams", "Archived exam records are shown below", Icons.archive_rounded);
                 } else {
-                  _toast(" Viewing active exams");
+                  _toast("Viewing Active Exams", "Current running and scheduled exams are shown below", Icons.play_circle_fill_rounded);
                 }
               }),
             ),

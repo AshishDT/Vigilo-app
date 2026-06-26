@@ -12,6 +12,7 @@ import '../enums/brief_type.dart';
 import '../models/briefing_model.dart';
 import '../services/briefings_storage_service.dart';
 import '../services/session_service.dart';
+import '../utils/notifications.dart';
 import 'file_view_screen.dart';
 
 enum BriefingsLibraryInitialAction { none, uploadPdf, capturePhoto }
@@ -144,7 +145,11 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
       _loading = false;
     });
     if (removedMissing > 0 && mounted) {
-      _toast('$removedMissing missing briefing file(s) were removed');
+      _toast(
+        'Files Removed',
+        '$removedMissing missing briefing file(s) were removed',
+        Icons.delete_outline_rounded,
+      );
     }
     await _runInitialActionIfNeeded();
   }
@@ -164,9 +169,12 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
     }
   }
 
-  void _toast(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+  void _toast(String title, [String? subtitle, IconData? icon]) {
+    NotificationService.show(
+      context,
+      title: title,
+      subtitle: subtitle,
+      icon: icon ?? Icons.info_outline_rounded,
     );
   }
 
@@ -190,7 +198,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
       await action();
     } catch (e) {
       if (mounted) {
-        _toast('Operation failed: $e');
+        _toast('Operation Failed', e.toString(), Icons.error_outline_rounded);
       }
     } finally {
       if (mounted) {
@@ -232,7 +240,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
         ..._items,
       ];
       await _saveLibrary(updated);
-      _toast('PDF uploaded');
+      _toast('Upload Successful', 'PDF uploaded', Icons.check_circle_outline_rounded);
     });
   }
 
@@ -264,7 +272,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
         ..._items,
       ];
       await _saveLibrary(updated);
-      _toast('Photo captured');
+      _toast('Capture Successful', 'Photo captured', Icons.camera_alt_outlined);
     });
   }
 
@@ -443,7 +451,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
         }
       } catch (_) {}
 
-      _toast('Briefing deleted');
+      _toast('Briefing Deleted', 'The briefing has been removed', Icons.delete_outline_rounded);
     });
   }
 
@@ -532,7 +540,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
         .toList(growable: false);
     final emptySelectionMessage = widget.emptySelectionMessage;
     if (selected.isEmpty && emptySelectionMessage != null) {
-      _toast(emptySelectionMessage);
+      _toast('Selection Empty', emptySelectionMessage, Icons.warning_amber_rounded);
       return;
     }
     widget.onSelectionApplied?.call(selected);

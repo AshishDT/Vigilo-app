@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../models/exam_card_data.dart';
 import '../services/csv_export_service.dart';
+import 'notifications.dart';
 
 final CsvExportService _csvExportService = CsvExportService();
 
@@ -13,7 +14,7 @@ void exportCopy(ExamCardData exam, BuildContext context) async {
     final recordId = exam.recordId;
     if (recordId == null) {
       if (!context.mounted) return;
-      _toast("Unable to export: exam is not persisted yet", context);
+      _toast("Export Failed", "Exam is not persisted yet", Icons.warning_amber_rounded, context);
       return;
     }
 
@@ -22,10 +23,10 @@ void exportCopy(ExamCardData exam, BuildContext context) async {
     );
     await Clipboard.setData(ClipboardData(text: logText));
     if (!context.mounted) return;
-    _toast("Export log copied to clipboard", context);
+    _toast("Export Successful", "Export log copied to clipboard", Icons.copy_rounded, context);
   } catch (e) {
     if (!context.mounted) return;
-    _toast("Failed to copy export log: $e", context);
+    _toast("Export Failed", "Failed to copy export log: $e", Icons.error_outline_rounded, context);
   }
 }
 
@@ -34,7 +35,7 @@ void exportCsvDownload(ExamCardData exam, BuildContext context) async {
     final recordId = exam.recordId;
     if (recordId == null) {
       if (!context.mounted) return;
-      _toast("Unable to export: exam is not persisted yet", context);
+      _toast("Export Failed", "Exam is not persisted yet", Icons.warning_amber_rounded, context);
       return;
     }
     final file = await _csvExportService.exportRecordToCsv(
@@ -44,7 +45,7 @@ void exportCsvDownload(ExamCardData exam, BuildContext context) async {
     _showLogSavedSnackBar(context, file.path);
   } catch (e) {
     if (!context.mounted) return;
-    _toast("Failed to save export log: $e", context);
+    _toast("Export Failed", "Failed to save export log: $e", Icons.error_outline_rounded, context);
   }
 }
 
@@ -53,7 +54,7 @@ void exportCsvShare(ExamCardData exam, BuildContext context) async {
     final recordId = exam.recordId;
     if (recordId == null) {
       if (!context.mounted) return;
-      _toast("Unable to export: exam is not persisted yet", context);
+      _toast("Export Failed", "Exam is not persisted yet", Icons.warning_amber_rounded, context);
       return;
     }
 
@@ -67,10 +68,10 @@ void exportCsvShare(ExamCardData exam, BuildContext context) async {
     );
     await SharePlus.instance.share(params);
     if (!context.mounted) return;
-    _toast("Export log shared successfully", context);
+    _toast("Export Successful", "Export log shared successfully", Icons.share_rounded, context);
   } catch (e) {
     if (!context.mounted) return;
-    _toast("Failed to share export log: $e", context);
+    _toast("Export Failed", "Failed to share export log: $e", Icons.error_outline_rounded, context);
   }
 }
 
@@ -81,33 +82,26 @@ Future<void> _openLog(String filePath, BuildContext context) async {
     final msg = result.message.trim().isNotEmpty
         ? result.message
         : 'Unknown error';
-    _toast("Could not open export log: $msg", context);
+    _toast("Open Failed", "Could not open export log: $msg", Icons.error_outline_rounded, context);
   }
 }
 
 void _showLogSavedSnackBar(BuildContext context, String filePath) {
-  final messenger = ScaffoldMessenger.of(context);
-  messenger.hideCurrentSnackBar();
-  messenger.showSnackBar(
-    SnackBar(
-      content: Text("Export log saved: $filePath"),
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(seconds: 6),
-      action: SnackBarAction(
-        label: 'Open',
-        onPressed: () {
-          _openLog(filePath, context);
-        },
-      ),
-    ),
+  NotificationService.show(
+    context,
+    title: "Export Saved",
+    subtitle: "Tap to open: $filePath",
+    icon: Icons.save_rounded,
+    onTap: () {
+      _openLog(filePath, context);
+    },
   );
 }
 
-void _toast(String msg, BuildContext context) =>
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-      ),
+void _toast(String title, String subtitle, IconData icon, BuildContext context) =>
+    NotificationService.show(
+      context,
+      title: title,
+      subtitle: subtitle,
+      icon: icon,
     );

@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/constants.dart';
+import '../utils/id_generator.dart';
+import '../utils/screen_util.dart';
+import '../utils/notifications.dart';
 
 import '../services/license_key_codec.dart';
 import '../services/license_service.dart';
@@ -326,11 +329,11 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       if (!mounted) return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('No email app is available on this device.'),
-        behavior: SnackBarBehavior.floating,
-      ),
+    NotificationService.show(
+      context,
+      title: "Error",
+      subtitle: 'No email app is available on this device.',
+      icon: Icons.error_outline_rounded,
     );
   }
 
