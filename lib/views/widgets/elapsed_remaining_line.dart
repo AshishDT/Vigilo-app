@@ -18,57 +18,49 @@ class ElapsedRemainingLine extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Elapsed',
-                style: TextStyle(
-                  color: vColors.textSoft,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                elapsedStr,
-                style: TextStyle(
-                  color: vColors.text,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                child: Text(
-                  '|',
-                  style: TextStyle(
-                    color: vColors.textSoft,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              Text(
-                'Remaining',
-                style: TextStyle(
-                  color: vColors.textSoft,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                remainingStr,
-                style: TextStyle(
-                  color: vColors.text,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
+        Text(
+          'Elapsed',
+          style: TextStyle(
+            color: vColors.textSoft,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          elapsedStr,
+          style: TextStyle(
+            color: vColors.text,
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Text(
+            '|',
+            style: TextStyle(
+              color: vColors.textSoft,
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Text(
+          'Remaining',
+          style: TextStyle(
+            color: vColors.textSoft,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          remainingStr,
+          style: TextStyle(
+            color: vColors.text,
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
           ),
         ),
       ],
