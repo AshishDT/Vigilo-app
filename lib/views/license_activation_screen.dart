@@ -37,7 +37,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       'Vigilo ERC is a digital exam room control system for exam officers and invigilators. '
       'It supports live timing, structured event logging, incident capture, and exportable records while remaining offline-first for core operation.';
   static const String _aboutLegalText =
-      'Copyright © 2026 Vigilo Platforms Ltd. All rights reserved. Vigilo® is a registered trademark of Vigilo Platforms Ltd.';
+      'Copyright © 2026 Vigilo\u00A0Platforms\u00A0Ltd. All rights reserved. Vigilo® is a registered trademark of Vigilo\u00A0Platforms\u00A0Ltd.';
   static const String _segmentedLicenceMessage =
       'Enter the organisation name, organisation code, and 6-character activation code issued by Vigilo.';
 
@@ -1473,7 +1473,7 @@ class _LicenceTypePanel extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(
-        color: colors.panel2,
+        color: colors.panel,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: colors.line),
       ),
