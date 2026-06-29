@@ -1288,6 +1288,27 @@ class _HomeScreenState extends State<HomeScreen>
                                   }
                                   String res = await pickDur(c.normalDuration, "Set Duration");
                                   if (res != "") {
+                                    int newNormalSec = _toMin(res) * 60;
+                                    int elapsedSec = (c.progress * c.totalSeconds).round();
+
+                                    if (c.phase == ExamPhase.normal && newNormalSec < elapsedSec) {
+                                      NotificationService.show(
+                                        context,
+                                        title: "Invalid Duration",
+                                        subtitle: "Cannot reduce duration below elapsed time.",
+                                        icon: Icons.error_outline_rounded,
+                                      );
+                                      return;
+                                    } else if (c.phase == ExamPhase.extra && newNormalSec + c.extraSeconds < elapsedSec) {
+                                      NotificationService.show(
+                                        context,
+                                        title: "Invalid Duration",
+                                        subtitle: "Cannot reduce total time below elapsed time.",
+                                        icon: Icons.error_outline_rounded,
+                                      );
+                                      return;
+                                    }
+
                                     DateTime now = DateTime.now();
                                     DateTime dateTime1 = DateTime(
                                       now.year,
@@ -1338,6 +1359,19 @@ class _HomeScreenState extends State<HomeScreen>
                                   }
                                   String res = await pickDur(c.extraTime, "Add Extra Time");
                                   if (res != "") {
+                                    int newExtraSec = _toMin(res) * 60;
+                                    int elapsedSec = (c.progress * c.totalSeconds).round();
+
+                                    if (c.phase == ExamPhase.extra && c.normalSeconds + newExtraSec < elapsedSec) {
+                                      NotificationService.show(
+                                        context,
+                                        title: "Invalid Extra Time",
+                                        subtitle: "Cannot reduce total time below elapsed time.",
+                                        icon: Icons.error_outline_rounded,
+                                      );
+                                      return;
+                                    }
+
                                     final previousMinutes = _toMin(c.extraTime);
                                     final updatedMinutes = _toMin(res);
 
