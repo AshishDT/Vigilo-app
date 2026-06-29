@@ -195,9 +195,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
   final List<String> selectedInvigilators = [];
   List<String> presetMessages = [
-    "Runner required in H2",
+    "Runner H2",
+    "Check seating plan",
     "Candidate requires paper",
-    "Please check seating plan",
+    "15 minutes remaining",
   ];
   List<Message> messageLog = [];
   final TextEditingController customMessageCtrl = TextEditingController();
@@ -548,9 +549,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     setState(() {
       presetMessages = cleaned.isEmpty
           ? [
-              "Runner required in H2",
+              "Runner H2",
+              "Check seating plan",
               "Candidate requires paper",
-              "Please check seating plan",
+              "15 minutes remaining",
             ]
           : cleaned;
     });
