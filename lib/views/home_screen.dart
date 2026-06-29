@@ -48,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen>
   final List<ExamCardData> _archiveCards = [];
   final SessionService _sessionService = SessionService();
   final Set<String> _normalTimeWarningVibrationSent = <String>{};
+  final Set<String> _extraTimeWarningVibrationSent = <String>{};
   bool _tickInFlight = false;
   bool _isAdjustingProgress = false;
 
@@ -152,6 +153,7 @@ class _HomeScreenState extends State<HomeScreen>
         .whereType<String>()
         .toSet();
     _normalTimeWarningVibrationSent.retainAll(activeIds);
+    _extraTimeWarningVibrationSent.retainAll(activeIds);
     if (!mounted) return;
     setState(() {
       _cards
@@ -488,12 +490,14 @@ class _HomeScreenState extends State<HomeScreen>
     if (autoStartTriggered || ended) {
       await _refreshCards();
       await _vibrateForTenMinutesBeforeNormalEnd();
+      await _vibrateForTenMinutesBeforeExtraEnd();
       return;
     }
 
     // UI tick refresh only; no per-second persistence.
     await _refreshCards();
     await _vibrateForTenMinutesBeforeNormalEnd();
+    await _vibrateForTenMinutesBeforeExtraEnd();
   }
 
   int _elapsedSecondsForWarning(ExamCardData card) {
@@ -523,6 +527,35 @@ class _HomeScreenState extends State<HomeScreen>
       if (currentElapsedSeconds < thresholdSeconds) continue;
 
       _normalTimeWarningVibrationSent.add(id);
+      shouldVibrate = true;
+    }
+
+    if (!shouldVibrate) return;
+    await _triggerWarningVibration();
+  }
+
+  Future<void> _vibrateForTenMinutesBeforeExtraEnd() async {
+    bool shouldVibrate = false;
+
+    for (final current in _cards) {
+      final id = current.recordId;
+      if (id == null) continue;
+      if (!current.vibrateOn) continue;
+      if (_extraTimeWarningVibrationSent.contains(id)) continue;
+      if (!current.running && !current.isPaused && current.progress <= 0.0) {
+        continue;
+      }
+
+      final extraSeconds = current.extraSeconds;
+      if (extraSeconds <= 0) continue;
+
+      final totalSeconds = current.totalSeconds;
+      final thresholdSeconds = (totalSeconds - 600).clamp(current.normalSeconds, totalSeconds);
+      final currentElapsedSeconds = _elapsedSecondsForWarning(current);
+      if (currentElapsedSeconds >= totalSeconds) continue;
+      if (currentElapsedSeconds < thresholdSeconds) continue;
+
+      _extraTimeWarningVibrationSent.add(id);
       shouldVibrate = true;
     }
 
@@ -620,6 +653,7 @@ class _HomeScreenState extends State<HomeScreen>
       extraTimeMs: _cards[i].extraSeconds * 1000,
     );
     _normalTimeWarningVibrationSent.remove(recordId);
+    _extraTimeWarningVibrationSent.remove(recordId);
     await _refreshCards();
     _toast("Exam Restarted", "The exam timer has been reset", Icons.restart_alt_rounded, NotificationType.information);
     if (mounted) Navigator.pop(context);

@@ -213,19 +213,19 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('30-day evaluation licence for schools testing Vigilo ERC.'),
+        find.text('30-day evaluation licence for organisation testing Vigilo ERC.'),
         findsOneWidget,
       );
       expect(find.text('Officer Tools'), findsOneWidget);
       expect(find.text('Basic exam session export'), findsOneWidget);
       expect(
-        find.text('Full operational licence for schools running examinations.'),
+        find.text('Full operational licence for organisation running examinations.'),
         findsOneWidget,
       );
       expect(find.text('Exam session export'), findsOneWidget);
       expect(
         find.text(
-          'Includes everything in Core plus additional coordination features.\n(Available in a future update.)',
+          'Includes everything in Core plus additional coordination features.\n(Available in a future update)',
         ),
         findsOneWidget,
       );
