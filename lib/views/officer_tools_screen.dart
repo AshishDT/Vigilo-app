@@ -90,6 +90,9 @@ class _OtSheetColorPalette {
   Color get blueSoft =>
       _isDark ? const Color(0xFF8FD4FF) : const Color(0xFF3B82F6);
 
+  Color get green =>
+      _isDark ? const Color(0xFF5ED68A) : const Color(0xFF249B62);
+
   Color get orange =>
       _isDark ? const Color(0xFFFFB64D) : const Color(0xFFD97706);
 
@@ -1243,8 +1246,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 Expanded(
                   child: _setupTimingCell(
                     'START',
-                    _setupDisplayTime(data.start),
-                    _setupPhaseLabel(data.phase) == 'FINISHED'
+                    _setupDisplayTime(
+                      data.phase == ExamPhase.extra
+                          ? data.normalEnd
+                          : data.start,
+                    ),
+                    _setupPhaseLabel(data.phase) == 'Finished'
                         ? Colors.grey
                         : _OtSheetColors.blue,
                   ),
@@ -1253,8 +1260,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 Expanded(
                   child: _setupTimingCell(
                     'END',
-                    _setupDisplayTime(data.end),
-                    _setupPhaseLabel(data.phase) == 'FINISHED'
+                    _setupDisplayTime(
+                      data.phase == ExamPhase.extra
+                          ? data.extraEnd
+                          : data.end,
+                    ),
+                    _setupPhaseLabel(data.phase) == 'Finished'
                         ? Colors.grey
                         : _OtSheetColors.blue,
                   ),
@@ -1264,10 +1275,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   child: _setupTimingCell(
                     'PHASE',
                     _setupPhaseLabel(data.phase),
-                    _setupPhaseLabel(data.phase) == 'EXTRA'
+                    _setupPhaseLabel(data.phase) == 'Extra Time'
                         ? _OtSheetColors.orange
-                        : _setupPhaseLabel(data.phase) == 'FINISHED'
-                        ? Colors.grey
+                        : _setupPhaseLabel(data.phase) == 'Finished'
+                        ? _OtSheetColors.green
                         : _OtSheetColors.blue,
                   ),
                 ),
@@ -1282,11 +1293,11 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   String _setupPhaseLabel(ExamPhase phase) {
     switch (phase) {
       case ExamPhase.normal:
-        return 'NORMAL';
+        return 'Normal Time';
       case ExamPhase.extra:
-        return 'EXTRA';
+        return 'Extra Time';
       case ExamPhase.finished:
-        return 'FINISHED';
+        return 'Finished';
     }
   }
 
@@ -1594,7 +1605,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             onChanged: disabled ? null : (_) => _updateOperationalSetup(),
             decoration: InputDecoration(
               hintText:
-                  'Add exam notes, special arrangements and briefing references.',
+                  'Add exam notes, special arrangements and briefing references',
               hintStyle: TextStyle(
                 color: _OtSheetColors.textFaint,
                 fontSize: 15,
@@ -1608,6 +1619,168 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCurrentStatusSection(ExamCardData data) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "CURRENT STATUS",
+          style: TextStyle(
+            color: _OtSheetColors.blueSoft,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.3,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Builder(
+          builder: (context) {
+            final Color statusColor;
+            Color borderColor = _OtSheetColors.lineSoft;
+            final IconData statusIcon;
+            final String statusTitle;
+
+            if (_isExamCompleted) {
+              statusColor = _OtSheetColors.green;
+              statusIcon = Icons.check_circle_outline_rounded;
+              statusTitle = "Exam Completed";
+            } else if (data.isPaused) {
+              statusColor = _OtSheetColors.orange;
+              statusIcon = Icons.pause_circle_outline_rounded;
+              statusTitle = "Exam Paused";
+            } else if (data.phase == ExamPhase.extra) {
+              statusColor = _OtSheetColors.orange;
+              borderColor = _OtSheetColors.orange;
+              statusIcon = Icons.access_time_rounded;
+              statusTitle = "Extra Time Active";
+            } else {
+              statusColor = _OtSheetColors.blue;
+              statusIcon = Icons.access_time_rounded;
+              statusTitle = "Normal Time Active";
+            }
+
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              decoration: BoxDecoration(
+                color: _OtSheetColors.panel2.withValues(
+                  alpha: 0.7,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: borderColor,
+                  width: .7,
+                ),
+              ),
+              child: Row(
+                spacing: 16,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(
+                        alpha: .2,
+                      ),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: statusColor,
+                      ),
+                    ),
+                    child: Icon(
+                      statusIcon,
+                      color: statusColor,
+                      size: 24,
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          statusTitle,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          spacing: 64,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Started",
+                                  style: TextStyle(
+                                    color: _OtSheetColors.textSoft,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _setupDisplayTime(
+                                    data.phase == ExamPhase.extra
+                                        ? data.normalEnd
+                                        : data.start,
+                                  ),
+                                  style: TextStyle(
+                                    color: _OtSheetColors.text,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _isExamCompleted
+                                      ? "Ended"
+                                      : "Expected End",
+                                  style: TextStyle(
+                                    color: _OtSheetColors.textSoft,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _setupDisplayTime(
+                                    data.phase == ExamPhase.extra
+                                        ? data.extraEnd
+                                        : data.end,
+                                  ),
+                                  style: TextStyle(
+                                    color: _OtSheetColors.text,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 
@@ -1629,7 +1802,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   label: 'Exam Time',
                   value: _setupTimeRange(),
                   valueColor: _OtSheetColors.blue,
-                  isCompleted: _setupPhaseLabel(data.phase) == 'FINISHED',
+                  isCompleted: _setupPhaseLabel(data.phase) == 'Finished',
                 ),
                 _setupRowDivider(),
                 _setupEditableTextRow(
@@ -1643,14 +1816,14 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   label: 'Duration',
                   value: data.normalDuration,
                   valueColor: _OtSheetColors.blue,
-                  isCompleted: _setupPhaseLabel(data.phase) == 'FINISHED',
+                  isCompleted: _setupPhaseLabel(data.phase) == 'Finished',
                 ),
                 _setupRowDivider(),
                 _setupInfoRow(
                   label: 'Extra Time',
                   value: data.extraTime,
                   valueColor: _OtSheetColors.orange,
-                  isCompleted: _setupPhaseLabel(data.phase) == 'FINISHED',
+                  isCompleted: _setupPhaseLabel(data.phase) == 'Finished',
                 ),
               ],
             ),
@@ -2764,173 +2937,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              "CURRENT STATUS",
-                              style: TextStyle(
-                                color: _OtSheetColors.blueSoft,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Builder(
-                              builder: (context) {
-                                final Color statusColor;
-                                Color borderColor = _OtSheetColors.lineSoft;
-                                final IconData statusIcon;
-                                final String statusTitle;
-
-                                if (_isExamCompleted) {
-                                  statusColor = Colors.grey;
-                                  statusIcon =
-                                      Icons.check_circle_outline_rounded;
-                                  statusTitle = "Exam Completed";
-                                } else if (data.isPaused) {
-                                  statusColor = _OtSheetColors.orange;
-                                  statusIcon =
-                                      Icons.pause_circle_outline_rounded;
-                                  statusTitle = "Exam Paused";
-                                } else if (data.phase == ExamPhase.extra) {
-                                  statusColor = _OtSheetColors.orange;
-                                  borderColor = _OtSheetColors.orange;
-                                  statusIcon = Icons.access_time_rounded;
-                                  statusTitle = "Extra Time Active";
-                                } else {
-                                  statusColor = _OtSheetColors.blue;
-                                  statusIcon = Icons.access_time_rounded;
-                                  statusTitle = "Normal Time Active";
-                                }
-
-                                return Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 16,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _OtSheetColors.panel2.withValues(
-                                      alpha: 0.7,
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: borderColor,
-                                      width: .7,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    spacing: 16,
-                                    children: [
-                                      Container(
-                                        width: 44,
-                                        height: 44,
-                                        decoration: BoxDecoration(
-                                          color: statusColor.withValues(
-                                            alpha: .2,
-                                          ),
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: statusColor,
-                                          ),
-                                        ),
-                                        child: Icon(
-                                          statusIcon,
-                                          color: statusColor,
-                                          size: 24,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              statusTitle,
-                                              style: TextStyle(
-                                                color: statusColor,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 12),
-                                            Row(
-                                              spacing: 64,
-                                              children: [
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      "Started",
-                                                      style: TextStyle(
-                                                        color: _OtSheetColors
-                                                            .textSoft,
-                                                        fontSize: 13,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    Text(
-                                                      _setupDisplayTime(
-                                                        data.phase == ExamPhase.extra
-                                                            ? data.normalEnd
-                                                            : data.start,
-                                                      ),
-                                                      style: TextStyle(
-                                                        color:
-                                                            _OtSheetColors.text,
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.w900,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      _isExamCompleted
-                                                          ? "Ended"
-                                                          : "Expected End",
-                                                      style: TextStyle(
-                                                        color: _OtSheetColors
-                                                            .textSoft,
-                                                        fontSize: 13,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    Text(
-                                                      _setupDisplayTime(
-                                                        data.phase == ExamPhase.extra
-                                                            ? data.extraEnd
-                                                            : data.end,
-                                                      ),
-                                                      style: TextStyle(
-                                                        color:
-                                                            _OtSheetColors.text,
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.w900,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 24),
+                            _buildCurrentStatusSection(data),
                             Text(
                               "CONTROL ACTIONS",
                               style: TextStyle(
@@ -2954,7 +2961,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   icon: data.isPaused
                                       ? Icons.play_arrow_rounded
                                       : Icons.pause_rounded,
-                                  color: _setupPhaseLabel(data.phase) == 'EXTRA'
+                                  color: _setupPhaseLabel(data.phase) == 'Extra Time'
                                       ? _OtSheetColors.orange
                                       : _OtSheetColors.blue,
                                   onTap: widget.onPause,
@@ -2964,7 +2971,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   title: "Restart Exam",
                                   subtitle: "Restart the exam timer",
                                   icon: Icons.restart_alt_rounded,
-                                  color: _setupPhaseLabel(data.phase) == 'EXTRA'
+                                  color: _setupPhaseLabel(data.phase) == 'Extra Time'
                                       ? _OtSheetColors.orange
                                       : _OtSheetColors.textSoft,
                                   onTap: widget.onReStart,
