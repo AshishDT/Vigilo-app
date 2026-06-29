@@ -797,7 +797,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   int get _activeExamCount =>
-      _cards.where((c) => c.running && c.phase != ExamPhase.finished).length;
+      _cards.where((c) => (c.running || c.isPaused) && c.phase != ExamPhase.finished).length;
 
   bool _isArchivableExam(ExamCardData card) {
     final isFinished = card.phase == ExamPhase.finished || card.progress >= 1.0;
