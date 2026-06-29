@@ -114,6 +114,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   final TextEditingController _setupInvigilatorsController =
       TextEditingController();
   final TextEditingController _setupNotesController = TextEditingController();
+  late final FocusNode _setupInvigilatorsFocus = FocusNode();
+  late final FocusNode _setUpByFocus = FocusNode();
+  late final FocusNode _setupNotesFocus = FocusNode();
   int? _expandedLogIndex;
   int? _expandedRecentIncidentIndex;
   final Set<String> _expandedPrivacySections = {};
@@ -318,6 +321,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     _setupRoomController.dispose();
     _setupInvigilatorsController.dispose();
     _setupNotesController.dispose();
+    _setupInvigilatorsFocus.dispose();
+    _setUpByFocus.dispose();
+    _setupNotesFocus.dispose();
     super.dispose();
   }
 
@@ -1403,6 +1409,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     required TextEditingController controller,
     required ValueChanged<String> onChanged,
     bool disabled = false,
+    FocusNode? focusNode,
+    FocusNode? nextFocusNode,
+    TextInputAction? textInputAction,
   }) {
     final hintText = switch (label) {
       'Invigilators' => 'Add invigilator names',
@@ -1434,6 +1443,13 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 child: TextField(
                   readOnly: disabled,
                   controller: controller,
+                  focusNode: focusNode,
+                  textInputAction: textInputAction ?? (nextFocusNode != null ? TextInputAction.next : TextInputAction.done),
+                  onSubmitted: (_) {
+                    if (nextFocusNode != null) {
+                      nextFocusNode.requestFocus();
+                    }
+                  },
                   cursorColor: _OtSheetColors.blueSoft,
                   textAlign: TextAlign.right,
                   minLines: 1,
@@ -1561,6 +1577,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           ignoring: disabled,
           child: TextField(
             controller: _setupNotesController,
+            focusNode: _setupNotesFocus,
+            textInputAction: TextInputAction.done,
             cursorColor: _OtSheetColors.blueSoft,
             minLines: 3,
             maxLines: 5,
@@ -1644,12 +1662,16 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   controller: _setupInvigilatorsController,
                   disabled: _isExamCompleted,
                   onChanged: (_) => _updateOperationalSetup(),
+                  focusNode: _setupInvigilatorsFocus,
+                  nextFocusNode: _setUpByFocus,
                 ),
                 _setupRowDivider(),
                 _setupEditableTextRow(
                   label: 'Set Up By',
                   controller: _setUpByController,
                   disabled: _isExamCompleted,
+                  focusNode: _setUpByFocus,
+                  nextFocusNode: _setupNotesFocus,
                   onChanged: (value) {
                     _updateData(
                       _currentData.copyWith(
@@ -4645,6 +4667,8 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
   final TextEditingController _messageController = TextEditingController();
   late final TextEditingController _requestTypeController =
       TextEditingController();
+  late final FocusNode _requestTypeFocus = FocusNode();
+  late final FocusNode _messageFocus = FocusNode();
 
   String _priority = 'Normal';
 
@@ -4658,6 +4682,8 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
     _roomController.dispose();
     _messageController.dispose();
     _requestTypeController.dispose();
+    _requestTypeFocus.dispose();
+    _messageFocus.dispose();
     super.dispose();
   }
 
@@ -4884,6 +4910,11 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                             ),
                             child: TextField(
                               controller: _requestTypeController,
+                              focusNode: _requestTypeFocus,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                _messageFocus.requestFocus();
+                              },
                               cursorColor: _OtSheetColors.blueSoft,
                               style: TextStyle(
                                 color: _OtSheetColors.text,
@@ -5026,6 +5057,8 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                             ),
                             child: TextField(
                               controller: _messageController,
+                              focusNode: _messageFocus,
+                              textInputAction: TextInputAction.done,
                               minLines: 3,
                               maxLines: 5,
                               cursorColor: _OtSheetColors.blueSoft,
@@ -5157,12 +5190,18 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
   final TextEditingController _studentController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
   final TextEditingController _actionController = TextEditingController();
+  late final FocusNode _studentFocus = FocusNode();
+  late final FocusNode _detailsFocus = FocusNode();
+  late final FocusNode _actionFocus = FocusNode();
 
   @override
   void dispose() {
     _studentController.dispose();
     _detailsController.dispose();
     _actionController.dispose();
+    _studentFocus.dispose();
+    _detailsFocus.dispose();
+    _actionFocus.dispose();
     super.dispose();
   }
 
@@ -5405,6 +5444,11 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                             ),
                             child: TextField(
                               controller: _studentController,
+                              focusNode: _studentFocus,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                _detailsFocus.requestFocus();
+                              },
                               cursorColor: _OtSheetColors.blueSoft,
                               style: TextStyle(
                                 color: _OtSheetColors.text,
@@ -5449,6 +5493,11 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                             ),
                             child: TextField(
                               controller: _detailsController,
+                              focusNode: _detailsFocus,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                _actionFocus.requestFocus();
+                              },
                               minLines: 3,
                               maxLines: 5,
                               cursorColor: _OtSheetColors.blueSoft,
@@ -5496,6 +5545,8 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                             ),
                             child: TextField(
                               controller: _actionController,
+                              focusNode: _actionFocus,
+                              textInputAction: TextInputAction.done,
                               cursorColor: _OtSheetColors.blueSoft,
                               style: TextStyle(
                                 color: _OtSheetColors.text,
@@ -5585,12 +5636,18 @@ class _MalpracticeIncidentDialogState
   final TextEditingController _studentController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
   final TextEditingController _actionController = TextEditingController();
+  late final FocusNode _studentFocus = FocusNode();
+  late final FocusNode _detailsFocus = FocusNode();
+  late final FocusNode _actionFocus = FocusNode();
 
   @override
   void dispose() {
     _studentController.dispose();
     _detailsController.dispose();
     _actionController.dispose();
+    _studentFocus.dispose();
+    _detailsFocus.dispose();
+    _actionFocus.dispose();
     super.dispose();
   }
 
@@ -5864,6 +5921,11 @@ class _MalpracticeIncidentDialogState
                             ),
                             child: TextField(
                               controller: _studentController,
+                              focusNode: _studentFocus,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                _detailsFocus.requestFocus();
+                              },
                               cursorColor: _OtSheetColors.blueSoft,
                               style: TextStyle(
                                 color: _OtSheetColors.text,
@@ -5908,6 +5970,11 @@ class _MalpracticeIncidentDialogState
                             ),
                             child: TextField(
                               controller: _detailsController,
+                              focusNode: _detailsFocus,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                _actionFocus.requestFocus();
+                              },
                               minLines: 3,
                               maxLines: 5,
                               cursorColor: _OtSheetColors.blueSoft,
@@ -5955,6 +6022,8 @@ class _MalpracticeIncidentDialogState
                             ),
                             child: TextField(
                               controller: _actionController,
+                              focusNode: _actionFocus,
+                              textInputAction: TextInputAction.done,
                               cursorColor: _OtSheetColors.blueSoft,
                               style: TextStyle(
                                 color: _OtSheetColors.text,
@@ -6045,6 +6114,9 @@ class _ToiletVisitIncidentDialogState
   final TextEditingController _studentController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _actionController = TextEditingController();
+  late final FocusNode _studentFocus = FocusNode();
+  late final FocusNode _notesFocus = FocusNode();
+  late final FocusNode _actionFocus = FocusNode();
 
   int _durationMinutes = 5;
 
@@ -6053,6 +6125,9 @@ class _ToiletVisitIncidentDialogState
     _studentController.dispose();
     _notesController.dispose();
     _actionController.dispose();
+    _studentFocus.dispose();
+    _notesFocus.dispose();
+    _actionFocus.dispose();
     super.dispose();
   }
 
@@ -6338,6 +6413,11 @@ class _ToiletVisitIncidentDialogState
                             ),
                             child: TextField(
                               controller: _studentController,
+                              focusNode: _studentFocus,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                _notesFocus.requestFocus();
+                              },
                               cursorColor: _OtSheetColors.blueSoft,
                               style: TextStyle(
                                 color: _OtSheetColors.text,
@@ -6391,6 +6471,13 @@ class _ToiletVisitIncidentDialogState
                             ),
                             child: TextField(
                               controller: _notesController,
+                              focusNode: _notesFocus,
+                              textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                _actionFocus.requestFocus();
+                              },
+                              minLines: 3,
+                              maxLines: 5,
                               cursorColor: _OtSheetColors.blueSoft,
                               style: TextStyle(
                                 color: _OtSheetColors.text,
@@ -6435,6 +6522,8 @@ class _ToiletVisitIncidentDialogState
                             ),
                             child: TextField(
                               controller: _actionController,
+                              focusNode: _actionFocus,
+                              textInputAction: TextInputAction.done,
                               cursorColor: _OtSheetColors.blueSoft,
                               style: TextStyle(
                                 color: _OtSheetColors.text,

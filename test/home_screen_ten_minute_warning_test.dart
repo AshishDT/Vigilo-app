@@ -129,7 +129,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(home: HomeScreen(dark: false, onToggleTheme: () {})),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
       
       // Wait for tick
       await tester.pump(const Duration(seconds: 2));

@@ -43,6 +43,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
 
   final TextEditingController _schoolNameController = TextEditingController();
   final TextEditingController _schoolNumberController = TextEditingController();
+  late final FocusNode _schoolNameFocus = FocusNode();
+  late final FocusNode _schoolNumberFocus = FocusNode();
   late final List<TextEditingController> _validationControllers;
   late final List<FocusNode> _validationFocusNodes;
 
@@ -71,6 +73,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
   void dispose() {
     _schoolNameController.dispose();
     _schoolNumberController.dispose();
+    _schoolNameFocus.dispose();
+    _schoolNumberFocus.dispose();
     for (final controller in _validationControllers) {
       controller.dispose();
     }
@@ -749,9 +753,13 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                     ),
                   ),
                   onChanged: (value) => _handleValidationChanged(index, value),
-                  onSubmitted: index == LicenseKeyCodec.validationCodeLength - 1
-                      ? (_) => _activateLicence()
-                      : null,
+                  onSubmitted: (_) {
+                    if (index == LicenseKeyCodec.validationCodeLength - 1) {
+                      _activateLicence();
+                    } else {
+                      _validationFocusNodes[index + 1].requestFocus();
+                    }
+                  },
                 ),
               ),
             ),
@@ -1043,8 +1051,12 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                             const SizedBox(height: 6),
                             _InputField(
                               controller: _schoolNameController,
+                              focusNode: _schoolNameFocus,
                               hintText: 'Enter organisation name',
                               textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                _schoolNumberFocus.requestFocus();
+                              },
                               onChanged: _handleInputChanged,
                             ),
                             const SizedBox(height: 14),
@@ -1052,8 +1064,14 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                             const SizedBox(height: 6),
                             _InputField(
                               controller: _schoolNumberController,
+                              focusNode: _schoolNumberFocus,
                               hintText: 'Enter organisation code',
                               textInputAction: TextInputAction.next,
+                              onSubmitted: (_) {
+                                if (_validationFocusNodes.isNotEmpty) {
+                                  _validationFocusNodes[0].requestFocus();
+                                }
+                              },
                               textCapitalization: TextCapitalization.characters,
                               inputFormatters: [
                                 LengthLimitingTextInputFormatter(
@@ -1671,6 +1689,8 @@ class _InputField extends StatelessWidget {
     this.textCapitalization = TextCapitalization.none,
     this.inputFormatters,
     this.onChanged,
+    this.focusNode,
+    this.onSubmitted,
   });
 
   final TextEditingController controller;
@@ -1679,12 +1699,16 @@ class _InputField extends StatelessWidget {
   final TextCapitalization textCapitalization;
   final List<TextInputFormatter>? inputFormatters;
   final ValueChanged<String>? onChanged;
+  final FocusNode? focusNode;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) {
     final colors = _VigiloColors(context);
     return TextField(
       controller: controller,
+      focusNode: focusNode,
+      onSubmitted: onSubmitted,
       textInputAction: textInputAction,
       textCapitalization: textCapitalization,
       inputFormatters: inputFormatters,

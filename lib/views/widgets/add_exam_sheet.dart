@@ -373,11 +373,19 @@ class _AddExamSheetState extends State<AddExamSheet> {
     required TextEditingController controller,
     required String hint,
     required FocusNode focusNode,
+    FocusNode? nextFocusNode,
+    TextInputAction? textInputAction,
   }) {
     final colors = _SheetColors(context);
     return TextField(
       controller: controller,
       focusNode: focusNode,
+      textInputAction: textInputAction ?? (nextFocusNode != null ? TextInputAction.next : TextInputAction.done),
+      onSubmitted: (_) {
+        if (nextFocusNode != null) {
+          nextFocusNode.requestFocus();
+        }
+      },
       style: TextStyle(
         color: colors.text,
         fontSize: 16,
@@ -682,6 +690,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                 controller: _subjectCtl,
                                 hint: 'Enter exam subject',
                                 focusNode: _subjectFocus,
+                                nextFocusNode: _boardFocus,
                               ),
                               const SizedBox(height: 14),
                               _formLabel('Exam Board'),
@@ -689,6 +698,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                 controller: _boardCtl,
                                 hint: 'OCR, AQA, Edexcel',
                                 focusNode: _boardFocus,
+                                nextFocusNode: _schoolFocus,
                               ),
                             ],
                           ),
@@ -704,6 +714,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                 controller: _schoolCtl,
                                 hint: 'Enter organisation name',
                                 focusNode: _schoolFocus,
+                                nextFocusNode: _centreFocus,
                               ),
                               const SizedBox(height: 14),
                               _formLabel('Centre Number'),
@@ -711,6 +722,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                 controller: _centreCtl,
                                 hint: 'Enter centre number',
                                 focusNode: _centreFocus,
+                                textInputAction: TextInputAction.done,
                               ),
                             ],
                           ),
