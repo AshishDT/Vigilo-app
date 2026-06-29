@@ -2873,7 +2873,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                     const SizedBox(height: 4),
                                                     Text(
                                                       _setupDisplayTime(
-                                                        data.start,
+                                                        data.phase == ExamPhase.extra
+                                                            ? data.normalEnd
+                                                            : data.start,
                                                       ),
                                                       style: TextStyle(
                                                         color:
@@ -2904,7 +2906,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                     const SizedBox(height: 4),
                                                     Text(
                                                       _setupDisplayTime(
-                                                        data.end,
+                                                        data.phase == ExamPhase.extra
+                                                            ? data.extraEnd
+                                                            : data.end,
                                                       ),
                                                       style: TextStyle(
                                                         color:
