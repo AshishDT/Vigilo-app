@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import '../views/widgets/erc_notice.dart';
 
+enum NotificationType {
+  success,
+  information,
+  warning,
+  error,
+}
+
 class NotificationService {
   static void show(
     BuildContext context, {
@@ -8,7 +15,22 @@ class NotificationService {
     String? subtitle,
     IconData icon = Icons.info_outline_rounded,
     VoidCallback? onTap,
+    NotificationType type = NotificationType.information,
   }) {
+    int durationSeconds;
+    switch (type) {
+      case NotificationType.success:
+      case NotificationType.information:
+        durationSeconds = 3;
+        break;
+      case NotificationType.warning:
+        durationSeconds = 4;
+        break;
+      case NotificationType.error:
+        durationSeconds = 5;
+        break;
+    }
+
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
@@ -23,7 +45,7 @@ class NotificationService {
         backgroundColor: Colors.transparent,
         elevation: 0,
         padding: EdgeInsets.zero,
-        duration: const Duration(seconds: 3),
+        duration: Duration(seconds: durationSeconds),
       ),
     );
   }

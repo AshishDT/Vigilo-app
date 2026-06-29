@@ -414,16 +414,17 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
     if (save) {
       widget.onSaveData();
-      _showBanner("Setup Saved", "Your setup details have been saved", Icons.save_rounded);
+      _showBanner("Setup Saved", "Your setup details have been saved", Icons.save_rounded, NotificationType.success);
     }
   }
 
-  void _showBanner(String title, [String? subtitle, IconData? icon]) {
+  void _showBanner(String title, [String? subtitle, IconData? icon, NotificationType type = NotificationType.information]) {
     NotificationService.show(
       context,
       title: title,
       subtitle: subtitle,
       icon: icon ?? Icons.info_outline_rounded,
+      type: type,
     );
   }
 
@@ -472,7 +473,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               action: action,
             ),
           );
-          _showBanner("Incident Logged", "Medical incident has been logged", Icons.local_hospital_rounded);
+          _showBanner("Incident Logged", "Medical incident has been logged", Icons.local_hospital_rounded, NotificationType.success);
           Navigator.pop(context);
         },
       ),
@@ -498,7 +499,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               action: action,
             ),
           );
-          _showBanner("Incident Logged", "Malpractice incident has been logged", Icons.gavel_rounded);
+          _showBanner("Incident Logged", "Malpractice incident has been logged", Icons.gavel_rounded, NotificationType.success);
           Navigator.pop(context);
         },
       ),
@@ -524,7 +525,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               action: action,
             ),
           );
-          _showBanner("Incident Logged", "Toilet visit has been logged", Icons.wc_rounded);
+          _showBanner("Incident Logged", "Toilet visit has been logged", Icons.wc_rounded, NotificationType.success);
           Navigator.pop(context);
         },
       ),
@@ -579,7 +580,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
   bool _send(String message) {
     if (message.trim().isEmpty || selectedInvigilators.isEmpty) {
-      _showBanner("Action Required", "Select a recipient and enter a message", Icons.warning_amber_rounded);
+      _showBanner("Action Required", "Select a recipient and enter a message", Icons.warning_amber_rounded, NotificationType.warning);
       return false;
     }
 
@@ -591,7 +592,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       }
     });
     customMessageCtrl.clear();
-    _showBanner("Message Sent", "Your message has been sent", Icons.send_rounded);
+    _showBanner("Message Sent", "Your message has been sent", Icons.send_rounded, NotificationType.success);
     return true;
   }
 
@@ -650,7 +651,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       return;
     }
     if (selectedInvigilators.isEmpty) {
-      _showBanner("Action Required", "Select recipients before sharing", Icons.warning_amber_rounded);
+      _showBanner("Action Required", "Select recipients before sharing", Icons.warning_amber_rounded, NotificationType.warning);
       return;
     }
 
@@ -660,7 +661,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         .toList();
 
     if (validTitles.isEmpty) {
-      _showBanner("Action Required", "Please select at least one briefing to share", Icons.warning_amber_rounded);
+      _showBanner("Action Required", "Please select at least one briefing to share", Icons.warning_amber_rounded, NotificationType.warning);
       return;
     }
 
@@ -673,7 +674,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       _updateData(_currentData.copyWith(messages: messageLog));
     });
     widget.onSaveData();
-    _showBanner("Briefings Shared", "Briefings have been shared successfully", Icons.share_rounded);
+    _showBanner("Briefings Shared", "Briefings have been shared successfully", Icons.share_rounded, NotificationType.success);
   }
 
   Widget _buildAnimatedTab({

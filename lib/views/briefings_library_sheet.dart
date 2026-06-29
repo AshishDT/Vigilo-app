@@ -149,6 +149,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
         'Files Removed',
         '$removedMissing missing briefing file(s) were removed',
         Icons.delete_outline_rounded,
+        NotificationType.warning,
       );
     }
     await _runInitialActionIfNeeded();
@@ -169,12 +170,13 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
     }
   }
 
-  void _toast(String title, [String? subtitle, IconData? icon]) {
+  void _toast(String title, [String? subtitle, IconData? icon, NotificationType type = NotificationType.information]) {
     NotificationService.show(
       context,
       title: title,
       subtitle: subtitle,
       icon: icon ?? Icons.info_outline_rounded,
+      type: type,
     );
   }
 
@@ -198,7 +200,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
       await action();
     } catch (e) {
       if (mounted) {
-        _toast('Operation Failed', e.toString(), Icons.error_outline_rounded);
+        _toast('Operation Failed', e.toString(), Icons.error_outline_rounded, NotificationType.error);
       }
     } finally {
       if (mounted) {
@@ -240,7 +242,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
         ..._items,
       ];
       await _saveLibrary(updated);
-      _toast('Upload Successful', 'PDF uploaded', Icons.check_circle_outline_rounded);
+      _toast('Upload Successful', 'PDF uploaded', Icons.check_circle_outline_rounded, NotificationType.success);
     });
   }
 
@@ -272,7 +274,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
         ..._items,
       ];
       await _saveLibrary(updated);
-      _toast('Capture Successful', 'Photo captured', Icons.camera_alt_outlined);
+      _toast('Capture Successful', 'Photo captured', Icons.camera_alt_outlined, NotificationType.success);
     });
   }
 
@@ -451,7 +453,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
         }
       } catch (_) {}
 
-      _toast('Briefing Deleted', 'The briefing has been removed', Icons.delete_outline_rounded);
+      _toast('Briefing Deleted', 'The briefing has been removed', Icons.delete_outline_rounded, NotificationType.success);
     });
   }
 
@@ -540,7 +542,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
         .toList(growable: false);
     final emptySelectionMessage = widget.emptySelectionMessage;
     if (selected.isEmpty && emptySelectionMessage != null) {
-      _toast('Selection Empty', emptySelectionMessage, Icons.warning_amber_rounded);
+      _toast('Selection Empty', emptySelectionMessage, Icons.warning_amber_rounded, NotificationType.warning);
       return;
     }
     widget.onSelectionApplied?.call(selected);

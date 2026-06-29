@@ -559,12 +559,13 @@ class _HomeScreenState extends State<HomeScreen>
     _saveState();
   });
 
-  void _toast(String title, [String? subtitle, IconData? icon]) {
+  void _toast(String title, [String? subtitle, IconData? icon, NotificationType type = NotificationType.information]) {
     NotificationService.show(
       context,
       title: title,
       subtitle: subtitle,
       icon: icon ?? Icons.info_outline_rounded,
+      type: type,
     );
   }
 
@@ -588,11 +589,11 @@ class _HomeScreenState extends State<HomeScreen>
     final c = _cards[i];
     final recordId = c.recordId;
     if (recordId == null) {
-      _toast("Not Ready", "Exam is not ready yet", Icons.warning_amber_rounded);
+      _toast("Not Ready", "Exam is not ready yet", Icons.warning_amber_rounded, NotificationType.warning);
       return;
     }
     if (c.totalSeconds <= 0) {
-      _toast("Missing Information", "Set Duration/Extra Time first", Icons.warning_amber_rounded);
+      _toast("Missing Information", "Set Duration/Extra Time first", Icons.warning_amber_rounded, NotificationType.warning);
       return;
     }
 
@@ -620,7 +621,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
     _normalTimeWarningVibrationSent.remove(recordId);
     await _refreshCards();
-    _toast("Exam Restarted", "The exam timer has been reset", Icons.restart_alt_rounded);
+    _toast("Exam Restarted", "The exam timer has been reset", Icons.restart_alt_rounded, NotificationType.information);
     if (mounted) Navigator.pop(context);
   }
 
@@ -631,10 +632,10 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (c.isPaused) {
       await _sessionService.resumeSession(recordId);
-      _toast("Exam Resumed", "The exam timer has resumed", Icons.play_circle_fill_rounded);
+      _toast("Exam Resumed", "The exam timer has resumed", Icons.play_circle_fill_rounded, NotificationType.success);
     } else {
       await _sessionService.pauseSession(recordId);
-      _toast("Exam Paused", "The exam timer has been paused", Icons.pause_circle_filled_rounded);
+      _toast("Exam Paused", "The exam timer has been paused", Icons.pause_circle_filled_rounded, NotificationType.information);
     }
 
     await _refreshCards();
@@ -651,7 +652,7 @@ class _HomeScreenState extends State<HomeScreen>
       reason: 'manual_end',
     );
     await _refreshCards();
-    _toast("Exam Ended", "The exam has been marked as finished", Icons.stop_circle_rounded);
+    _toast("Exam Ended", "The exam has been marked as finished", Icons.stop_circle_rounded, NotificationType.success);
     if (mounted) Navigator.pop(context);
   }
 
@@ -730,7 +731,7 @@ class _HomeScreenState extends State<HomeScreen>
           );
 
           if (_toMin(normalizedDuration) <= 0) {
-            _toast("Invalid Duration", "Set a valid exam duration before saving.", Icons.warning_amber_rounded);
+            _toast("Invalid Duration", "Set a valid exam duration before saving.", Icons.warning_amber_rounded, NotificationType.error);
             return;
           }
 
@@ -776,7 +777,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
 
     if (result == true) {
-      _toast("Exam Created", "New exam successfully created", Icons.check_circle_rounded);
+      _toast("Exam Created", "New exam successfully created", Icons.check_circle_rounded, NotificationType.success);
     }
   }
 
@@ -939,14 +940,14 @@ class _HomeScreenState extends State<HomeScreen>
                     _saveState();
                     if (nowOn) {
                       try {
-                        _toast("Vibration Enabled", "Vibration is on for this exam", Icons.vibration_rounded);
+                        _toast("Vibration Enabled", "Vibration is on for this exam", Icons.vibration_rounded, NotificationType.success);
                         await HapticFeedback.vibrate();
                       } catch (_) {}
                     } else {
-                      _toast("Vibration Disabled", "Vibration is off for this exam", Icons.phonelink_erase_rounded);
+                      _toast("Vibration Disabled", "Vibration is off for this exam", Icons.phonelink_erase_rounded, NotificationType.information);
                     }
                   } else {
-                    _toast("Action Required", "Open an exam to use Vibrate", Icons.touch_app_rounded);
+                    _toast("Action Required", "Open an exam to use Vibrate", Icons.touch_app_rounded, NotificationType.warning);
                   }
                 }
               },
@@ -974,25 +975,28 @@ class _HomeScreenState extends State<HomeScreen>
                         archivedCount == 1
                             ? "Exam archived"
                             : "$archivedCount exams archived",
+                        null,
+                        Icons.archive_rounded,
+                        NotificationType.success,
                       );
                     } else {
-                      _toast("Archive Failed", "No finished selected exams to archive", Icons.archive_rounded);
+                      _toast("Archive Failed", "No finished selected exams to archive", Icons.archive_rounded, NotificationType.error);
                     }
-                    _toast("Archive Mode", "Archive mode has been disabled", Icons.archive_outlined);
+                    _toast("Archive Mode", "Archive mode has been disabled", Icons.archive_outlined, NotificationType.information);
                     isArchiveMode = false;
                     setState(() {});
                     return;
                   }
 
                   if (_cards.isEmpty) {
-                    _toast("Archive Failed", "No exams available to archive", Icons.archive_rounded);
+                    _toast("Archive Failed", "No exams available to archive", Icons.archive_rounded, NotificationType.error);
                     return;
                   }
                   if (_archivableExamCount == 0) {
-                    _toast("Action Restricted", "Only finished exams can be archived", Icons.block_rounded);
+                    _toast("Action Restricted", "Only finished exams can be archived", Icons.block_rounded, NotificationType.error);
                     return;
                   }
-                  _toast("Archive Mode", "Tap finished exams to archive them", Icons.archive_rounded);
+                  _toast("Archive Mode", "Tap finished exams to archive them", Icons.archive_rounded, NotificationType.information);
                   isArchiveMode = true;
                   setState(() {});
                 }
@@ -1077,9 +1081,9 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                           );
                           if (v) {
-                            _toast("Auto-Start Enabled", "The exam will auto-start at the scheduled time", Icons.timer_rounded);
+                            _toast("Auto-Start Enabled", "The exam will auto-start at the scheduled time", Icons.timer_rounded, NotificationType.success);
                           } else {
-                            _toast("Auto-Start Disabled", "Auto start is off", Icons.timer_off_rounded);
+                            _toast("Auto-Start Disabled", "Auto start is off", Icons.timer_off_rounded, NotificationType.information);
                           }
                           _saveState();
                         },
@@ -1127,7 +1131,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     );
                   } else {
-                    _toast("Action Required", "Open an exam to use Officer Tools", Icons.touch_app_rounded);
+                    _toast("Action Required", "Open an exam to use Officer Tools", Icons.touch_app_rounded, NotificationType.warning);
                   }
                 }
               },
@@ -1200,7 +1204,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 onSelect: () {
                                   if (!isArchiveView) {
                                     if (!_isArchivableExam(c)) {
-                                      _toast("Action Restricted", "Only finished exams can be archived", Icons.block_rounded);
+                                      _toast("Action Restricted", "Only finished exams can be archived", Icons.block_rounded, NotificationType.error);
                                       return;
                                     }
                                     setState(() {
@@ -1219,7 +1223,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     if (_archiveCards.isEmpty) {
                                       isArchiveView = false;
                                     }
-                                    _toast("Exam Restored", "The exam has been successfully restored", Icons.settings_backup_restore_rounded);
+                                    _toast("Exam Restored", "The exam has been successfully restored", Icons.settings_backup_restore_rounded, NotificationType.success);
                                     _saveState();
                                     setState(() {});
                                   }
@@ -1296,6 +1300,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         context,
                                         title: "Invalid Duration",
                                         subtitle: "Cannot reduce duration below elapsed time.",
+                                        type: NotificationType.error,
                                         icon: Icons.error_outline_rounded,
                                       );
                                       return;
@@ -1304,6 +1309,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         context,
                                         title: "Invalid Duration",
                                         subtitle: "Cannot reduce total time below elapsed time.",
+                                        type: NotificationType.error,
                                         icon: Icons.error_outline_rounded,
                                       );
                                       return;
@@ -1367,6 +1373,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         context,
                                         title: "Invalid Extra Time",
                                         subtitle: "Cannot reduce total time below elapsed time.",
+                                        type: NotificationType.error,
                                         icon: Icons.error_outline_rounded,
                                       );
                                       return;
@@ -1503,9 +1510,9 @@ class _HomeScreenState extends State<HomeScreen>
                 isArchiveView = !isArchiveView;
                 isArchiveMode = false;
                 if (isArchiveView) {
-                  _toast("Viewing Archived Exams", "Archived exam records are shown below", Icons.archive_rounded);
+                  _toast("Viewing Archived Exams", "Archived exam records are shown below", Icons.archive_rounded, NotificationType.information);
                 } else {
-                  _toast("Viewing Active Exams", "Current running and scheduled exams are shown below", Icons.play_circle_fill_rounded);
+                  _toast("Viewing Active Exams", "Current running and scheduled exams are shown below", Icons.play_circle_fill_rounded, NotificationType.information);
                 }
               }),
             ),

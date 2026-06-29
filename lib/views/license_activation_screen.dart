@@ -334,6 +334,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       title: "Error",
       subtitle: 'No email app is available on this device.',
       icon: Icons.error_outline_rounded,
+      type: NotificationType.error,
     );
   }
 
