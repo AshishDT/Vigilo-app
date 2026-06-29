@@ -26,7 +26,7 @@ class StatChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: VigiloUiColors.blue(dark).withOpacity(dark ? 0.30 : 0.26),
-          width: 0.7,
+          width: dark ? 0.7 : 1.5,
         ),
         boxShadow: dark
             ? [
