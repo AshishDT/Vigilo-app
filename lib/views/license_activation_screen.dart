@@ -859,7 +859,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           _LicenceTypePanel(
                             title: LicenseService.pilotLicenceType,
                             subtitle: Text(
-                              '30-day evaluation licence for schools testing Vigilo ERC.',
+                              '30-day evaluation licence for organisation testing Vigilo ERC.',
                               style: TextStyle(
                                 color: colors.textSoft,
                                 fontSize: 15,
@@ -872,7 +872,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           _LicenceTypePanel(
                             title: LicenseService.coreLicenceType,
                             subtitle: Text(
-                              'Full operational licence for schools running examinations.',
+                              'Full operational licence for organisation running examinations.',
                               style: TextStyle(
                                 color: colors.textSoft,
                                 fontSize: 15,
