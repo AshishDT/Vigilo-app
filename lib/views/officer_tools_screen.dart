@@ -2420,9 +2420,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
   Widget _otCategoryBadge(String text) {
     return Container(
-      width: 68,
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: _OtSheetColors.panel2.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(12),
@@ -2432,6 +2431,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       ),
       child: Text(
         text,
+        maxLines: 1,
         style: TextStyle(
           color: _OtSheetColors.blueSoft,
           fontSize: 11.2,
