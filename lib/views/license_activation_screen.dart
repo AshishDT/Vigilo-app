@@ -336,7 +336,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
     NotificationService.show(
       context,
       title: "Error",
-      subtitle: 'No email app is available on this device.',
+      subtitle: 'No email app is available on this device',
       icon: Icons.error_outline_rounded,
       type: NotificationType.error,
     );
@@ -894,7 +894,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           _LicenceTypePanel(
                             title: 'Pro',
                             subtitle: Text(
-                              'Includes everything in Core plus additional coordination features.\n(Available in a future update)',
+                              'Includes everything in Core plus additional coordination features.\n(Pro features will be introduced in Version 1.1)',
                               style: TextStyle(
                                 color: colors.textSoft,
                                 fontSize: 15,

@@ -484,7 +484,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                         vertical: 9,
                       ),
                       decoration: BoxDecoration(
-                        color: phaseColor.withOpacity(0.88),
+                        color: (data.phase == ExamPhase.finished ? vColors.green : phaseColor).withOpacity(0.88),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(

@@ -765,7 +765,7 @@ class _HomeScreenState extends State<HomeScreen>
           );
 
           if (_toMin(normalizedDuration) <= 0) {
-            _toast("Invalid Duration", "Set a valid exam duration before saving.", Icons.warning_amber_rounded, NotificationType.error);
+            _toast("Invalid Duration", "Set a valid exam duration before saving", Icons.warning_amber_rounded, NotificationType.error);
             return;
           }
 
@@ -1333,7 +1333,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       NotificationService.show(
                                         context,
                                         title: "Invalid Duration",
-                                        subtitle: "Cannot reduce duration below elapsed time.",
+                                        subtitle: "Cannot reduce duration below elapsed time",
                                         type: NotificationType.error,
                                         icon: Icons.error_outline_rounded,
                                       );
@@ -1342,7 +1342,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       NotificationService.show(
                                         context,
                                         title: "Invalid Duration",
-                                        subtitle: "Cannot reduce total time below elapsed time.",
+                                        subtitle: "Cannot reduce total time below elapsed time",
                                         type: NotificationType.error,
                                         icon: Icons.error_outline_rounded,
                                       );
@@ -1406,7 +1406,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       NotificationService.show(
                                         context,
                                         title: "Invalid Extra Time",
-                                        subtitle: "Cannot reduce total time below elapsed time.",
+                                        subtitle: "Cannot reduce total time below elapsed time",
                                         type: NotificationType.error,
                                         icon: Icons.error_outline_rounded,
                                       );

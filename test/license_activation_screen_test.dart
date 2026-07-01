@@ -225,7 +225,7 @@ void main() {
       expect(find.text('Exam session export'), findsOneWidget);
       expect(
         find.text(
-          'Includes everything in Core plus additional coordination features.\n(Available in a future update)',
+          'Includes everything in Core plus additional coordination features.\n(Pro features will be introduced in Version 1.1)',
         ),
         findsOneWidget,
       );
