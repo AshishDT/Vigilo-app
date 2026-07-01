@@ -765,7 +765,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     final icons = [
       Icons.schedule_outlined,
       Icons.timer_outlined,
-      Icons.forum_outlined,
+      CupertinoIcons.chat_bubble_2,
       Icons.warning_amber_rounded,
       Icons.article_outlined,
       Icons.verified_user_outlined,
@@ -917,14 +917,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         : color;
     final Color titleColor = disabled
         ? _OtSheetColors.textFaint.withValues(alpha: 0.58)
-        : (color == _OtSheetColors.orange
-              ? _OtSheetColors.orange
-              : _OtSheetColors.text);
+        : _OtSheetColors.text;
     final Color subtitleColor = disabled
         ? _OtSheetColors.textFaint.withValues(alpha: 0.4)
-        : (color == _OtSheetColors.orange
-              ? _OtSheetColors.orange.withValues(alpha: 0.75)
-              : _OtSheetColors.textSoft);
+        : _OtSheetColors.textSoft;
     final Color backgroundColor = disabled
         ? _OtSheetColors.panel2.withValues(alpha: 0.2)
         : color.withValues(alpha: 0.04);
