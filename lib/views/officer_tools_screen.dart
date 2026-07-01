@@ -99,6 +99,8 @@ class _OtSheetColorPalette {
 
   Color get red => _isDark ? const Color(0xFFE05D74) : const Color(0xFFDC2626);
 
+  Color get purple => const Color(0xFF7C5CFA);
+
   Color get blackWhite =>
       _isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
 }
@@ -3291,7 +3293,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   title: "Toilet Visit",
                                   subtitle: "Record a toilet visit",
                                   icon: Icons.groups,
-                                  color: _OtSheetColors.textSoft,
+                                  color: _OtSheetColors.purple,
                                   onTap: _showToiletVisitIncidentDialog,
                                   disabled: _isExamCompleted,
                                 ),
@@ -3380,7 +3382,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     if (incident.message == 'Toilet break') {
                                       visualTitle = "Toilet Visit";
                                       visualIcon = Icons.groups;
-                                      visualColor = _OtSheetColors.textSoft;
+                                      visualColor = _OtSheetColors.purple;
                                     } else if (incident.message ==
                                         'Medical incident') {
                                       visualTitle = "Medical";
@@ -6247,12 +6249,12 @@ class _ToiletVisitIncidentDialogState
           height: 44,
           decoration: BoxDecoration(
             color: selected
-                ? _OtSheetColors.blueSoft.withValues(alpha: 0.15)
+                ? _OtSheetColors.purple.withValues(alpha: 0.15)
                 : _OtSheetColors.panel2.withValues(alpha: 0.30),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: selected
-                  ? _OtSheetColors.blueSoft.withValues(alpha: 0.70)
+                  ? _OtSheetColors.purple.withValues(alpha: 0.70)
                   : _OtSheetColors.lineSoft,
               width: .7,
             ),
@@ -6262,7 +6264,7 @@ class _ToiletVisitIncidentDialogState
             '$mins min',
             style: TextStyle(
               color: selected
-                  ? _OtSheetColors.blueSoft
+                  ? _OtSheetColors.purple
                   : _OtSheetColors.textSoft,
               fontSize: 15.5,
               fontWeight: FontWeight.w900,
@@ -6281,8 +6283,8 @@ class _ToiletVisitIncidentDialogState
         height: 44,
         child: FilledButton(
           style: FilledButton.styleFrom(
-            backgroundColor: _OtSheetColors.blueSoft,
-            disabledBackgroundColor: _OtSheetColors.blueSoft.withValues(
+            backgroundColor: _OtSheetColors.purple,
+            disabledBackgroundColor: _OtSheetColors.purple.withValues(
               alpha: 0.45,
             ),
             foregroundColor: Colors.white,
@@ -6384,12 +6386,12 @@ class _ToiletVisitIncidentDialogState
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: _OtSheetColors.blueSoft.withValues(
+                            color: _OtSheetColors.purple.withValues(
                               alpha: 0.15,
                             ),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: _OtSheetColors.blueSoft.withValues(
+                              color: _OtSheetColors.purple.withValues(
                                 alpha: 0.70,
                               ),
                               width: .7,
@@ -6398,7 +6400,7 @@ class _ToiletVisitIncidentDialogState
                           alignment: Alignment.center,
                           child: Icon(
                             Icons.timer_outlined,
-                            color: _OtSheetColors.blueSoft,
+                            color: _OtSheetColors.purple,
                             size: 26,
                           ),
                         ),
@@ -6489,7 +6491,7 @@ class _ToiletVisitIncidentDialogState
                               onSubmitted: (_) {
                                 _notesFocus.requestFocus();
                               },
-                              cursorColor: _OtSheetColors.blueSoft,
+                              cursorColor: _OtSheetColors.purple,
                               style: TextStyle(
                                 color: _OtSheetColors.text,
                                 fontSize: 16,
@@ -6549,7 +6551,7 @@ class _ToiletVisitIncidentDialogState
                               },
                               minLines: 3,
                               maxLines: 5,
-                              cursorColor: _OtSheetColors.blueSoft,
+                              cursorColor: _OtSheetColors.purple,
                               style: TextStyle(
                                 color: _OtSheetColors.text,
                                 fontSize: 16,
@@ -6595,7 +6597,7 @@ class _ToiletVisitIncidentDialogState
                               controller: _actionController,
                               focusNode: _actionFocus,
                               textInputAction: TextInputAction.done,
-                              cursorColor: _OtSheetColors.blueSoft,
+                              cursorColor: _OtSheetColors.purple,
                               style: TextStyle(
                                 color: _OtSheetColors.text,
                                 fontSize: 16,
