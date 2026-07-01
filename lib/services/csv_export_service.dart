@@ -1042,14 +1042,69 @@ class CsvExportService {
         type == SessionEventType.recoveredAfterTermination;
   }
 
+  String _formatMinutesDescription(int minutes) {
+    final absMinutes = minutes.abs();
+    if (absMinutes == 0) return '0 minutes';
+    final hours = absMinutes ~/ 60;
+    final remainingMinutes = absMinutes % 60;
+
+    String hoursStr = '';
+    if (hours > 0) {
+      hoursStr = '$hours ${hours == 1 ? "hour" : "hours"}';
+    }
+
+    String minsStr = '';
+    if (remainingMinutes > 0) {
+      minsStr = '$remainingMinutes ${remainingMinutes == 1 ? "minute" : "minutes"}';
+    }
+
+    if (hoursStr.isNotEmpty && minsStr.isNotEmpty) {
+      return '$hoursStr and $minsStr';
+    } else if (hoursStr.isNotEmpty) {
+      return hoursStr;
+    } else {
+      return minsStr;
+    }
+  }
+
+  String _formatDurationWording(String message) {
+    final normalMatch = RegExp(r'Normal Time Updated \(([+-]?\d+)m\)', caseSensitive: false).firstMatch(message);
+    if (normalMatch != null) {
+      final diff = int.tryParse(normalMatch.group(1) ?? '0') ?? 0;
+      final durationText = _formatMinutesDescription(diff);
+      if (diff >= 0) {
+        return 'Normal Time increased by $durationText';
+      } else {
+        return 'Normal Time reduced by $durationText';
+      }
+    }
+    final extraMatch = RegExp(
+      r'Extra\s+Time\s+updated\s*\((?:.*\s*,\s*)?([+-]?\d+)m\)',
+      caseSensitive: false,
+    ).firstMatch(message);
+    if (extraMatch != null) {
+      final diff = int.tryParse(extraMatch.group(1) ?? '0') ?? 0;
+      final durationText = _formatMinutesDescription(diff);
+      if (diff >= 0) {
+        return 'Extra Time increased by $durationText';
+      } else {
+        return 'Extra Time reduced by $durationText';
+      }
+    }
+    return message;
+  }
+
   String _payloadMessage(Map<String, dynamic> payload) {
+    String msg = '';
     if (payload['incident'] is Map) {
       final incidentMap = (payload['incident'] as Map).cast<String, dynamic>();
       final incidentMessage = incidentMap['message'];
-      if (incidentMessage is String) return incidentMessage;
+      if (incidentMessage is String) msg = incidentMessage;
+    } else {
+      final message = payload['message'];
+      if (message is String) msg = message;
     }
-    final message = payload['message'];
-    return message is String ? message : '';
+    return _formatDurationWording(msg);
   }
 
   bool _isRestartPayload(Map<String, dynamic> payload) {

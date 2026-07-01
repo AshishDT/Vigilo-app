@@ -328,14 +328,42 @@ class _HomeScreenState extends State<HomeScreen>
     return "${h.toString().padLeft(2, '0')}:${mm.toString().padLeft(2, '0')}";
   }
 
+  String _formatMinutesDescription(int minutes) {
+    final absMinutes = minutes.abs();
+    if (absMinutes == 0) return '0 minutes';
+    final hours = absMinutes ~/ 60;
+    final remainingMinutes = absMinutes % 60;
+
+    String hoursStr = '';
+    if (hours > 0) {
+      hoursStr = '$hours ${hours == 1 ? "hour" : "hours"}';
+    }
+
+    String minsStr = '';
+    if (remainingMinutes > 0) {
+      minsStr = '$remainingMinutes ${remainingMinutes == 1 ? "minute" : "minutes"}';
+    }
+
+    if (hoursStr.isNotEmpty && minsStr.isNotEmpty) {
+      return '$hoursStr and $minsStr';
+    } else if (hoursStr.isNotEmpty) {
+      return hoursStr;
+    } else {
+      return minsStr;
+    }
+  }
+
   String _formatExtraTimeUpdateReason({
     required int previousMinutes,
     required int updatedMinutes,
   }) {
     final diffMinutes = updatedMinutes - previousMinutes;
-    final diffText = '${diffMinutes >= 0 ? '+' : ''}${diffMinutes}m';
-    return 'Extra Time Updated '
-        '(${previousMinutes}m -> ${updatedMinutes}m, $diffText)';
+    final durationText = _formatMinutesDescription(diffMinutes);
+    if (diffMinutes >= 0) {
+      return 'Extra Time increased by $durationText';
+    } else {
+      return 'Extra Time reduced by $durationText';
+    }
   }
 
   ExamCardData _recompute(ExamCardData c) {
@@ -1381,12 +1409,18 @@ class _HomeScreenState extends State<HomeScreen>
                                     await _saveState();
                                     final recordId = _cards[idx].recordId;
                                     if (recordId != null) {
+                                      final String reason;
+                                      final durationText = _formatMinutesDescription(diff);
+                                      if (diff >= 0) {
+                                        reason = "Normal Time increased by $durationText";
+                                      } else {
+                                        reason = "Normal Time reduced by $durationText";
+                                      }
                                       await _sessionService.updatePlannedDuration(
                                         examRecordId: recordId,
                                         normalDurationMs: _cards[idx].normalSeconds * 1000,
                                         extraTimeMs: _cards[idx].extraSeconds * 1000,
-                                        reason:
-                                            "Normal Time Updated (${diff >= 0 ? '+' : ''}${diff}m)",
+                                        reason: reason,
                                         detail: detail,
                                       );
                                       await _refreshCards();

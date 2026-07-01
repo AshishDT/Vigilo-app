@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vigilo/views/briefings_library_sheet.dart';
 
@@ -762,10 +763,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     final icons = [
       Icons.schedule_outlined,
       Icons.timer_outlined,
-      Icons.chat_bubble_rounded,
+      Icons.forum_outlined,
       Icons.warning_amber_rounded,
       Icons.article_outlined,
-      Icons.shield_outlined,
+      Icons.verified_user_outlined,
     ];
 
     return SizedBox(
@@ -2362,9 +2363,13 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   }
 
   bool _isDurationAdjustmentMessage(String message) {
-    return message.startsWith('Normal Time Updated') ||
-        message.startsWith('Extra time updated') ||
-        message.startsWith('Extra Time Updated');
+    final msg = message.trim().toLowerCase();
+    return msg.startsWith('normal time updated') ||
+        msg.startsWith('extra time updated') ||
+        msg.startsWith('normal time increased') ||
+        msg.startsWith('normal time reduced') ||
+        msg.startsWith('extra time increased') ||
+        msg.startsWith('extra time reduced');
   }
 
   bool _isMalpracticeConcern(Incident incident) {
@@ -2450,8 +2455,61 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     return s;
   }
 
+  String _formatMinutesDescription(int minutes) {
+    final absMinutes = minutes.abs();
+    if (absMinutes == 0) return '0 minutes';
+    final hours = absMinutes ~/ 60;
+    final remainingMinutes = absMinutes % 60;
+
+    String hoursStr = '';
+    if (hours > 0) {
+      hoursStr = '$hours ${hours == 1 ? "hour" : "hours"}';
+    }
+
+    String minsStr = '';
+    if (remainingMinutes > 0) {
+      minsStr = '$remainingMinutes ${remainingMinutes == 1 ? "minute" : "minutes"}';
+    }
+
+    if (hoursStr.isNotEmpty && minsStr.isNotEmpty) {
+      return '$hoursStr and $minsStr';
+    } else if (hoursStr.isNotEmpty) {
+      return hoursStr;
+    } else {
+      return minsStr;
+    }
+  }
+
+  String _formatDurationWording(String message) {
+    final normalMatch = RegExp(r'Normal Time Updated \(([+-]?\d+)m\)', caseSensitive: false).firstMatch(message);
+    if (normalMatch != null) {
+      final diff = int.tryParse(normalMatch.group(1) ?? '0') ?? 0;
+      final durationText = _formatMinutesDescription(diff);
+      if (diff >= 0) {
+        return 'Normal Time increased by $durationText';
+      } else {
+        return 'Normal Time reduced by $durationText';
+      }
+    }
+    final extraMatch = RegExp(
+      r'Extra\s+Time\s+updated\s*\((?:.*\s*,\s*)?([+-]?\d+)m\)',
+      caseSensitive: false,
+    ).firstMatch(message);
+    if (extraMatch != null) {
+      final diff = int.tryParse(extraMatch.group(1) ?? '0') ?? 0;
+      final durationText = _formatMinutesDescription(diff);
+      if (diff >= 0) {
+        return 'Extra Time increased by $durationText';
+      } else {
+        return 'Extra Time reduced by $durationText';
+      }
+    }
+    return message;
+  }
+
   String _logTitle(Incident incident) {
-    final isDurationAdjustment = _isDurationAdjustmentMessage(incident.message);
+    final formattedMessage = _formatDurationWording(incident.message);
+    final isDurationAdjustment = _isDurationAdjustmentMessage(formattedMessage);
 
     if (incident.message == 'Toilet break') {
       final student = _formatStudentID(incident.studentID);
@@ -2460,8 +2518,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     }
     if (_isMalpracticeConcern(incident)) {
       final student = _formatStudentID(incident.studentID);
-      if (student.isEmpty) return incident.message;
-      return '${incident.message}\n$student';
+      if (student.isEmpty) return formattedMessage;
+      return '$formattedMessage\n$student';
     }
     if (incident.message == 'Medical incident') {
       final student = _formatStudentID(incident.studentID);
@@ -2469,9 +2527,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       return 'Medical Incident\n$student';
     }
     if (isDurationAdjustment && incident.updatedDuration.isNotEmpty) {
-      return '${incident.message} - ${incident.updatedDuration} min';
+      return '$formattedMessage - ${incident.updatedDuration} min';
     }
-    return incident.message;
+    return formattedMessage;
   }
 
   void _addLogDetail(List<String> details, String label, String value) {

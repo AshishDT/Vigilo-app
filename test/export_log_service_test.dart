@@ -246,14 +246,14 @@ void main() {
         expect(
           text,
           contains(
-            ',Control,Normal Time,Extra time updated (+2m),H1,,,Adjustment entered before extra time',
+            ',Control,Normal Time,Extra Time increased by 2 minutes,H1,,,Adjustment entered before extra time',
           ),
         );
         expect(
           text,
           isNot(
             contains(
-              'Extra time updated (+2m) - Adjustment entered before extra time',
+              'Extra Time increased by 2 minutes - Adjustment entered before extra time',
             ),
           ),
         );
@@ -315,7 +315,7 @@ void main() {
         expect(
           text,
           contains(
-            ',Control,Normal Time,"Extra Time Updated (25m -> 30m, +5m)",H1,,,Adjustment entered before extra time',
+            ',Control,Normal Time,Extra Time increased by 5 minutes,H1,,,Adjustment entered before extra time',
           ),
         );
       },
@@ -370,9 +370,81 @@ void main() {
         expect(
           text,
           contains(
-            ',Control,Normal Time,Normal Time Updated (+2m),H1,,,Adjustment entered before extra time',
+            ',Control,Normal Time,Normal Time increased by 2 minutes,H1,,,Adjustment entered before extra time',
           ),
         );
+      },
+    );
+
+    test(
+      'formats duration updates to natural hour/minute description',
+      () async {
+        const recordId = 'record-export-log-hour-minute-formatting';
+        final card = ExamCardData(
+          recordId: recordId,
+          school: 'Battersea Academy',
+          centreNumber: '12345',
+          date: '08/03/2026',
+          subject: 'Maths GCSE (AQA)',
+          start: '10:00',
+          duration: '01:00',
+          end: '11:15',
+          normalStart: '10:00',
+          normalDuration: '01:00',
+          normalEnd: '11:00',
+          extraTime: '00:15',
+          totalDuration: '01:15',
+          extraEnd: '11:15',
+          roomsSnapshot: 'H1',
+        );
+
+        await sessionService.persistHomeState(
+          cards: [card],
+          archiveCards: const [],
+          lastUsed: _emptyLastUsed(),
+        );
+
+        await sessionService.startSession(
+          examRecordId: recordId,
+          startedAt: DateTime.now().toUtc().subtract(
+            const Duration(minutes: 1),
+          ),
+        );
+        
+        // Update 1: Normal Time Updated (-120m) -> 2 hours
+        await sessionService.updatePlannedDuration(
+          examRecordId: recordId,
+          normalDurationMs: const Duration(minutes: 60).inMilliseconds,
+          extraTimeMs: const Duration(minutes: 15).inMilliseconds,
+          reason: 'Normal Time Updated (-120m)',
+          detail: 'Adjustment 1',
+        );
+
+        // Update 2: Extra Time Updated (25m -> 30m, +90m) -> 1 hour and 30 minutes
+        await sessionService.updatePlannedDuration(
+          examRecordId: recordId,
+          normalDurationMs: const Duration(minutes: 60).inMilliseconds,
+          extraTimeMs: const Duration(minutes: 15).inMilliseconds,
+          reason: 'Extra Time Updated (25m -> 30m, +90m)',
+          detail: 'Adjustment 2',
+        );
+
+        // Update 3: Normal Time Updated (+60m) -> 1 hour
+        await sessionService.updatePlannedDuration(
+          examRecordId: recordId,
+          normalDurationMs: const Duration(minutes: 60).inMilliseconds,
+          extraTimeMs: const Duration(minutes: 15).inMilliseconds,
+          reason: 'Normal Time Updated (+60m)',
+          detail: 'Adjustment 3',
+        );
+
+        final text = await exportService.buildRecordCsvText(
+          examRecordId: recordId,
+        );
+
+        expect(text, contains('Normal Time reduced by 2 hours'));
+        expect(text, contains('Extra Time increased by 1 hour and 30 minutes'));
+        expect(text, contains('Normal Time increased by 1 hour'));
       },
     );
 

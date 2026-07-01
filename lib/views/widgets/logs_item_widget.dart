@@ -3,9 +3,65 @@ import 'package:flutter/material.dart';
 import '../../models/incident.dart';
 
 bool _isDurationAdjustmentMessage(String message) {
-  return message.startsWith('Normal Time Updated') ||
-      message.startsWith('Extra time updated') ||
-      message.startsWith('Extra Time Updated');
+  final msg = message.trim().toLowerCase();
+  return msg.startsWith('normal time updated') ||
+      msg.startsWith('extra time updated') ||
+      msg.startsWith('normal time increased') ||
+      msg.startsWith('normal time reduced') ||
+      msg.startsWith('extra time increased') ||
+      msg.startsWith('extra time reduced');
+}
+
+String _formatMinutesDescription(int minutes) {
+  final absMinutes = minutes.abs();
+  if (absMinutes == 0) return '0 minutes';
+  final hours = absMinutes ~/ 60;
+  final remainingMinutes = absMinutes % 60;
+
+  String hoursStr = '';
+  if (hours > 0) {
+    hoursStr = '$hours ${hours == 1 ? "hour" : "hours"}';
+  }
+
+  String minsStr = '';
+  if (remainingMinutes > 0) {
+    minsStr = '$remainingMinutes ${remainingMinutes == 1 ? "minute" : "minutes"}';
+  }
+
+  if (hoursStr.isNotEmpty && minsStr.isNotEmpty) {
+    return '$hoursStr and $minsStr';
+  } else if (hoursStr.isNotEmpty) {
+    return hoursStr;
+  } else {
+    return minsStr;
+  }
+}
+
+String _formatDurationWording(String message) {
+  final normalMatch = RegExp(r'Normal Time Updated \(([+-]?\d+)m\)', caseSensitive: false).firstMatch(message);
+  if (normalMatch != null) {
+    final diff = int.tryParse(normalMatch.group(1) ?? '0') ?? 0;
+    final durationText = _formatMinutesDescription(diff);
+    if (diff >= 0) {
+      return 'Normal Time increased by $durationText';
+    } else {
+      return 'Normal Time reduced by $durationText';
+    }
+  }
+  final extraMatch = RegExp(
+    r'Extra\s+Time\s+updated\s*\((?:.*\s*,\s*)?([+-]?\d+)m\)',
+    caseSensitive: false,
+  ).firstMatch(message);
+  if (extraMatch != null) {
+    final diff = int.tryParse(extraMatch.group(1) ?? '0') ?? 0;
+    final durationText = _formatMinutesDescription(diff);
+    if (diff >= 0) {
+      return 'Extra Time increased by $durationText';
+    } else {
+      return 'Extra Time reduced by $durationText';
+    }
+  }
+  return message;
 }
 
 String _formatStudentID(String s) {
@@ -39,35 +95,35 @@ class LogsItemWidget extends StatelessWidget {
     final time =
         "${incident.time.hour.toString().padLeft(2, '0')}:${incident.time.minute.toString().padLeft(2, '0')}:${incident.time.second.toString().padLeft(2, '0')}";
 
-    String message = incident.message;
+    String message = _formatDurationWording(incident.message);
     IconData icon = Icons.schedule;
     final isMalpracticeConcern =
-        incident.message == 'Malpractice' ||
-        incident.message == 'Suspected malpractice' ||
-        incident.message == 'Malpractice concern' ||
-        incident.message == 'Cheating concern';
-    final isDurationAdjustment = _isDurationAdjustmentMessage(incident.message);
+        message == 'Malpractice' ||
+        message == 'Suspected malpractice' ||
+        message == 'Malpractice concern' ||
+        message == 'Cheating concern';
+    final isDurationAdjustment = _isDurationAdjustmentMessage(message);
 
-    if (incident.message == 'Toilet break') {
+    if (message == 'Toilet break') {
       final student = _formatStudentID(incident.studentID);
       final durationStr = incident.duration.isEmpty ? '' : '\nDuration:\n${incident.duration} min';
       message = 'Toilet Visit\nStudent: $student$durationStr';
       icon = Icons.wc;
     } else if (isMalpracticeConcern) {
       final student = _formatStudentID(incident.studentID);
-      final displayMsg = incident.message == 'Suspected malpractice' 
+      final displayMsg = message == 'Suspected malpractice' 
           ? 'Malpractice' 
-          : incident.message;
+          : message;
       message = '$displayMsg\nStudent: $student';
       icon = Icons.warning_amber;
-    } else if (incident.message == 'Medical incident') {
+    } else if (message == 'Medical incident') {
       final student = _formatStudentID(incident.studentID);
       final actionStr = incident.action.isEmpty ? '' : '\nAction:\n${incident.action}';
       message = 'Medical Incident\nStudent: $student$actionStr';
       icon = Icons.medical_services;
     } else if (isDurationAdjustment && incident.updatedDuration.isNotEmpty) {
       message = '$message - ${incident.updatedDuration} min';
-    } else if (incident.message == 'Invigilator list updated') {
+    } else if (message == 'Invigilator list updated') {
       icon = Icons.group;
     }
 
