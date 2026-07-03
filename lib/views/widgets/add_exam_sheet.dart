@@ -480,7 +480,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
 
   Widget _primaryButton({
     required String label,
-    required IconData icon,
+    IconData? icon,
     required VoidCallback? onTap,
   }) {
     final colors = _SheetColors(context);
@@ -503,8 +503,10 @@ class _AddExamSheetState extends State<AddExamSheet> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20, color: Colors.white),
-              const SizedBox(width: 10),
+              if (icon != null) ...[
+                Icon(icon, size: 20, color: Colors.white),
+                const SizedBox(width: 10),
+              ],
               Flexible(
                 child: Text(
                   label,
@@ -524,7 +526,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
 
   Widget _secondaryButton({
     required String label,
-    required IconData icon,
+    IconData? icon,
     required VoidCallback onTap,
   }) {
     final colors = _SheetColors(context);
@@ -544,8 +546,10 @@ class _AddExamSheetState extends State<AddExamSheet> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: colors.blue),
-              const SizedBox(width: 10),
+              if (icon != null) ...[
+                Icon(icon, size: 18, color: colors.blue),
+                const SizedBox(width: 10),
+              ],
               Flexible(
                 child: Text(
                   label,
@@ -790,7 +794,6 @@ class _AddExamSheetState extends State<AddExamSheet> {
                       Expanded(
                         child: _secondaryButton(
                           label: 'Cancel',
-                          icon: Icons.close_rounded,
                           onTap: () => Navigator.pop(context, false),
                         ),
                       ),
@@ -798,7 +801,6 @@ class _AddExamSheetState extends State<AddExamSheet> {
                       Expanded(
                         child: _primaryButton(
                           label: 'Save',
-                          icon: Icons.check_rounded,
                           onTap: _isValidToSave()
                               ? () async {
                                   final school = _schoolCtl.text.trim();
