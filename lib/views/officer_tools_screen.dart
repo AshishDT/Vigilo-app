@@ -3280,7 +3280,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                 _otIncidentActionButton(
                                   title: "Toilet Visit",
                                   subtitle: "Record a toilet visit",
-                                  icon: Icons.groups,
+                                  icon: Icons.wc,
                                   color: _OtSheetColors.purple,
                                   onTap: _showToiletVisitIncidentDialog,
                                   disabled: _isExamCompleted,
@@ -3369,7 +3369,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
                                     if (incident.message == 'Toilet break') {
                                       visualTitle = "Toilet Visit";
-                                      visualIcon = Icons.groups;
+                                      visualIcon = Icons.wc;
                                       visualColor = _OtSheetColors.purple;
                                     } else if (incident.message ==
                                         'Medical incident') {
