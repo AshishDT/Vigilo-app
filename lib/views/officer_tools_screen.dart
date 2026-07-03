@@ -829,14 +829,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         : color;
     final Color titleColor = disabled
         ? _OtSheetColors.textFaint.withValues(alpha: 0.58)
-        : (color == _OtSheetColors.red
-              ? _OtSheetColors.red
-              : _OtSheetColors.text);
+        : _OtSheetColors.text;
     final Color subtitleColor = disabled
         ? _OtSheetColors.textFaint.withValues(alpha: 0.4)
-        : (color == _OtSheetColors.red
-              ? _OtSheetColors.red.withValues(alpha: 0.75)
-              : _OtSheetColors.textSoft);
+        : _OtSheetColors.textSoft;
     final Color backgroundColor = disabled
         ? _OtSheetColors.panel2.withValues(alpha: 0.4)
         : (color == _OtSheetColors.red
