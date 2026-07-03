@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vigilo/views/briefings_library_sheet.dart';
+import 'widgets/erc_notice.dart';
 
 import '../enums/exam_phase.dart';
 import '../models/briefing_model.dart';
@@ -111,6 +112,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   _OtSheetColorPalette get _OtSheetColors => _OtSheetColorPalette(context);
   static const String _requiredFieldWarning =
       "Required fields cannot be empty. Please fill in all mandatory fields.";
+
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
 
   late final TabController _tabs = TabController(length: 6, vsync: this);
   final ScrollController _tabScrollController = ScrollController();
@@ -432,13 +436,46 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   }
 
   void _showBanner(String title, [String? subtitle, IconData? icon, NotificationType type = NotificationType.information]) {
-    NotificationService.show(
-      context,
-      title: title,
-      subtitle: subtitle,
-      icon: icon ?? Icons.info_outline_rounded,
-      type: type,
-    );
+    int durationSeconds;
+    switch (type) {
+      case NotificationType.success:
+      case NotificationType.information:
+        durationSeconds = 3;
+        break;
+      case NotificationType.warning:
+        durationSeconds = 4;
+        break;
+      case NotificationType.error:
+        durationSeconds = 5;
+        break;
+    }
+
+    final messenger = _scaffoldMessengerKey.currentState;
+    if (messenger != null) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: ERCNotice(
+            icon: icon ?? Icons.info_outline_rounded,
+            title: title,
+            subtitle: subtitle,
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          padding: EdgeInsets.zero,
+          duration: Duration(seconds: durationSeconds),
+        ),
+      );
+    } else {
+      NotificationService.show(
+        context,
+        title: title,
+        subtitle: subtitle,
+        icon: icon ?? Icons.info_outline_rounded,
+        type: type,
+      );
+    }
   }
 
   void _saveScheduleDetails({String? setUpBy, String? setUpRole}) {
@@ -2909,29 +2946,33 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   Widget build(BuildContext context) {
     final data = _currentData;
 
-    return AnimatedPadding(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.82,
-        decoration: BoxDecoration(
-          color: _OtSheetColors.panel.withValues(alpha: 0.995),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          border: Border.all(
-            color: _OtSheetColors.lineSoft.withValues(alpha: 0.55),
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black54,
-              blurRadius: 24,
-              offset: Offset(0, -8),
-            ),
-          ],
+    return ScaffoldMessenger(
+      key: _scaffoldMessengerKey,
+      child: AnimatedPadding(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: SafeArea(
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.82,
+          decoration: BoxDecoration(
+            color: _OtSheetColors.panel.withValues(alpha: 0.995),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+            border: Border.all(
+              color: _OtSheetColors.lineSoft.withValues(alpha: 0.55),
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black54,
+                blurRadius: 24,
+                offset: Offset(0, -8),
+              ),
+            ],
+          ),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: SafeArea(
           top: false,
           child: Column(
             children: [
@@ -3857,8 +3898,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           ),
         ),
       ),
+      ),
+      ),
     );
-  }
+}
 
   void showCopiedMessage(BuildContext context) {
     final overlay = Overlay.of(context);
