@@ -238,7 +238,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
       ),
       builder: (_) => VigiloTimePickerSheet(
         initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
-        showIcons: true,
+        showIcons: false,
       ),
     );
     if (picked != null) {
@@ -259,7 +259,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
       ),
       builder: (_) => VigiloDatePickerSheet(
         initialDate: _selectedDate,
-        showIcons: true,
+        showIcons: false,
       ),
     );
     if (picked != null) {
@@ -280,7 +280,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
       builder: (_) => VigiloDurationPickerSheet(
         initialDuration: time,
         title: title,
-        showIcons: true,
+        showIcons: false,
       ),
     );
     return res ?? "";
