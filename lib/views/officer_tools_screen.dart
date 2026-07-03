@@ -2806,12 +2806,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     final bool isAction = onTap != null;
     final bool expanded = _expandedPrivacySections.contains(sectionId);
 
-    final Color primaryColor = isDanger
-        ? _OtSheetColors.red
-        : _OtSheetColors.text;
-    final Color secondaryColor = isDanger
-        ? _OtSheetColors.red.withValues(alpha: 0.75)
-        : _OtSheetColors.textSoft;
+    final Color primaryColor = _OtSheetColors.text;
+    final Color secondaryColor = _OtSheetColors.textSoft;
     final Color iconColor = isDanger
         ? _OtSheetColors.red
         : _OtSheetColors.blueSoft;
@@ -3818,7 +3814,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                             Text(
                               "CRITICAL ACTIONS",
                               style: TextStyle(
-                                color: _OtSheetColors.red,
+                                color: _OtSheetColors.blueSoft,
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 1.3,
