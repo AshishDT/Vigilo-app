@@ -1,3 +1,3 @@
 class AppConfig {
-  static const String releaseDate = '29 June 2026';
+  static const String releaseDate = '03 July 2026';
 }
