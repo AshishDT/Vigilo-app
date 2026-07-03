@@ -1301,12 +1301,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 Expanded(
                   child: _setupTimingCell(
                     'PHASE',
-                    _setupPhaseLabel(data.phase),
-                    _setupPhaseLabel(data.phase) == 'Extra Time'
+                    data.isPaused ? 'Paused' : _setupPhaseLabel(data.phase),
+                    data.phase == ExamPhase.extra
                         ? _OtSheetColors.orange
-                        : _setupPhaseLabel(data.phase) == 'Finished'
-                        ? _OtSheetColors.green
-                        : _OtSheetColors.blue,
+                        : data.phase == ExamPhase.finished
+                            ? _OtSheetColors.green
+                            : _OtSheetColors.blue,
                   ),
                 ),
               ],
