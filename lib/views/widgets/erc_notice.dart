@@ -30,6 +30,9 @@ class ERCNotice extends StatelessWidget {
         ? const Color(0xFFB6C7D8)
         : const Color(0xFF475569);
 
+    final sanitizedTitle = _sanitizeText(title);
+    final sanitizedSubtitle = subtitle != null ? _sanitizeText(subtitle!) : null;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -51,17 +54,17 @@ class ERCNotice extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    title,
+                    sanitizedTitle,
                     style: TextStyle(
                       color: titleColor,
                       fontWeight: FontWeight.w800,
                       fontSize: 15,
                     ),
                   ),
-                  if (subtitle != null && subtitle!.isNotEmpty) ...[
+                  if (sanitizedSubtitle != null && sanitizedSubtitle.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
-                      subtitle!,
+                      sanitizedSubtitle,
                       style: TextStyle(color: subtitleColor, fontSize: 13),
                     ),
                   ],
@@ -73,4 +76,58 @@ class ERCNotice extends StatelessWidget {
       ),
     );
   }
+
+  String _sanitizeText(String text) {
+    if (text.isEmpty) return text;
+
+    // 1. Sanitize "persist" terms (case-insensitive)
+    String sanitized = text
+        .replaceAll(RegExp(r'\bpersisted\b', caseSensitive: false), 'saved')
+        .replaceAll(RegExp(r'\bpersists\b', caseSensitive: false), 'saves')
+        .replaceAll(RegExp(r'\bpersisting\b', caseSensitive: false), 'saving')
+        .replaceAll(RegExp(r'\bpersist\b', caseSensitive: false), 'save')
+        .replaceAll(RegExp(r'\bpersistence\b', caseSensitive: false), 'storage');
+
+    // 2. Sanitize file paths
+    final pathRegex = RegExp(r'(?:[a-zA-Z]:)?(?:[\\/][a-zA-Z0-9_\.\-]+){2,}');
+    sanitized = sanitized.replaceAllMapped(pathRegex, (match) {
+      final path = match.group(0)!;
+      final parts = path.split(RegExp(r'[/\\]'));
+      final filename = parts.last;
+      return filename.isNotEmpty ? filename : 'file';
+    });
+
+    // 3. Sanitize Exception / Error messages
+    sanitized = sanitized.replaceAll(
+      RegExp(r'\b(?:Exception|Error)\b:\s*', caseSensitive: false),
+      '',
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(r'\b(?:SqliteException|PlatformException|DatabaseException)\b:?\s*', caseSensitive: false),
+      '',
+    );
+
+    final technicalKeywords = [
+      'constraint failed',
+      'no such table',
+      'sqlite',
+      'null pointer',
+      'nullpointer',
+      'index out of range',
+      'out of bounds',
+      'bad state',
+      'unhandled exception',
+      'stack trace',
+      'nosuchmethod',
+    ];
+
+    for (final keyword in technicalKeywords) {
+      if (sanitized.toLowerCase().contains(keyword)) {
+        return "An unexpected error occurred";
+      }
+    }
+
+    return sanitized;
+  }
 }
+
