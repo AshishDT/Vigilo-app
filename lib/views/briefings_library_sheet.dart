@@ -147,7 +147,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
     if (removedMissing > 0 && mounted) {
       _toast(
         'Files Removed',
-        '$removedMissing missing briefing file(s) were removed',
+        '$removedMissing Missing briefing files removed',
         Icons.delete_outline_rounded,
         NotificationType.warning,
       );
@@ -200,7 +200,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
       await action();
     } catch (e) {
       if (mounted) {
-        _toast('Operation Failed', e.toString(), Icons.error_outline_rounded, NotificationType.error);
+        _toast('Operation Failed', '', Icons.error_outline_rounded, NotificationType.error);
       }
     } finally {
       if (mounted) {

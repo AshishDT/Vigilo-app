@@ -1578,9 +1578,9 @@ class _HomeScreenState extends State<HomeScreen>
                 isArchiveView = !isArchiveView;
                 isArchiveMode = false;
                 if (isArchiveView) {
-                  _toast("Viewing Archived Exams", "Archived exam records are shown below", Icons.archive_rounded, NotificationType.information);
+                  _toast("Showing archived exams", "Archived exam records are shown below", Icons.archive_rounded, NotificationType.information);
                 } else {
-                  _toast("Viewing Active Exams", "Current running and scheduled exams are shown below", Icons.play_circle_fill_rounded, NotificationType.information);
+                  _toast("Showing active exams", "Current running and scheduled exams are shown below", Icons.play_circle_fill_rounded, NotificationType.information);
                 }
               }),
             ),

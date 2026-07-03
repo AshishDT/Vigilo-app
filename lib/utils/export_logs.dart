@@ -14,7 +14,7 @@ void exportCopy(ExamCardData exam, BuildContext context) async {
     final recordId = exam.recordId;
     if (recordId == null) {
       if (!context.mounted) return;
-      _toast("Export Failed", "Exam is not persisted yet", Icons.warning_amber_rounded, context, NotificationType.error);
+      _toast("Unable to export", "Save the exam before exporting", Icons.warning_amber_rounded, context, NotificationType.error);
       return;
     }
 
@@ -26,7 +26,7 @@ void exportCopy(ExamCardData exam, BuildContext context) async {
     _toast("Export Successful", "Export log copied to clipboard", Icons.copy_rounded, context, NotificationType.success);
   } catch (e) {
     if (!context.mounted) return;
-    _toast("Export Failed", "Failed to copy export log: $e", Icons.error_outline_rounded, context, NotificationType.error);
+    _toast("Unable to export", "Export copy failed", Icons.error_outline_rounded, context, NotificationType.error);
   }
 }
 
@@ -35,7 +35,7 @@ void exportCsvDownload(ExamCardData exam, BuildContext context) async {
     final recordId = exam.recordId;
     if (recordId == null) {
       if (!context.mounted) return;
-      _toast("Export Failed", "Exam is not persisted yet", Icons.warning_amber_rounded, context, NotificationType.error);
+      _toast("Unable to export", "Save the exam before exporting", Icons.warning_amber_rounded, context, NotificationType.error);
       return;
     }
     final file = await _csvExportService.exportRecordToCsv(
@@ -45,7 +45,7 @@ void exportCsvDownload(ExamCardData exam, BuildContext context) async {
     _showLogSavedSnackBar(context, file.path);
   } catch (e) {
     if (!context.mounted) return;
-    _toast("Export Failed", "Failed to save export log: $e", Icons.error_outline_rounded, context, NotificationType.error);
+    _toast("Unable to export", "Export save failed", Icons.error_outline_rounded, context, NotificationType.error);
   }
 }
 
@@ -54,7 +54,7 @@ void exportCsvShare(ExamCardData exam, BuildContext context) async {
     final recordId = exam.recordId;
     if (recordId == null) {
       if (!context.mounted) return;
-      _toast("Export Failed", "Exam is not persisted yet", Icons.warning_amber_rounded, context, NotificationType.error);
+      _toast("Unable to export", "Save the exam before exporting", Icons.warning_amber_rounded, context, NotificationType.error);
       return;
     }
 
@@ -63,7 +63,7 @@ void exportCsvShare(ExamCardData exam, BuildContext context) async {
     );
 
     final params = ShareParams(
-      text: 'Exported exam session log for ${exam.subject}',
+      text: 'Export log shared',
       files: [XFile(file.path)],
     );
     await SharePlus.instance.share(params);
@@ -71,7 +71,7 @@ void exportCsvShare(ExamCardData exam, BuildContext context) async {
     _toast("Export Successful", "Export log shared successfully", Icons.share_rounded, context, NotificationType.success);
   } catch (e) {
     if (!context.mounted) return;
-    _toast("Export Failed", "Failed to share export log: $e", Icons.error_outline_rounded, context, NotificationType.error);
+    _toast("Unable to export", "Export share failed", Icons.error_outline_rounded, context, NotificationType.error);
   }
 }
 
@@ -79,18 +79,18 @@ Future<void> _openLog(String filePath, BuildContext context) async {
   final result = await OpenFilex.open(filePath);
   if (!context.mounted) return;
   if (result.type != ResultType.done) {
-    final msg = result.message.trim().isNotEmpty
+    final _ = result.message.trim().isNotEmpty
         ? result.message
         : 'Unknown error';
-    _toast("Open Failed", "Could not open export log: $msg", Icons.error_outline_rounded, context, NotificationType.error);
+    _toast("Open Failed", "Unable to open export log", Icons.error_outline_rounded, context, NotificationType.error);
   }
 }
 
 void _showLogSavedSnackBar(BuildContext context, String filePath) {
   NotificationService.show(
     context,
-    title: "Export Saved",
-    subtitle: "Tap to open: $filePath",
+    title: "Export log saved",
+    subtitle: "",
     icon: Icons.save_rounded,
     type: NotificationType.success,
     onTap: () {
