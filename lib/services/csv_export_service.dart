@@ -264,7 +264,7 @@ class CsvExportService {
     buffer.writeln('Event Log');
     buffer.writeln();
     buffer.writeln(
-      'Date/Time,Category,Phase,Description,Room,Student ID,Staff Member,Details',
+      'Date/Time,Category,Phase,Description,Room,Student ID,Invigilator(s),Details',
     );
 
     for (final row in logRows) {
@@ -287,7 +287,7 @@ class CsvExportService {
     buffer.writeln();
     buffer.writeln('Export Location: Generated locally by Vigilo ERC');
     buffer.writeln('Record Type: Exam session event log');
-    buffer.writeln('Integrity Status: Local export record');
+    buffer.writeln('Integrity Status: Complete local audit record');
     buffer.writeln();
     buffer.writeln('Note:');
     buffer.writeln(

@@ -2589,7 +2589,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         incident.message == 'Medical incident') {
       _addLogDetail(details, 'Room', incident.room);
       _addLogDetail(details, 'Student ID', incident.studentID);
-      _addLogDetail(details, 'Staff member', incident.staffMember);
+      _addLogDetail(details, 'Invigilator(s)', incident.staffMember);
       _addLogDetail(details, 'Details', incident.detail);
       _addLogDetail(details, 'Action taken', incident.action);
       return details;
@@ -2610,7 +2610,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     _addLogDetail(details, 'Room', incident.room);
     _addLogDetail(details, 'Student ID', incident.studentID);
     _addLogDetail(details, 'Duration', incident.duration);
-    _addLogDetail(details, 'Staff member', incident.staffMember);
+    _addLogDetail(details, 'Invigilator(s)', incident.staffMember);
     _addLogDetail(details, 'Details', incident.detail);
     _addLogDetail(details, 'Action taken', incident.action);
     _addLogDetail(details, 'Updated Duration', incident.updatedDuration);

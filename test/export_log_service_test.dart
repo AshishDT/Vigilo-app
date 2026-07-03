@@ -118,7 +118,7 @@ void main() {
       expect(
         text,
         contains(
-          'Event Log\n\nDate/Time,Category,Phase,Description,Room,Student ID,Staff Member,Details',
+          'Event Log\n\nDate/Time,Category,Phase,Description,Room,Student ID,Invigilator(s),Details',
         ),
       );
       expect(
@@ -152,7 +152,7 @@ void main() {
       expect(
         text,
         contains(
-          'Date/Time,Category,Phase,Description,Room,Student ID,Staff Member,Details',
+          'Date/Time,Category,Phase,Description,Room,Student ID,Invigilator(s),Details',
         ),
       );
       expect(
@@ -188,7 +188,7 @@ void main() {
         contains('Export Location: Generated locally by Vigilo ERC'),
       );
       expect(text, contains('Record Type: Exam session event log'));
-      expect(text, contains('Integrity Status: Local export record'));
+      expect(text, contains('Integrity Status: Complete local audit record'));
       expect(
         text,
         contains(
