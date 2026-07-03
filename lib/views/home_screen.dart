@@ -78,13 +78,13 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   int get allInvigilators {
-    final allNames = <String>{};
+    int total = 0;
     for (final s in _cards) {
       if (s.phase != ExamPhase.finished) {
-        allNames.addAll(_getUniqueInvigilators(s));
+        total += _getUniqueInvigilators(s).length;
       }
     }
-    return allNames.length;
+    return total;
   }
 
   // Last-used for wizard prefill

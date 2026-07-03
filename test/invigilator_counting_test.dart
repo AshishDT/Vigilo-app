@@ -90,13 +90,13 @@ void main() {
     }
 
     int countAllInvigilators(List<ExamCardData> cards) {
-      final allNames = <String>{};
+      int total = 0;
       for (final s in cards) {
         if (s.phase != ExamPhase.finished) {
-          allNames.addAll(getUniqueInvigilators(s));
+          total += getUniqueInvigilators(s).length;
         }
       }
-      return allNames.length;
+      return total;
     }
 
     test('Should count invigilators on a single active exam', () {
@@ -129,7 +129,7 @@ void main() {
       expect(countAllInvigilators([card]), equals(3));
     });
 
-    test('Should count unique invigilators across multiple active exams (with global deduplication)', () {
+    test('Should sum unique invigilators across multiple active exams (no global cross-exam deduplication)', () {
       final exam1 = ExamCardData(
         recordId: '1',
         school: 'School A',
@@ -184,8 +184,8 @@ void main() {
 
       // Exam 1: 3 unique invigilators (Allan, Basil, Steve)
       // Exam 2: 6 unique invigilators (Allan, Basil, Dave, John, Mary, Jack)
-      // Deduplicated globally: 7 unique names.
-      expect(countAllInvigilators([exam1, exam2]), equals(7));
+      // Expected sum: 3 + 6 = 9.
+      expect(countAllInvigilators([exam1, exam2]), equals(9));
     });
 
     test('Should ignore invigilators on finished exams', () {
