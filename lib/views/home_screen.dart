@@ -650,11 +650,11 @@ class _HomeScreenState extends State<HomeScreen>
     final c = _cards[i];
     final recordId = c.recordId;
     if (recordId == null) {
-      _toast("Not Ready", "Exam is not ready yet", Icons.warning_amber_rounded, NotificationType.warning);
+      _toast("Not Ready", "Complete exam setup before starting", Icons.warning_amber_rounded, NotificationType.warning);
       return;
     }
     if (c.totalSeconds <= 0) {
-      _toast("Missing Information", "Set Duration/Extra Time first", Icons.warning_amber_rounded, NotificationType.warning);
+      _toast("Missing Information", "Set the exam duration before starting", Icons.warning_amber_rounded, NotificationType.warning);
       return;
     }
 
@@ -714,7 +714,7 @@ class _HomeScreenState extends State<HomeScreen>
       reason: 'manual_end',
     );
     await _refreshCards();
-    _toast("Exam Ended", "The exam has been marked as finished", Icons.stop_circle_rounded, NotificationType.success);
+    _toast("Exam ended", "The exam has been marked as finished", Icons.stop_circle_rounded, NotificationType.success);
     if (mounted) Navigator.pop(context);
   }
 
