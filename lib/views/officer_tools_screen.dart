@@ -1,4 +1,5 @@
 import 'widgets/animated_scale_on_press.dart';
+
 // Vigilo ERC v1.0 — Stage 6 Polish R06
 import 'dart:async';
 import 'dart:io';
@@ -130,7 +131,6 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   int? _expandedLogIndex;
   int? _expandedRecentIncidentIndex;
   final Set<String> _expandedPrivacySections = {};
-  final Set<String> _resolvedIncidentKeys = {};
   String _setUpRole = '';
   int _activeTabIndex = 0;
   bool _hasExported = false;
@@ -367,7 +367,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   List<String> _parseInvigilatorsInput(String raw) {
     final parts = raw
         .replaceAll('\r', '\n')
-        .split(RegExp(r'[\n,;|]+'))
+        .split(RegExp(r'[\n,;|.]+'))
         .map((name) => name.trim())
         .where((name) => name.isNotEmpty);
     return parts.toSet().toList();
@@ -431,11 +431,21 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
     if (save) {
       widget.onSaveData();
-      _showBanner("Setup Saved", "Your setup details have been saved", Icons.save_rounded, NotificationType.success);
+      _showBanner(
+        "Setup Saved",
+        "Your setup details have been saved",
+        Icons.save_rounded,
+        NotificationType.success,
+      );
     }
   }
 
-  void _showBanner(String title, [String? subtitle, IconData? icon, NotificationType type = NotificationType.information]) {
+  void _showBanner(
+    String title, [
+    String? subtitle,
+    IconData? icon,
+    NotificationType type = NotificationType.information,
+  ]) {
     int durationSeconds;
     switch (type) {
       case NotificationType.success:
@@ -523,7 +533,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               action: action,
             ),
           );
-          _showBanner("Incident Logged", "Medical incident has been logged", Icons.local_hospital_rounded, NotificationType.success);
+          _showBanner(
+            "Incident Logged",
+            "Medical incident has been logged",
+            Icons.local_hospital_rounded,
+            NotificationType.success,
+          );
           Navigator.pop(context);
         },
       ),
@@ -549,7 +564,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               action: action,
             ),
           );
-          _showBanner("Incident Logged", "Malpractice incident has been logged", Icons.gavel_rounded, NotificationType.success);
+          _showBanner(
+            "Incident Logged",
+            "Malpractice incident has been logged",
+            Icons.gavel_rounded,
+            NotificationType.success,
+          );
           Navigator.pop(context);
         },
       ),
@@ -575,7 +595,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               action: action,
             ),
           );
-          _showBanner("Incident Logged", "Toilet visit has been logged", Icons.wc_rounded, NotificationType.success);
+          _showBanner(
+            "Incident Logged",
+            "Toilet visit has been logged",
+            Icons.wc_rounded,
+            NotificationType.success,
+          );
           Navigator.pop(context);
         },
       ),
@@ -631,7 +656,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
   bool _send(String message) {
     if (message.trim().isEmpty || selectedInvigilators.isEmpty) {
-      _showBanner("Action Required", "Select a recipient and enter a message", Icons.warning_amber_rounded, NotificationType.warning);
+      _showBanner(
+        "Action Required",
+        "Select a recipient and enter a message",
+        Icons.warning_amber_rounded,
+        NotificationType.warning,
+      );
       return false;
     }
 
@@ -643,7 +673,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       }
     });
     customMessageCtrl.clear();
-    _showBanner("Message Sent", "Your message has been sent", Icons.send_rounded, NotificationType.success);
+    _showBanner(
+      "Message Sent",
+      "Your message has been sent",
+      Icons.send_rounded,
+      NotificationType.success,
+    );
     return true;
   }
 
@@ -702,7 +737,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       return;
     }
     if (selectedInvigilators.isEmpty) {
-      _showBanner("Action Required", "Select recipients before sharing", Icons.warning_amber_rounded, NotificationType.warning);
+      _showBanner(
+        "Action Required",
+        "Select recipients before sharing",
+        Icons.warning_amber_rounded,
+        NotificationType.warning,
+      );
       return;
     }
 
@@ -712,7 +752,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         .toList();
 
     if (validTitles.isEmpty) {
-      _showBanner("Action Required", "Please select at least one briefing to share", Icons.warning_amber_rounded, NotificationType.warning);
+      _showBanner(
+        "Action Required",
+        "Please select at least one briefing to share",
+        Icons.warning_amber_rounded,
+        NotificationType.warning,
+      );
       return;
     }
 
@@ -725,7 +770,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       _updateData(_currentData.copyWith(messages: messageLog));
     });
     widget.onSaveData();
-    _showBanner("Briefings Shared", "Briefings have been shared successfully", Icons.share_rounded, NotificationType.success);
+    _showBanner(
+      "Briefings Shared",
+      "Briefings have been shared successfully",
+      Icons.share_rounded,
+      NotificationType.success,
+    );
   }
 
   Widget _buildAnimatedTab({
@@ -1016,59 +1066,6 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     );
   }
 
-  Widget _otViewAllIncidentsTile() {
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: _OtSheetColors.panel2.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _OtSheetColors.lineSoft, width: .7),
-      ),
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: _OtSheetColors.blueSoft.withValues(alpha: .2),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: _OtSheetColors.blueSoft, width: 1),
-                ),
-                child: Icon(
-                  Icons.article_outlined,
-                  color: _OtSheetColors.blueSoft,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  "View all incidents",
-                  style: TextStyle(
-                    color: _OtSheetColors.text,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.keyboard_arrow_right_rounded,
-                color: _OtSheetColors.textSoft,
-                size: 24,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _otFilledButton(
     String text, {
     required VoidCallback onTap,
@@ -1137,32 +1134,32 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
           onPressed: onTap,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 17, color: _OtSheetColors.blue),
-              const SizedBox(width: 4),
-            ],
-            Flexible(
-              child: Text(
-                text,
-                softWrap: false,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _OtSheetColors.blackWhite,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 17, color: _OtSheetColors.blue),
+                const SizedBox(width: 4),
+              ],
+              Flexible(
+                child: Text(
+                  text,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _OtSheetColors.blackWhite,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   EdgeInsets _otScrollPadding(BuildContext context) {
     return EdgeInsets.fromLTRB(
@@ -1293,9 +1290,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   child: _setupTimingCell(
                     'END',
                     _setupDisplayTime(
-                      data.phase == ExamPhase.extra
-                          ? data.extraEnd
-                          : data.end,
+                      data.phase == ExamPhase.extra ? data.extraEnd : data.end,
                     ),
                     _setupPhaseLabel(data.phase) == 'Finished'
                         ? Colors.grey
@@ -1489,7 +1484,11 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   readOnly: disabled,
                   controller: controller,
                   focusNode: focusNode,
-                  textInputAction: textInputAction ?? (nextFocusNode != null ? TextInputAction.next : TextInputAction.done),
+                  textInputAction:
+                      textInputAction ??
+                      (nextFocusNode != null
+                          ? TextInputAction.next
+                          : TextInputAction.done),
                   onSubmitted: (_) {
                     if (nextFocusNode != null) {
                       nextFocusNode.requestFocus();
@@ -1696,19 +1695,11 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
             return Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
-                color: _OtSheetColors.panel2.withValues(
-                  alpha: 0.7,
-                ),
+                color: _OtSheetColors.panel2.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: borderColor,
-                  width: .7,
-                ),
+                border: Border.all(color: borderColor, width: .7),
               ),
               child: Row(
                 spacing: 16,
@@ -1717,19 +1708,11 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: statusColor.withValues(
-                        alpha: .2,
-                      ),
+                      color: statusColor.withValues(alpha: .2),
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: statusColor,
-                      ),
+                      border: Border.all(color: statusColor),
                     ),
-                    child: Icon(
-                      statusIcon,
-                      color: statusColor,
-                      size: 24,
-                    ),
+                    child: Icon(statusIcon, color: statusColor, size: 24),
                   ),
                   Expanded(
                     child: Column(
@@ -1777,9 +1760,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _isExamCompleted
-                                      ? "Ended"
-                                      : "Expected End",
+                                  _isExamCompleted ? "Ended" : "Expected End",
                                   style: TextStyle(
                                     color: _OtSheetColors.textSoft,
                                     fontSize: 13,
@@ -2091,13 +2072,14 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     );
   }
 
-  Widget _otPresetChip(String text, {double? maxWidth, required VoidCallback onTap}) {
+  Widget _otPresetChip(
+    String text, {
+    double? maxWidth,
+    required VoidCallback onTap,
+  }) {
     return IntrinsicWidth(
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minHeight: 48,
-          maxWidth: maxWidth ?? 320,
-        ),
+        constraints: BoxConstraints(minHeight: 48, maxWidth: maxWidth ?? 320),
         child: Material(
           color: _OtSheetColors.blue,
           borderRadius: BorderRadius.circular(24),
@@ -2106,10 +2088,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             borderRadius: BorderRadius.circular(24),
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               child: Text(
                 text,
                 softWrap: false,
@@ -2226,7 +2205,6 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     );
   }
 
-
   String _recipientText(List<String> names) {
     if (names.isEmpty) return 'To: No recipients';
     if (names.length <= 2) return 'To: ${names.join(', ')}';
@@ -2250,9 +2228,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       for (final existing in grouped) {
         final timeDiff = msg.time.difference(existing.time).abs();
         if (existing.text == display && timeDiff.inSeconds < 5) {
-          if (recipient.isNotEmpty && !existing.recipients.contains(recipient)) {
+          if (recipient.isNotEmpty &&
+              !existing.recipients.contains(recipient)) {
             existing.recipients.add(recipient);
-            existing.recipients.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+            existing.recipients.sort(
+              (a, b) => a.toLowerCase().compareTo(b.toLowerCase()),
+            );
           }
           merged = true;
           break;
@@ -2499,7 +2480,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
     String minsStr = '';
     if (remainingMinutes > 0) {
-      minsStr = '$remainingMinutes ${remainingMinutes == 1 ? "minute" : "minutes"}';
+      minsStr =
+          '$remainingMinutes ${remainingMinutes == 1 ? "minute" : "minutes"}';
     }
 
     if (hoursStr.isNotEmpty && minsStr.isNotEmpty) {
@@ -2512,7 +2494,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   }
 
   String _formatDurationWording(String message) {
-    final normalMatch = RegExp(r'Normal Time Updated \(([+-]?\d+)m\)', caseSensitive: false).firstMatch(message);
+    final normalMatch = RegExp(
+      r'Normal Time Updated \(([+-]?\d+)m\)',
+      caseSensitive: false,
+    ).firstMatch(message);
     if (normalMatch != null) {
       final diff = int.tryParse(normalMatch.group(1) ?? '0') ?? 0;
       final durationText = _formatMinutesDescription(diff);
@@ -2948,246 +2933,81 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
     return ScaffoldMessenger(
       key: _scaffoldMessengerKey,
-      child: AnimatedPadding(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.82,
-          decoration: BoxDecoration(
-            color: _OtSheetColors.panel.withValues(alpha: 0.995),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-            border: Border.all(
-              color: _OtSheetColors.lineSoft.withValues(alpha: 0.55),
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black54,
-                blurRadius: 24,
-                offset: Offset(0, -8),
-              ),
-            ],
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.82,
+        decoration: BoxDecoration(
+          color: _OtSheetColors.panel.withValues(alpha: 0.995),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          border: Border.all(
+            color: _OtSheetColors.lineSoft.withValues(alpha: 0.55),
           ),
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              const SizedBox(height: 14),
-              Container(
-                width: 70,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: _OtSheetColors.lineSoft,
-                  borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black54,
+              blurRadius: 24,
+              offset: Offset(0, -8),
+            ),
+          ],
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                const SizedBox(height: 14),
+                Container(
+                  width: 70,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: _OtSheetColors.lineSoft,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-                child: Row(
-                  spacing: 8,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        data.subject,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: _OtSheetColors.text,
-                          fontSize: 23,
-                          fontWeight: FontWeight.w900,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                  child: Row(
+                    spacing: 8,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          data.subject,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: _OtSheetColors.text,
+                            fontSize: 23,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
-                    ),
-                    _otIconChipButton(
-                      Icons.close_rounded,
-                      tooltip: 'Close',
-                      onTap: () => Navigator.pop(context),
-                      size: 45,
-                      borderRadius: 14,
-                      iconSize: 24,
-                    ),
-                  ],
-                ),
-              ),
-              _otTabBar(),
-              SizedBox(height: 18),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabs,
-                  children: [
-                    _setupTab(data),
-                    SingleChildScrollView(
-                      padding: _otScrollPadding(context),
-                      child: _otCardPanel(
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildCurrentStatusSection(data),
-                            Text(
-                              "CONTROL ACTIONS",
-                              style: TextStyle(
-                                color: _OtSheetColors.blueSoft,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Column(
-                              spacing: 12,
-                              children: [
-                                _otControlItem(
-                                  title: data.isPaused
-                                      ? "Resume Exam"
-                                      : "Pause Exam",
-                                  subtitle: data.isPaused
-                                      ? "Resume the current exam timer"
-                                      : "Pause the current exam timer",
-                                  icon: data.isPaused
-                                      ? Icons.play_arrow_rounded
-                                      : Icons.pause_rounded,
-                                  color: _setupPhaseLabel(data.phase) == 'Extra Time'
-                                      ? _OtSheetColors.orange
-                                      : _OtSheetColors.blue,
-                                  onTap: widget.onPause,
-                                  disabled: _isExamCompleted,
-                                ),
-                                _otControlItem(
-                                  title: "Restart Exam",
-                                  subtitle: "Restart the exam timer",
-                                  icon: Icons.restart_alt_rounded,
-                                  color: _setupPhaseLabel(data.phase) == 'Extra Time'
-                                      ? _OtSheetColors.orange
-                                      : _OtSheetColors.textSoft,
-                                  onTap: widget.onReStart,
-                                  disabled: _isExamCompleted || data.isPaused,
-                                ),
-                                _otControlItem(
-                                  title: "End Exam",
-                                  subtitle:
-                                      "End the exam and close active timing",
-                                  icon: Icons.stop_rounded,
-                                  color: _OtSheetColors.red,
-                                  onTap: widget.onEnd,
-                                  disabled: _isExamCompleted || data.isPaused,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              "AUTOMATION",
-                              style: TextStyle(
-                                color: _OtSheetColors.blueSoft,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
-                                  alpha: 0.7,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
-                                  width: .7,
-                                ),
-                              ),
-                              child: Row(
-                                spacing: 16,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Auto-start exam",
-                                          style: TextStyle(
-                                            color: _isExamCompleted
-                                                ? _OtSheetColors.textFaint
-                                                      .withValues(alpha: 0.58)
-                                                : _OtSheetColors.text,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          "Automatically start the exam at the scheduled time",
-                                          style: TextStyle(
-                                            color: _isExamCompleted
-                                                ? _OtSheetColors.textFaint
-                                                      .withValues(alpha: 0.4)
-                                                : _OtSheetColors.textSoft,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Switch(
-                                    value: autoStart,
-                                    activeThumbColor: Colors.white,
-                                    activeTrackColor: _OtSheetColors.blue,
-                                    inactiveTrackColor: const Color(0xFF10263D),
-                                    inactiveThumbColor: const Color(0xFF8FA7BF),
-                                    trackOutlineColor:
-                                        WidgetStateProperty.resolveWith((
-                                          states,
-                                        ) {
-                                          if (states.contains(
-                                            WidgetState.selected,
-                                          )) {
-                                            return Colors.transparent;
-                                          }
-                                          return const Color(0xFF35597B);
-                                        }),
-                                    onChanged: _isExamCompleted
-                                        ? null
-                                        : (v) {
-                                            setState(() {
-                                              autoStart = v;
-                                            });
-                                            widget.onToggleAutoStart(v);
-                                          },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                      _otIconChipButton(
+                        Icons.close_rounded,
+                        tooltip: 'Close',
+                        onTap: () => Navigator.pop(context),
+                        size: 45,
+                        borderRadius: 14,
+                        iconSize: 24,
                       ),
-                    ),
-
-                    // MESSAGES
-                    GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onTap: () {
-                        FocusScope.of(context).unfocus();
-                      },
-                      child: SingleChildScrollView(
-                        keyboardDismissBehavior:
-                            ScrollViewKeyboardDismissBehavior.onDrag,
+                    ],
+                  ),
+                ),
+                _otTabBar(),
+                SizedBox(height: 18),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabs,
+                    children: [
+                      _setupTab(data),
+                      SingleChildScrollView(
                         padding: _otScrollPadding(context),
                         child: _otCardPanel(
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              _buildCurrentStatusSection(data),
                               Text(
-                                "RECIPIENTS",
+                                "CONTROL ACTIONS",
                                 style: TextStyle(
                                   color: _OtSheetColors.blueSoft,
                                   fontSize: 12.5,
@@ -3195,80 +3015,54 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   letterSpacing: 1.3,
                                 ),
                               ),
-                              const SizedBox(height: 10),
-                              _otMessageSelectorField(
-                                title: "Select invigilators",
-                                subtitle: selectedInvigilators.isEmpty
-                                    ? "No Invigilators selected"
-                                    : (selectedInvigilators.length == 1
-                                          ? "1 Invigilator selected"
-                                          : "${selectedInvigilators.length} Invigilators selected"),
-                                disabled: _isExamCompleted,
-                                onTap: _openRecipientSelector,
-                              ),
-                              const SizedBox(height: 24),
-                              _otSectionDivider(),
-                              const SizedBox(height: 18),
-                              Row(
+                              const SizedBox(height: 12),
+                              Column(
+                                spacing: 12,
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      "QUICK MESSAGES",
-                                      style: TextStyle(
-                                        color: _OtSheetColors.blueSoft,
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 1.3,
-                                      ),
-                                    ),
-                                  ),
-                                  _otSmallTextButton(
-                                    'Edit',
-                                    icon: Icons.edit_rounded,
+                                  _otControlItem(
+                                    title: data.isPaused
+                                        ? "Resume Exam"
+                                        : "Pause Exam",
+                                    subtitle: data.isPaused
+                                        ? "Resume the current exam timer"
+                                        : "Pause the current exam timer",
+                                    icon: data.isPaused
+                                        ? Icons.play_arrow_rounded
+                                        : Icons.pause_rounded,
+                                    color:
+                                        _setupPhaseLabel(data.phase) ==
+                                            'Extra Time'
+                                        ? _OtSheetColors.orange
+                                        : _OtSheetColors.blue,
+                                    onTap: widget.onPause,
                                     disabled: _isExamCompleted,
-                                    onTap: _editPresets,
+                                  ),
+                                  _otControlItem(
+                                    title: "Restart Exam",
+                                    subtitle: "Restart the exam timer",
+                                    icon: Icons.restart_alt_rounded,
+                                    color:
+                                        _setupPhaseLabel(data.phase) ==
+                                            'Extra Time'
+                                        ? _OtSheetColors.orange
+                                        : _OtSheetColors.textSoft,
+                                    onTap: widget.onReStart,
+                                    disabled: _isExamCompleted || data.isPaused,
+                                  ),
+                                  _otControlItem(
+                                    title: "End Exam",
+                                    subtitle:
+                                        "End the exam and close active timing",
+                                    icon: Icons.stop_rounded,
+                                    color: _OtSheetColors.red,
+                                    onTap: widget.onEnd,
+                                    disabled: _isExamCompleted || data.isPaused,
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
-                              Opacity(
-                                opacity: _isExamCompleted ? 0.58 : 1,
-                                child: IgnorePointer(
-                                  ignoring: _isExamCompleted,
-                                  child: _buildResponsivePresetWrap(presetMessages),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              Opacity(
-                                opacity: _isExamCompleted ? 0.58 : 1,
-                                child: IgnorePointer(
-                                  ignoring: _isExamCompleted,
-                                  child: Row(
-                                    spacing: 10,
-                                    children: [
-                                      Expanded(
-                                        child: _otUtilityButton(
-                                          "Briefings",
-                                          icon: Icons.description_outlined,
-                                          onTap: _openSelectBriefings,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: _otUtilityButton(
-                                          "Request Runner",
-                                          icon: Icons.directions_run_rounded,
-                                          onTap: _requestRunner,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
                               const SizedBox(height: 24),
-                              _otSectionDivider(),
-                              const SizedBox(height: 18),
                               Text(
-                                "NEW MESSAGE",
+                                "AUTOMATION",
                                 style: TextStyle(
                                   color: _OtSheetColors.blueSoft,
                                   fontSize: 12.5,
@@ -3277,11 +3071,193 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              _otMessageInputBox(disabled: _isExamCompleted),
-                              if (messageLog.isNotEmpty) ...[
-                                const SizedBox(height: 32),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _OtSheetColors.panel2.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: _OtSheetColors.lineSoft,
+                                    width: .7,
+                                  ),
+                                ),
+                                child: Row(
+                                  spacing: 16,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Auto-start exam",
+                                            style: TextStyle(
+                                              color: _isExamCompleted
+                                                  ? _OtSheetColors.textFaint
+                                                        .withValues(alpha: 0.58)
+                                                  : _OtSheetColors.text,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            "Automatically start the exam at the scheduled time",
+                                            style: TextStyle(
+                                              color: _isExamCompleted
+                                                  ? _OtSheetColors.textFaint
+                                                        .withValues(alpha: 0.4)
+                                                  : _OtSheetColors.textSoft,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Switch(
+                                      value: autoStart,
+                                      activeThumbColor: Colors.white,
+                                      activeTrackColor: _OtSheetColors.blue,
+                                      inactiveTrackColor: const Color(
+                                        0xFF10263D,
+                                      ),
+                                      inactiveThumbColor: const Color(
+                                        0xFF8FA7BF,
+                                      ),
+                                      trackOutlineColor:
+                                          WidgetStateProperty.resolveWith((
+                                            states,
+                                          ) {
+                                            if (states.contains(
+                                              WidgetState.selected,
+                                            )) {
+                                              return Colors.transparent;
+                                            }
+                                            return const Color(0xFF35597B);
+                                          }),
+                                      onChanged: _isExamCompleted
+                                          ? null
+                                          : (v) {
+                                              setState(() {
+                                                autoStart = v;
+                                              });
+                                              widget.onToggleAutoStart(v);
+                                            },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // MESSAGES
+                      GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: () {
+                          FocusScope.of(context).unfocus();
+                        },
+                        child: SingleChildScrollView(
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          padding: _otScrollPadding(context),
+                          child: _otCardPanel(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 Text(
-                                  "RECENT MESSAGES",
+                                  "RECIPIENTS",
+                                  style: TextStyle(
+                                    color: _OtSheetColors.blueSoft,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                _otMessageSelectorField(
+                                  title: "Select invigilators",
+                                  subtitle: selectedInvigilators.isEmpty
+                                      ? "No Invigilators selected"
+                                      : (selectedInvigilators.length == 1
+                                            ? "1 Invigilator selected"
+                                            : "${selectedInvigilators.length} Invigilators selected"),
+                                  disabled: _isExamCompleted,
+                                  onTap: _openRecipientSelector,
+                                ),
+                                const SizedBox(height: 24),
+                                _otSectionDivider(),
+                                const SizedBox(height: 18),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        "QUICK MESSAGES",
+                                        style: TextStyle(
+                                          color: _OtSheetColors.blueSoft,
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 1.3,
+                                        ),
+                                      ),
+                                    ),
+                                    _otSmallTextButton(
+                                      'Edit',
+                                      icon: Icons.edit_rounded,
+                                      disabled: _isExamCompleted,
+                                      onTap: _editPresets,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Opacity(
+                                  opacity: _isExamCompleted ? 0.58 : 1,
+                                  child: IgnorePointer(
+                                    ignoring: _isExamCompleted,
+                                    child: _buildResponsivePresetWrap(
+                                      presetMessages,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                Opacity(
+                                  opacity: _isExamCompleted ? 0.58 : 1,
+                                  child: IgnorePointer(
+                                    ignoring: _isExamCompleted,
+                                    child: Row(
+                                      spacing: 10,
+                                      children: [
+                                        Expanded(
+                                          child: _otUtilityButton(
+                                            "Briefings",
+                                            icon: Icons.description_outlined,
+                                            onTap: _openSelectBriefings,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: _otUtilityButton(
+                                            "Request Runner",
+                                            icon: Icons.directions_run_rounded,
+                                            onTap: _requestRunner,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                _otSectionDivider(),
+                                const SizedBox(height: 18),
+                                Text(
+                                  "NEW MESSAGE",
                                   style: TextStyle(
                                     color: _OtSheetColors.blueSoft,
                                     fontSize: 12.5,
@@ -3290,142 +3266,102 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   ),
                                 ),
                                 const SizedBox(height: 12),
-                                ..._getGroupedMessages().map(_otMessageBubble),
+                                _otMessageInputBox(disabled: _isExamCompleted),
+                                if (messageLog.isNotEmpty) ...[
+                                  const SizedBox(height: 32),
+                                  Text(
+                                    "RECENT MESSAGES",
+                                    style: TextStyle(
+                                      color: _OtSheetColors.blueSoft,
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 1.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  ..._getGroupedMessages().map(
+                                    _otMessageBubble,
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
-                    // INCIDENTS
-                    SingleChildScrollView(
-                      padding: _otScrollPadding(context),
-                      child: _otCardPanel(
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "LOG NEW INCIDENT",
-                              style: TextStyle(
-                                color: _OtSheetColors.blueSoft,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.3,
+                      // INCIDENTS
+                      SingleChildScrollView(
+                        padding: _otScrollPadding(context),
+                        child: _otCardPanel(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "LOG NEW INCIDENT",
+                                style: TextStyle(
+                                  color: _OtSheetColors.blueSoft,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.3,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            Column(
-                              spacing: 12,
-                              children: [
-                                _otIncidentActionButton(
-                                  title: "Toilet Visit",
-                                  subtitle: "Record a toilet visit",
-                                  icon: Icons.wc,
-                                  color: _OtSheetColors.purple,
-                                  onTap: _showToiletVisitIncidentDialog,
-                                  disabled: _isExamCompleted,
-                                ),
-                                _otIncidentActionButton(
-                                  title: "Medical",
-                                  subtitle: "Record a medical incident",
-                                  icon: Icons.medical_services,
-                                  color: _OtSheetColors.blue,
-                                  onTap: _showMedicalIncidentDialog,
-                                  disabled: _isExamCompleted,
-                                ),
-                                _otIncidentActionButton(
-                                  title: "Malpractice",
-                                  subtitle: "Record a malpractice concern",
-                                  icon: Icons.warning_amber_rounded,
-                                  color: _OtSheetColors.orange,
-                                  onTap: _showMalpracticeIncidentDialog,
-                                  disabled: _isExamCompleted,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              "RECENT INCIDENTS",
-                              style: TextStyle(
-                                color: _OtSheetColors.blueSoft,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.3,
+                              const SizedBox(height: 12),
+                              Column(
+                                spacing: 12,
+                                children: [
+                                  _otIncidentActionButton(
+                                    title: "Toilet Visit",
+                                    subtitle: "Record a toilet visit",
+                                    icon: Icons.wc,
+                                    color: _OtSheetColors.purple,
+                                    onTap: _showToiletVisitIncidentDialog,
+                                    disabled: _isExamCompleted,
+                                  ),
+                                  _otIncidentActionButton(
+                                    title: "Medical",
+                                    subtitle: "Record a medical incident",
+                                    icon: Icons.medical_services,
+                                    color: _OtSheetColors.blue,
+                                    onTap: _showMedicalIncidentDialog,
+                                    disabled: _isExamCompleted,
+                                  ),
+                                  _otIncidentActionButton(
+                                    title: "Malpractice",
+                                    subtitle: "Record a malpractice concern",
+                                    icon: Icons.warning_amber_rounded,
+                                    color: _OtSheetColors.orange,
+                                    onTap: _showMalpracticeIncidentDialog,
+                                    disabled: _isExamCompleted,
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            Builder(
-                              builder: (context) {
-                                final recentIncidents = data.logs
-                                    .where(
-                                      (log) => _logCategory(log) == 'Incident',
-                                    )
-                                    .toList();
+                              const SizedBox(height: 24),
+                              Text(
+                                "RECENT INCIDENTS",
+                                style: TextStyle(
+                                  color: _OtSheetColors.blueSoft,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.3,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Builder(
+                                builder: (context) {
+                                  final recentIncidents = data.logs
+                                      .where(
+                                        (log) =>
+                                            _logCategory(log) == 'Incident',
+                                      )
+                                      .toList();
 
-                                if (recentIncidents.isEmpty) {
-                                  return Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 20,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _OtSheetColors.panel2.withValues(
-                                        alpha: 0.7,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: _OtSheetColors.lineSoft,
-                                        width: .7,
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        "No recent incidents logged",
-                                        style: TextStyle(
-                                          color: _OtSheetColors.textSoft,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }
-
-                                return Column(
-                                  spacing: 10,
-                                  children: List.generate(recentIncidents.length, (
-                                    idx,
-                                  ) {
-                                    final incident = recentIncidents[idx];
-                                    final bool expanded =
-                                        _expandedRecentIncidentIndex == idx;
-                                    final timeStr =
-                                        "${incident.time.hour.toString().padLeft(2, '0')}:${incident.time.minute.toString().padLeft(2, '0')}";
-
-                                    final String visualTitle;
-                                    final IconData visualIcon;
-                                    final Color visualColor;
-
-                                    if (incident.message == 'Toilet break') {
-                                      visualTitle = "Toilet Visit";
-                                      visualIcon = Icons.wc;
-                                      visualColor = _OtSheetColors.purple;
-                                    } else if (incident.message ==
-                                        'Medical incident') {
-                                      visualTitle = "Medical";
-                                      visualIcon = Icons.medical_services;
-                                      visualColor = _OtSheetColors.blue;
-                                    } else {
-                                      visualTitle = "Malpractice";
-                                      visualIcon = Icons.warning_amber_rounded;
-                                      visualColor = _OtSheetColors.orange;
-                                    }
-
+                                  if (recentIncidents.isEmpty) {
                                     return Container(
                                       width: double.infinity,
-                                      clipBehavior: Clip.antiAlias,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 20,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: _OtSheetColors.panel2.withValues(
                                           alpha: 0.7,
@@ -3436,472 +3372,534 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                           width: .7,
                                         ),
                                       ),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: () {
-                                            setState(() {
-                                              _expandedRecentIncidentIndex =
-                                                  _expandedRecentIncidentIndex ==
-                                                      idx
-                                                  ? null
-                                                  : idx;
-                                            });
-                                          },
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 16,
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  crossAxisAlignment: expanded
-                                                      ? CrossAxisAlignment.start
-                                                      : CrossAxisAlignment
-                                                            .center,
-                                                  children: [
-                                                    Icon(
-                                                      visualIcon,
-                                                      color: visualColor,
-                                                      size: 24,
-                                                    ),
-                                                    const SizedBox(width: 12),
-                                                    Text(
-                                                      timeStr,
-                                                      style: TextStyle(
-                                                        color:
-                                                            _OtSheetColors.text,
-                                                        fontSize: 15.5,
-                                                        fontWeight:
-                                                            FontWeight.w900,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 20),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text(
-                                                            visualTitle,
-                                                            style: TextStyle(
-                                                              color:
-                                                                  visualColor,
-                                                              fontSize: 16,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w800,
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 3,
-                                                          ),
-                                                          Text(
-                                                            "Student: ${incident.studentID.trim()}",
-                                                            style: TextStyle(
-                                                              color:
-                                                                  _OtSheetColors
-                                                                      .textSoft,
-                                                              fontSize: 13.8,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                            ),
-                                                          ),
-                                                          AnimatedCrossFade(
-                                                            firstChild:
-                                                                const SizedBox.shrink(),
-                                                            secondChild: Padding(
-                                                              padding:
-                                                                  const EdgeInsets.only(
-                                                                    top: 5.5,
-                                                                    right: 10,
-                                                                  ),
-                                                              child: Column(
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .start,
-                                                                spacing: 6,
-                                                                children: [
-                                                                  if (incident
-                                                                      .room
-                                                                      .isNotEmpty)
-                                                                    Text(
-                                                                      "Room: ${incident.room}",
-                                                                      style: TextStyle(
-                                                                        color: _OtSheetColors
-                                                                            .textSoft,
-                                                                        fontSize:
-                                                                            13.8,
-                                                                        fontWeight:
-                                                                            FontWeight.w600,
-                                                                      ),
-                                                                    ),
-                                                                  if (incident
-                                                                      .duration
-                                                                      .isNotEmpty)
-                                                                    Text(
-                                                                      "Duration: ${incident.duration} minutes",
-                                                                      style: TextStyle(
-                                                                        color: _OtSheetColors
-                                                                            .textSoft,
-                                                                        fontSize:
-                                                                            13.8,
-                                                                        fontWeight:
-                                                                            FontWeight.w600,
-                                                                      ),
-                                                                    ),
-                                                                  if (incident
-                                                                      .detail
-                                                                      .isNotEmpty)
-                                                                    Text(
-                                                                      "Details: ${incident.detail}",
-                                                                      style: TextStyle(
-                                                                        color: _OtSheetColors
-                                                                            .textSoft,
-                                                                        fontSize:
-                                                                            13.8,
-                                                                        fontWeight:
-                                                                            FontWeight.w600,
-                                                                      ),
-                                                                    ),
-                                                                  if (incident
-                                                                      .action
-                                                                      .isNotEmpty)
-                                                                    Text(
-                                                                      "Action: ${incident.action}",
-                                                                      style: TextStyle(
-                                                                        color: _OtSheetColors
-                                                                            .textSoft,
-                                                                        fontSize:
-                                                                            13.8,
-                                                                        fontWeight:
-                                                                            FontWeight.w600,
-                                                                      ),
-                                                                    ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                            crossFadeState:
-                                                                expanded
-                                                                ? CrossFadeState
-                                                                      .showSecond
-                                                                : CrossFadeState
-                                                                      .showFirst,
-                                                            duration:
-                                                                const Duration(
-                                                                  milliseconds:
-                                                                      180,
-                                                                ),
-                                                            sizeCurve: Curves
-                                                                .easeInOut,
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 12),
-                                                    Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                            top: 2,
-                                                          ),
-                                                      child: AnimatedRotation(
-                                                        turns: expanded
-                                                            ? 0.25
-                                                            : 0,
-                                                        duration:
-                                                            const Duration(
-                                                              milliseconds: 180,
-                                                            ),
-                                                        child: Icon(
-                                                          Icons
-                                                              .keyboard_arrow_right_rounded,
-                                                          color: _OtSheetColors
-                                                              .textSoft,
-                                                          size: 24,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
+                                      child: Center(
+                                        child: Text(
+                                          "No recent incidents logged",
+                                          style: TextStyle(
+                                            color: _OtSheetColors.textSoft,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
                                           ),
                                         ),
                                       ),
                                     );
-                                  }),
-                                );
-                              },
-                            ),
-                            // _otViewAllIncidentsTile(),
-                          ],
-                        ),
-                      ),
-                    ),
+                                  }
 
-                    // LOG
-                    SingleChildScrollView(
-                      padding: _otScrollPadding(context),
-                      child: _otCardPanel(
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    "EXAM TIMELINE",
-                                    style: TextStyle(
-                                      color: _OtSheetColors.blueSoft,
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 1.3,
-                                    ),
-                                  ),
-                                ),
-                                _otLogStatusPill('Live audit record'),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _otUtilityButton(
-                                    "Copy Log",
-                                    icon: Icons.copy_rounded,
-                                    onTap: () {
-                                      widget.onExportCopy();
-                                      _markAsExported();
-                                      if (Platform.isIOS) {
-                                        showCopiedMessage(context);
+                                  return Column(
+                                    spacing: 10,
+                                    children: List.generate(recentIncidents.length, (
+                                      idx,
+                                    ) {
+                                      final incident = recentIncidents[idx];
+                                      final bool expanded =
+                                          _expandedRecentIncidentIndex == idx;
+                                      final timeStr =
+                                          "${incident.time.hour.toString().padLeft(2, '0')}:${incident.time.minute.toString().padLeft(2, '0')}";
+
+                                      final String visualTitle;
+                                      final IconData visualIcon;
+                                      final Color visualColor;
+
+                                      if (incident.message == 'Toilet break') {
+                                        visualTitle = "Toilet Visit";
+                                        visualIcon = Icons.wc;
+                                        visualColor = _OtSheetColors.purple;
+                                      } else if (incident.message ==
+                                          'Medical incident') {
+                                        visualTitle = "Medical";
+                                        visualIcon = Icons.medical_services;
+                                        visualColor = _OtSheetColors.blue;
+                                      } else {
+                                        visualTitle = "Malpractice";
+                                        visualIcon =
+                                            Icons.warning_amber_rounded;
+                                        visualColor = _OtSheetColors.orange;
                                       }
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                // Expanded(
-                                //   child: _otUtilityButton(
-                                //     "Download Log",
-                                //     icon: Icons.download_rounded,
-                                //     onTap: () {
-                                //       widget.onExportCsvDownload();
-                                //       _markAsExported();
-                                //     },
-                                //   ),
-                                // ),
-                                // const SizedBox(width: 12),
-                                Expanded(
-                                  child: _otUtilityButton(
-                                    "Share",
-                                    icon: Icons.share_rounded,
-                                    onTap: () {
-                                      widget.onExportCsvShare();
-                                      _markAsExported();
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
-                            if (_currentData.logs.isEmpty)
-                              _otStandardPanel(
-                                child: Center(
-                                  child: Text(
-                                    "No log entries yet",
-                                    style: TextStyle(
-                                      color: _OtSheetColors.textSoft,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
+
+                                      return Container(
+                                        width: double.infinity,
+                                        clipBehavior: Clip.antiAlias,
+                                        decoration: BoxDecoration(
+                                          color: _OtSheetColors.panel2
+                                              .withValues(alpha: 0.7),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: _OtSheetColors.lineSoft,
+                                            width: .7,
+                                          ),
+                                        ),
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            onTap: () {
+                                              setState(() {
+                                                _expandedRecentIncidentIndex =
+                                                    _expandedRecentIncidentIndex ==
+                                                        idx
+                                                    ? null
+                                                    : idx;
+                                              });
+                                            },
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 16,
+                                                  ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    crossAxisAlignment: expanded
+                                                        ? CrossAxisAlignment
+                                                              .start
+                                                        : CrossAxisAlignment
+                                                              .center,
+                                                    children: [
+                                                      Icon(
+                                                        visualIcon,
+                                                        color: visualColor,
+                                                        size: 24,
+                                                      ),
+                                                      const SizedBox(width: 12),
+                                                      Text(
+                                                        timeStr,
+                                                        style: TextStyle(
+                                                          color: _OtSheetColors
+                                                              .text,
+                                                          fontSize: 15.5,
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 20),
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              visualTitle,
+                                                              style: TextStyle(
+                                                                color:
+                                                                    visualColor,
+                                                                fontSize: 16,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w800,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 3,
+                                                            ),
+                                                            Text(
+                                                              "Student: ${incident.studentID.trim()}",
+                                                              style: TextStyle(
+                                                                color:
+                                                                    _OtSheetColors
+                                                                        .textSoft,
+                                                                fontSize: 13.8,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                            AnimatedCrossFade(
+                                                              firstChild:
+                                                                  const SizedBox.shrink(),
+                                                              secondChild: Padding(
+                                                                padding:
+                                                                    const EdgeInsets.only(
+                                                                      top: 5.5,
+                                                                      right: 10,
+                                                                    ),
+                                                                child: Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  spacing: 6,
+                                                                  children: [
+                                                                    if (incident
+                                                                        .room
+                                                                        .isNotEmpty)
+                                                                      Text(
+                                                                        "Room: ${incident.room}",
+                                                                        style: TextStyle(
+                                                                          color:
+                                                                              _OtSheetColors.textSoft,
+                                                                          fontSize:
+                                                                              13.8,
+                                                                          fontWeight:
+                                                                              FontWeight.w600,
+                                                                        ),
+                                                                      ),
+                                                                    if (incident
+                                                                        .duration
+                                                                        .isNotEmpty)
+                                                                      Text(
+                                                                        "Duration: ${incident.duration} minutes",
+                                                                        style: TextStyle(
+                                                                          color:
+                                                                              _OtSheetColors.textSoft,
+                                                                          fontSize:
+                                                                              13.8,
+                                                                          fontWeight:
+                                                                              FontWeight.w600,
+                                                                        ),
+                                                                      ),
+                                                                    if (incident
+                                                                        .detail
+                                                                        .isNotEmpty)
+                                                                      Text(
+                                                                        "Details: ${incident.detail}",
+                                                                        style: TextStyle(
+                                                                          color:
+                                                                              _OtSheetColors.textSoft,
+                                                                          fontSize:
+                                                                              13.8,
+                                                                          fontWeight:
+                                                                              FontWeight.w600,
+                                                                        ),
+                                                                      ),
+                                                                    if (incident
+                                                                        .action
+                                                                        .isNotEmpty)
+                                                                      Text(
+                                                                        "Action: ${incident.action}",
+                                                                        style: TextStyle(
+                                                                          color:
+                                                                              _OtSheetColors.textSoft,
+                                                                          fontSize:
+                                                                              13.8,
+                                                                          fontWeight:
+                                                                              FontWeight.w600,
+                                                                        ),
+                                                                      ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              crossFadeState:
+                                                                  expanded
+                                                                  ? CrossFadeState
+                                                                        .showSecond
+                                                                  : CrossFadeState
+                                                                        .showFirst,
+                                                              duration:
+                                                                  const Duration(
+                                                                    milliseconds:
+                                                                        180,
+                                                                  ),
+                                                              sizeCurve: Curves
+                                                                  .easeInOut,
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 12),
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              top: 2,
+                                                            ),
+                                                        child: AnimatedRotation(
+                                                          turns: expanded
+                                                              ? 0.25
+                                                              : 0,
+                                                          duration:
+                                                              const Duration(
+                                                                milliseconds:
+                                                                    180,
+                                                              ),
+                                                          child: Icon(
+                                                            Icons
+                                                                .keyboard_arrow_right_rounded,
+                                                            color:
+                                                                _OtSheetColors
+                                                                    .textSoft,
+                                                            size: 24,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                  );
+                                },
+                              ),
+                              // _otViewAllIncidentsTile(),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // LOG
+                      SingleChildScrollView(
+                        padding: _otScrollPadding(context),
+                        child: _otCardPanel(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      "EXAM TIMELINE",
+                                      style: TextStyle(
+                                        color: _OtSheetColors.blueSoft,
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 1.3,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              )
-                            else
-                              ...List.generate(_currentData.logs.length, (i) {
-                                final incident = _currentData.logs[i];
-                                return _timelineLogRow(
-                                  incident: incident,
-                                  expanded: _expandedLogIndex == i,
-                                  onTap: () {
-                                    setState(() {
-                                      _expandedLogIndex = _expandedLogIndex == i
-                                          ? null
-                                          : i;
-                                    });
-                                  },
-                                );
-                              }),
-                          ],
+                                  _otLogStatusPill('Live audit record'),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _otUtilityButton(
+                                      "Copy Log",
+                                      icon: Icons.copy_rounded,
+                                      onTap: () {
+                                        widget.onExportCopy();
+                                        _markAsExported();
+                                        if (Platform.isIOS) {
+                                          showCopiedMessage(context);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // Expanded(
+                                  //   child: _otUtilityButton(
+                                  //     "Download Log",
+                                  //     icon: Icons.download_rounded,
+                                  //     onTap: () {
+                                  //       widget.onExportCsvDownload();
+                                  //       _markAsExported();
+                                  //     },
+                                  //   ),
+                                  // ),
+                                  // const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _otUtilityButton(
+                                      "Share",
+                                      icon: Icons.share_rounded,
+                                      onTap: () {
+                                        widget.onExportCsvShare();
+                                        _markAsExported();
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 18),
+                              if (_currentData.logs.isEmpty)
+                                _otStandardPanel(
+                                  child: Center(
+                                    child: Text(
+                                      "No log entries yet",
+                                      style: TextStyle(
+                                        color: _OtSheetColors.textSoft,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              else
+                                ...List.generate(_currentData.logs.length, (i) {
+                                  final incident = _currentData.logs[i];
+                                  return _timelineLogRow(
+                                    incident: incident,
+                                    expanded: _expandedLogIndex == i,
+                                    onTap: () {
+                                      setState(() {
+                                        _expandedLogIndex =
+                                            _expandedLogIndex == i ? null : i;
+                                      });
+                                    },
+                                  );
+                                }),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
 
-                    // PRIVACY
-                    SingleChildScrollView(
-                      padding: _otScrollPadding(context),
-                      child: _otCardPanel(
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _otPrivacyOverviewCard(data),
-                            const SizedBox(height: 24),
-                            Text(
-                              "DATA & PRIVACY",
-                              style: TextStyle(
-                                color: _OtSheetColors.blueSoft,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
-                                  alpha: 0.7,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
-                                  width: .7,
+                      // PRIVACY
+                      SingleChildScrollView(
+                        padding: _otScrollPadding(context),
+                        child: _otCardPanel(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _otPrivacyOverviewCard(data),
+                              const SizedBox(height: 24),
+                              Text(
+                                "DATA & PRIVACY",
+                                style: TextStyle(
+                                  color: _OtSheetColors.blueSoft,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.3,
                                 ),
                               ),
-                              child: Column(
-                                children: [
-                                  _otPrivacyTile(
-                                    icon: Icons.article_outlined,
-                                    title: "Privacy Notice",
-                                    subtitle:
-                                        "How exam data is used and protected",
-                                    sectionId: 'privacy',
-                                    showCheckmark: true,
-                                    content:
-                                        "Vigilo ERC stores exam data locally on the device and does not transmit it to any external server.\n\nNo personal data is shared, synced, or stored outside of the device by the application.",
+                              const SizedBox(height: 12),
+                              Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: _OtSheetColors.panel2.withValues(
+                                    alpha: 0.7,
                                   ),
-                                  Container(
-                                    height: .7,
-                                    width: double.infinity,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
                                     color: _OtSheetColors.lineSoft,
+                                    width: .7,
                                   ),
-                                  _otPrivacyTile(
-                                    icon: Icons.download_rounded,
-                                    title: "Export & Retention",
-                                    subtitle:
-                                        "Manage exports and data retention",
-                                    sectionId: 'export',
-                                    showCheckmark: true,
-                                    content:
-                                        "Exported logs are generated for organisational record keeping and should be stored, shared, retained, or deleted in accordance with the organisation's own procedures.\n\nVigilo ERC does not upload exported records to an external server.",
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              "COMPLIANCE",
-                              style: TextStyle(
-                                color: _OtSheetColors.blueSoft,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
-                                  alpha: 0.7,
                                 ),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
-                                  width: .7,
+                                child: Column(
+                                  children: [
+                                    _otPrivacyTile(
+                                      icon: Icons.article_outlined,
+                                      title: "Privacy Notice",
+                                      subtitle:
+                                          "How exam data is used and protected",
+                                      sectionId: 'privacy',
+                                      showCheckmark: true,
+                                      content:
+                                          "Vigilo ERC stores exam data locally on the device and does not transmit it to any external server.\n\nNo personal data is shared, synced, or stored outside of the device by the application.",
+                                    ),
+                                    Container(
+                                      height: .7,
+                                      width: double.infinity,
+                                      color: _OtSheetColors.lineSoft,
+                                    ),
+                                    _otPrivacyTile(
+                                      icon: Icons.download_rounded,
+                                      title: "Export & Retention",
+                                      subtitle:
+                                          "Manage exports and data retention",
+                                      sectionId: 'export',
+                                      showCheckmark: true,
+                                      content:
+                                          "Exported logs are generated for organisational record keeping and should be stored, shared, retained, or deleted in accordance with the organisation's own procedures.\n\nVigilo ERC does not upload exported records to an external server.",
+                                    ),
+                                  ],
                                 ),
                               ),
-                              child: Column(
-                                children: [
-                                  _otPrivacyTile(
-                                    icon: Icons.group_outlined,
-                                    title: "Responsibilities",
-                                    subtitle: "Your role and responsibilities",
-                                    sectionId: 'compliance',
-                                    content:
-                                        "The organisation is responsible for the retention, export, archiving, and deletion of records in accordance with its own policies, relevant examination regulations such as JCQ where applicable, and applicable data protection requirements.\n\nThis application should only be used by authorised staff during examinations.",
+                              const SizedBox(height: 24),
+                              Text(
+                                "COMPLIANCE",
+                                style: TextStyle(
+                                  color: _OtSheetColors.blueSoft,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.3,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: _OtSheetColors.panel2.withValues(
+                                    alpha: 0.7,
                                   ),
-                                  Container(
-                                    height: .7,
-                                    width: double.infinity,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
                                     color: _OtSheetColors.lineSoft,
+                                    width: .7,
                                   ),
-                                  _otPrivacyTile(
-                                    icon: Icons.info_outline_rounded,
-                                    title: "Version Information",
-                                    subtitle: "App version and compliance info",
-                                    sectionId: 'version',
-                                    content:
-                                        "Vigilo ERC v1.0\n\nCopyright © 2026 Vigilo Platforms Ltd. All rights reserved.",
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              "CRITICAL ACTIONS",
-                              style: TextStyle(
-                                color: _OtSheetColors.blueSoft,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: _OtSheetColors.red.withValues(
-                                  alpha: 0.03,
                                 ),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
+                                child: Column(
+                                  children: [
+                                    _otPrivacyTile(
+                                      icon: Icons.group_outlined,
+                                      title: "Responsibilities",
+                                      subtitle:
+                                          "Your role and responsibilities",
+                                      sectionId: 'compliance',
+                                      content:
+                                          "The organisation is responsible for the retention, export, archiving, and deletion of records in accordance with its own policies, relevant examination regulations such as JCQ where applicable, and applicable data protection requirements.\n\nThis application should only be used by authorised staff during examinations.",
+                                    ),
+                                    Container(
+                                      height: .7,
+                                      width: double.infinity,
+                                      color: _OtSheetColors.lineSoft,
+                                    ),
+                                    _otPrivacyTile(
+                                      icon: Icons.info_outline_rounded,
+                                      title: "Version Information",
+                                      subtitle:
+                                          "App version and compliance info",
+                                      sectionId: 'version',
+                                      content:
+                                          "Vigilo ERC v1.0\n\nCopyright © 2026 Vigilo Platforms Ltd. All rights reserved.",
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Text(
+                                "CRITICAL ACTIONS",
+                                style: TextStyle(
+                                  color: _OtSheetColors.blueSoft,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.3,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
                                   color: _OtSheetColors.red.withValues(
-                                    alpha: 0.4,
+                                    alpha: 0.03,
                                   ),
-                                  width: .7,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: _OtSheetColors.red.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                    width: .7,
+                                  ),
+                                ),
+                                child: _otPrivacyTile(
+                                  icon: Icons.delete_outline_rounded,
+                                  title: "Delete Exam Data",
+                                  subtitle:
+                                      "Permanently delete all exam data from this device",
+                                  sectionId: 'delete',
+                                  content: "",
+                                  isDanger: true,
+                                  onTap: widget.onDeleteData,
                                 ),
                               ),
-                              child: _otPrivacyTile(
-                                icon: Icons.delete_outline_rounded,
-                                title: "Delete Exam Data",
-                                subtitle:
-                                    "Permanently delete all exam data from this device",
-                                sectionId: 'delete',
-                                content: "",
-                                isDanger: true,
-                                onTap: widget.onDeleteData,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-      ),
-      ),
     );
-}
+  }
 
   void showCopiedMessage(BuildContext context) {
     final overlay = Overlay.of(context);
@@ -4374,6 +4372,7 @@ class _InvigilatorSelectorDialogState
     );
   }
 }
+
 class _PresetMessagesDialog extends StatefulWidget {
   const _PresetMessagesDialog({
     required this.initialPresets,
@@ -4480,7 +4479,9 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                 decoration: BoxDecoration(
                   color: _OtSheetColors.panel,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: _OtSheetColors.line.withValues(alpha: 0.75)),
+                  border: Border.all(
+                    color: _OtSheetColors.line.withValues(alpha: 0.75),
+                  ),
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black45,
@@ -4490,264 +4491,294 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                   ],
                 ),
                 child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 58,
-                          height: 58,
-                          decoration: BoxDecoration(
-                            color: _OtSheetColors.blue.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: _OtSheetColors.blue.withValues(alpha: 0.5)),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 58,
+                            height: 58,
+                            decoration: BoxDecoration(
+                              color: _OtSheetColors.blue.withValues(
+                                alpha: 0.12,
+                              ),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: _OtSheetColors.blue.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.edit_note_rounded,
+                              color: _OtSheetColors.blue,
+                              size: 31,
+                            ),
                           ),
-                          child: Icon(
-                            Icons.edit_note_rounded,
-                            color: _OtSheetColors.blue,
-                            size: 31,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              'Edit Presets',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: _OtSheetColors.text,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                height: 1.1,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
+                        ],
+                      ),
+
+                      const SizedBox(height: 26),
+
+                      if (_presetControllers.isEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
                           child: Text(
-                            'Edit Presets',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            'No preset messages yet',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: _OtSheetColors.text,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              height: 1.1,
+                              color: _OtSheetColors.textSoft,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 26),
-
-                    if (_presetControllers.isEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        child: Text(
-                          'No preset messages yet',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: _OtSheetColors.textSoft,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ] else ...[
-                      ...List.generate(_presetControllers.length, (index) {
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            bottom: index == _presetControllers.length - 1 ? 0 : 16,
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  decoration: BoxDecoration(
-                                    color: _OtSheetColors.panel2.withValues(alpha: 0.58),
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color: _OtSheetColors.lineSoft.withValues(alpha: 0.28),
-                                    ),
-                                  ),
-                                  child: TextField(
-                                    controller: _presetControllers[index],
-                                    maxLines: null,
-                                    cursorColor: _OtSheetColors.blue,
-                                    style: TextStyle(
-                                      color: _OtSheetColors.text,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      height: 1.35,
-                                    ),
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      isDense: true,
-                                      contentPadding:
-                                          EdgeInsets.symmetric(vertical: 13),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              GestureDetector(
-                                onTap: () => _removePreset(index),
-                                child: Icon(
-                                  Icons.delete_rounded,
-                                  color: _OtSheetColors.red,
-                                  size: 27,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                    ],
-
-                    const SizedBox(height: 22),
-
-                    Container(
-                      height: 1,
-                      color: _OtSheetColors.line.withValues(alpha: 0.18),
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Add new preset',
-                        style: TextStyle(
-                          color: _OtSheetColors.textSoft,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    Container(
-                      height: 60,
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      decoration: BoxDecoration(
-                        color: _OtSheetColors.panel2,
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: _OtSheetColors.lineSoft.withValues(alpha: 0.45)),
-                      ),
-                      child: TextField(
-                        controller: _newPresetController,
-                        cursorColor: _OtSheetColors.blue,
-                        onChanged: (_) {
-                          setState(() {
-                            if (_presetControllers.length >= 50 &&
-                                _newPresetController.text.isNotEmpty) {
-                              _showLimitError = true;
-                            } else {
-                              _showLimitError = false;
-                            }
-                          });
-                        },
-                        style: TextStyle(
-                          color: _OtSheetColors.text,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: 'Type message...',
-                          hintStyle: TextStyle(
-                            color: _OtSheetColors.textFaint,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    if (_showLimitError) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        'Quick Message limit reached (50). Delete an existing message to create a new one.',
-                        style: TextStyle(
-                          color: _OtSheetColors.red,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-
-                    const SizedBox(height: 20),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AnimatedScaleOnPress(
-                            child: SizedBox(
-                              height: 44,
-                              child: OutlinedButton(
-                                onPressed: () => Navigator.pop(context),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: _OtSheetColors.lineSoft),
-                                  backgroundColor: _OtSheetColors.panel2.withValues(alpha: 0.62),
-                                  shape: const StadiumBorder(),
-                                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                                ),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    'Close',
-                                    style: TextStyle(
-                                      color: _OtSheetColors.blackWhite,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                      ] else ...[
+                        ...List.generate(_presetControllers.length, (index) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom: index == _presetControllers.length - 1
+                                  ? 0
+                                  : 16,
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: ValueListenableBuilder<TextEditingValue>(
-                            valueListenable: _newPresetController,
-                            builder: (context, val, _) {
-                              final isEnabled = val.text.trim().isNotEmpty && _presetControllers.length < 50;
-                              return AnimatedScaleOnPress(
-                                isDisabled: !isEnabled,
-                                child: SizedBox(
-                                  height: 44,
-                                  child: FilledButton(
-                                    onPressed: isEnabled ? _addPreset : null,
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: _OtSheetColors.blue,
-                                      disabledBackgroundColor: _OtSheetColors.blue.withValues(alpha: 0.45),
-                                      foregroundColor: Colors.white,
-                                      disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
-                                      shape: const StadiumBorder(),
-                                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                                      elevation: isEnabled ? 2 : 0,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
                                     ),
-                                    child: const FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        'Add',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w900,
+                                    decoration: BoxDecoration(
+                                      color: _OtSheetColors.panel2.withValues(
+                                        alpha: 0.58,
+                                      ),
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(
+                                        color: _OtSheetColors.lineSoft
+                                            .withValues(alpha: 0.28),
+                                      ),
+                                    ),
+                                    child: TextField(
+                                      controller: _presetControllers[index],
+                                      maxLines: null,
+                                      cursorColor: _OtSheetColors.blue,
+                                      style: TextStyle(
+                                        color: _OtSheetColors.text,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        height: 1.35,
+                                      ),
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          vertical: 13,
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              );
-                            }
+                                const SizedBox(width: 10),
+                                GestureDetector(
+                                  onTap: () => _removePreset(index),
+                                  child: Icon(
+                                    Icons.delete_rounded,
+                                    color: _OtSheetColors.red,
+                                    size: 27,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+
+                      const SizedBox(height: 22),
+
+                      Container(
+                        height: 1,
+                        color: _OtSheetColors.line.withValues(alpha: 0.18),
+                      ),
+
+                      const SizedBox(height: 22),
+
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Add new preset',
+                          style: TextStyle(
+                            color: _OtSheetColors.textSoft,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      Container(
+                        height: 60,
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        decoration: BoxDecoration(
+                          color: _OtSheetColors.panel2,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(
+                            color: _OtSheetColors.lineSoft.withValues(
+                              alpha: 0.45,
+                            ),
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _newPresetController,
+                          cursorColor: _OtSheetColors.blue,
+                          onChanged: (_) {
+                            setState(() {
+                              if (_presetControllers.length >= 50 &&
+                                  _newPresetController.text.isNotEmpty) {
+                                _showLimitError = true;
+                              } else {
+                                _showLimitError = false;
+                              }
+                            });
+                          },
+                          style: TextStyle(
+                            color: _OtSheetColors.text,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Type message...',
+                            hintStyle: TextStyle(
+                              color: _OtSheetColors.textFaint,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      if (_showLimitError) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Quick Message limit reached (50). Delete an existing message to create a new one.',
+                          style: TextStyle(
+                            color: _OtSheetColors.red,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
-                    ),
-                  ],
+
+                      const SizedBox(height: 20),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: AnimatedScaleOnPress(
+                              child: SizedBox(
+                                height: 44,
+                                child: OutlinedButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(
+                                      color: _OtSheetColors.lineSoft,
+                                    ),
+                                    backgroundColor: _OtSheetColors.panel2
+                                        .withValues(alpha: 0.62),
+                                    shape: const StadiumBorder(),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                    ),
+                                  ),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      'Close',
+                                      style: TextStyle(
+                                        color: _OtSheetColors.blackWhite,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: _newPresetController,
+                              builder: (context, val, _) {
+                                final isEnabled =
+                                    val.text.trim().isNotEmpty &&
+                                    _presetControllers.length < 50;
+                                return AnimatedScaleOnPress(
+                                  isDisabled: !isEnabled,
+                                  child: SizedBox(
+                                    height: 44,
+                                    child: FilledButton(
+                                      onPressed: isEnabled ? _addPreset : null,
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: _OtSheetColors.blue,
+                                        disabledBackgroundColor: _OtSheetColors
+                                            .blue
+                                            .withValues(alpha: 0.45),
+                                        foregroundColor: Colors.white,
+                                        disabledForegroundColor: Colors.white
+                                            .withValues(alpha: 0.6),
+                                        shape: const StadiumBorder(),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                        ),
+                                        elevation: isEnabled ? 2 : 0,
+                                      ),
+                                      child: const FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          'Add',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _RequestRunnerDialog extends StatefulWidget {
@@ -4894,7 +4925,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Container(
-                constraints: BoxConstraints(maxHeight: media.size.height * 0.82),
+                constraints: BoxConstraints(
+                  maxHeight: media.size.height * 0.82,
+                ),
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -4909,363 +4942,370 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                     ),
                   ],
                 ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8, left: 8, right: 4),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: _OtSheetColors.blue.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: _OtSheetColors.blue.withValues(
-                                alpha: 0.70,
-                              ),
-                              width: .7,
-                            ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.directions_run_rounded,
-                            color: _OtSheetColors.blue,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Request Runner',
-                                style: TextStyle(
-                                  color: _OtSheetColors.text,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Send an operational request for room support',
-                                style: TextStyle(
-                                  color: _OtSheetColors.textSoft,
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Tooltip(
-                          message: 'Close',
-                          child: InkWell(
-                            onTap: () => Navigator.pop(context),
-                            borderRadius: BorderRadius.circular(14),
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.close_rounded,
-                                size: 24,
-                                color: _OtSheetColors.textSoft,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, left: 8, right: 4),
+                      child: Row(
                         children: [
-                          _otSectionLabel('REQUEST TYPE'),
-                          const SizedBox(height: 10),
                           Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
+                            width: 50,
+                            height: 50,
                             decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2.withValues(
-                                alpha: 0.30,
+                              color: _OtSheetColors.blue.withValues(
+                                alpha: 0.15,
                               ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: _OtSheetColors.lineSoft,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _requestTypeController,
-                              focusNode: _requestTypeFocus,
-                              textInputAction: TextInputAction.next,
-                              onSubmitted: (_) {
-                                _messageFocus.requestFocus();
-                              },
-                              cursorColor: _OtSheetColors.blueSoft,
-                              style: TextStyle(
-                                color: _OtSheetColors.text,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              onChanged: (_) {
-                                setState(() {});
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Additional papers / materials',
-                                hintStyle: TextStyle(
-                                  color: _OtSheetColors.textSoft.withValues(
-                                    alpha: 0.60,
-                                  ),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          _otSectionLabel('PRIORITY'),
-                          const SizedBox(height: 10),
-                          Row(
-                            spacing: 10,
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _priority = 'Normal';
-                                    });
-                                  },
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 150),
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      color: _priority == 'Normal'
-                                          ? _OtSheetColors.blue.withValues(
-                                              alpha: 0.15,
-                                            )
-                                          : _OtSheetColors.panel2.withValues(
-                                              alpha: 0.30,
-                                            ),
-                                      borderRadius: BorderRadius.circular(24),
-                                      border: Border.all(
-                                        color: _priority == 'Normal'
-                                            ? _OtSheetColors.blue.withValues(
-                                                alpha: .7,
-                                              )
-                                            : _OtSheetColors.line.withValues(
-                                                alpha: 0.3,
-                                              ),
-                                        width: .7,
-                                      ),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      'Normal',
-                                      style: TextStyle(
-                                        color: _priority == 'Normal'
-                                            ? _OtSheetColors.blue
-                                            : _OtSheetColors.textSoft,
-                                        fontSize: 15.5,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _priority = 'Urgent';
-                                    });
-                                  },
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 150),
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      color: _priority == 'Urgent'
-                                          ? _OtSheetColors.orange.withValues(
-                                              alpha: 0.15,
-                                            )
-                                          : _OtSheetColors.panel2.withValues(
-                                              alpha: 0.30,
-                                            ),
-                                      borderRadius: BorderRadius.circular(24),
-                                      border: Border.all(
-                                        color: _priority == 'Urgent'
-                                            ? _OtSheetColors.orange.withValues(
-                                                alpha: .7,
-                                              )
-                                            : _OtSheetColors.line.withValues(
-                                                alpha: 0.3,
-                                              ),
-                                        width: .7,
-                                      ),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      'Urgent',
-                                      style: TextStyle(
-                                        color: _priority == 'Urgent'
-                                            ? _OtSheetColors.orange
-                                            : _OtSheetColors.textSoft,
-                                        fontSize: 15.5,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          _otSectionLabel('MESSAGE'),
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2.withValues(
-                                alpha: 0.30,
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: _OtSheetColors.lineSoft,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _messageController,
-                              focusNode: _messageFocus,
-                              textInputAction: TextInputAction.done,
-                              minLines: 3,
-                              maxLines: 5,
-                              cursorColor: _OtSheetColors.blueSoft,
-                              style: TextStyle(
-                                color: _OtSheetColors.text,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              onChanged: (_) {
-                                setState(() {});
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Add details for the runner...',
-                                hintStyle: TextStyle(
-                                  color: _OtSheetColors.textSoft.withValues(
-                                    alpha: 0.60,
-                                  ),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _OtSheetColors.blue.withValues(alpha: .05),
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(14),
                               border: Border.all(
                                 color: _OtSheetColors.blue.withValues(
-                                  alpha: 0.7,
+                                  alpha: 0.70,
                                 ),
                                 width: .7,
                               ),
                             ),
-                            child: Row(
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.directions_run_rounded,
+                              color: _OtSheetColors.blue,
+                              size: 26,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(
-                                  Icons.info_outline_rounded,
-                                  color: _OtSheetColors.blue,
-                                  size: 22,
+                                Text(
+                                  'Request Runner',
+                                  style: TextStyle(
+                                    color: _OtSheetColors.text,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Runner requests should be short, clear and operational.',
-                                    style: TextStyle(
-                                      color: _OtSheetColors.blue,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.45,
-                                    ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Send an operational request for room support',
+                                  style: TextStyle(
+                                    color: _OtSheetColors.textSoft,
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          Tooltip(
+                            message: 'Close',
+                            child: InkWell(
+                              onTap: () => Navigator.pop(context),
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: _OtSheetColors.panel2,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: _OtSheetColors.lineSoft,
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 24,
+                                  color: _OtSheetColors.textSoft,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
-                    child: Row(
-                      spacing: 10,
-                      children: [
-                        Expanded(
-                          child: _otUtilityButton(
-                            'Cancel',
-                            onTap: () => Navigator.pop(context),
-                          ),
+                    const SizedBox(height: 24),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _otSectionLabel('REQUEST TYPE'),
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _OtSheetColors.panel2.withValues(
+                                  alpha: 0.30,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: _OtSheetColors.lineSoft,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _requestTypeController,
+                                focusNode: _requestTypeFocus,
+                                textInputAction: TextInputAction.next,
+                                onSubmitted: (_) {
+                                  _messageFocus.requestFocus();
+                                },
+                                cursorColor: _OtSheetColors.blueSoft,
+                                style: TextStyle(
+                                  color: _OtSheetColors.text,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onChanged: (_) {
+                                  setState(() {});
+                                },
+                                decoration: InputDecoration(
+                                  hintText: 'Additional papers / materials',
+                                  hintStyle: TextStyle(
+                                    color: _OtSheetColors.textSoft.withValues(
+                                      alpha: 0.60,
+                                    ),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _otSectionLabel('PRIORITY'),
+                            const SizedBox(height: 10),
+                            Row(
+                              spacing: 10,
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _priority = 'Normal';
+                                      });
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 150,
+                                      ),
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color: _priority == 'Normal'
+                                            ? _OtSheetColors.blue.withValues(
+                                                alpha: 0.15,
+                                              )
+                                            : _OtSheetColors.panel2.withValues(
+                                                alpha: 0.30,
+                                              ),
+                                        borderRadius: BorderRadius.circular(24),
+                                        border: Border.all(
+                                          color: _priority == 'Normal'
+                                              ? _OtSheetColors.blue.withValues(
+                                                  alpha: .7,
+                                                )
+                                              : _OtSheetColors.line.withValues(
+                                                  alpha: 0.3,
+                                                ),
+                                          width: .7,
+                                        ),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        'Normal',
+                                        style: TextStyle(
+                                          color: _priority == 'Normal'
+                                              ? _OtSheetColors.blue
+                                              : _OtSheetColors.textSoft,
+                                          fontSize: 15.5,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _priority = 'Urgent';
+                                      });
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 150,
+                                      ),
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color: _priority == 'Urgent'
+                                            ? _OtSheetColors.orange.withValues(
+                                                alpha: 0.15,
+                                              )
+                                            : _OtSheetColors.panel2.withValues(
+                                                alpha: 0.30,
+                                              ),
+                                        borderRadius: BorderRadius.circular(24),
+                                        border: Border.all(
+                                          color: _priority == 'Urgent'
+                                              ? _OtSheetColors.orange
+                                                    .withValues(alpha: .7)
+                                              : _OtSheetColors.line.withValues(
+                                                  alpha: 0.3,
+                                                ),
+                                          width: .7,
+                                        ),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        'Urgent',
+                                        style: TextStyle(
+                                          color: _priority == 'Urgent'
+                                              ? _OtSheetColors.orange
+                                              : _OtSheetColors.textSoft,
+                                          fontSize: 15.5,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            _otSectionLabel('MESSAGE'),
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _OtSheetColors.panel2.withValues(
+                                  alpha: 0.30,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: _OtSheetColors.lineSoft,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _messageController,
+                                focusNode: _messageFocus,
+                                textInputAction: TextInputAction.done,
+                                minLines: 3,
+                                maxLines: 5,
+                                cursorColor: _OtSheetColors.blueSoft,
+                                style: TextStyle(
+                                  color: _OtSheetColors.text,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onChanged: (_) {
+                                  setState(() {});
+                                },
+                                decoration: InputDecoration(
+                                  hintText: 'Add details for the runner...',
+                                  hintStyle: TextStyle(
+                                    color: _OtSheetColors.textSoft.withValues(
+                                      alpha: 0.60,
+                                    ),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _OtSheetColors.blue.withValues(
+                                  alpha: .05,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: _OtSheetColors.blue.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                  width: .7,
+                                ),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.info_outline_rounded,
+                                    color: _OtSheetColors.blue,
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Runner requests should be short, clear and operational.',
+                                      style: TextStyle(
+                                        color: _OtSheetColors.blue,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        height: 1.45,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
                         ),
-                        Expanded(
-                          child: _otFilledButton(
-                            'Send Request',
-                            onTap: _isFormValid ? _sendRequest : null,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
+                      child: Row(
+                        spacing: 10,
+                        children: [
+                          Expanded(
+                            child: _otUtilityButton(
+                              'Cancel',
+                              onTap: () => Navigator.pop(context),
+                            ),
+                          ),
+                          Expanded(
+                            child: _otFilledButton(
+                              'Send Request',
+                              onTap: _isFormValid ? _sendRequest : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _MedicalIncidentDialog extends StatefulWidget {
@@ -5423,7 +5463,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Container(
-                constraints: BoxConstraints(maxHeight: media.size.height * 0.82),
+                constraints: BoxConstraints(
+                  maxHeight: media.size.height * 0.82,
+                ),
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -5438,278 +5480,280 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                     ),
                   ],
                 ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8, left: 8, right: 4),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: _OtSheetColors.blue.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, left: 8, right: 4),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
                               color: _OtSheetColors.blue.withValues(
-                                alpha: 0.70,
+                                alpha: 0.15,
                               ),
-                              width: .7,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: _OtSheetColors.blue.withValues(
+                                  alpha: 0.70,
+                                ),
+                                width: .7,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.medical_services,
+                              color: _OtSheetColors.blue,
+                              size: 26,
                             ),
                           ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.medical_services,
-                            color: _OtSheetColors.blue,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  'Medical Incident',
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                    color: _OtSheetColors.text,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w900,
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'Medical Incident',
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                      color: _OtSheetColors.text,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Record a medical incident',
-                                style: TextStyle(
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Record a medical incident',
+                                  style: TextStyle(
+                                    color: _OtSheetColors.textSoft,
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Tooltip(
+                            message: 'Close',
+                            child: InkWell(
+                              onTap: () => Navigator.pop(context),
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: _OtSheetColors.panel2,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: _OtSheetColors.lineSoft,
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 24,
                                   color: _OtSheetColors.textSoft,
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Tooltip(
-                          message: 'Close',
-                          child: InkWell(
-                            onTap: () => Navigator.pop(context),
-                            borderRadius: BorderRadius.circular(14),
-                            child: Container(
-                              width: 44,
-                              height: 44,
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _otSectionLabel('STUDENT'),
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2,
-                                borderRadius: BorderRadius.circular(14),
+                                color: _OtSheetColors.panel2.withValues(
+                                  alpha: 0.30,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: _OtSheetColors.lineSoft,
                                 ),
                               ),
-                              child: Icon(
-                                Icons.close_rounded,
-                                size: 24,
-                                color: _OtSheetColors.textSoft,
+                              child: TextField(
+                                controller: _studentController,
+                                focusNode: _studentFocus,
+                                textInputAction: TextInputAction.next,
+                                onSubmitted: (_) {
+                                  _detailsFocus.requestFocus();
+                                },
+                                cursorColor: _OtSheetColors.blueSoft,
+                                style: TextStyle(
+                                  color: _OtSheetColors.text,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  hintText: 'Name and candidate number',
+                                  hintStyle: TextStyle(
+                                    color: _OtSheetColors.textSoft.withValues(
+                                      alpha: 0.60,
+                                    ),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                            const SizedBox(height: 20),
+                            _otSectionLabel('DETAILS'),
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _OtSheetColors.panel2.withValues(
+                                  alpha: 0.30,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: _OtSheetColors.lineSoft,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _detailsController,
+                                focusNode: _detailsFocus,
+                                textInputAction: TextInputAction.next,
+                                onSubmitted: (_) {
+                                  _actionFocus.requestFocus();
+                                },
+                                minLines: 3,
+                                maxLines: 5,
+                                cursorColor: _OtSheetColors.blueSoft,
+                                style: TextStyle(
+                                  color: _OtSheetColors.text,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  hintText:
+                                      'Describe the incident detail and symptoms...',
+                                  hintStyle: TextStyle(
+                                    color: _OtSheetColors.textSoft.withValues(
+                                      alpha: 0.60,
+                                    ),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _otSectionLabel('ACTION TAKEN'),
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _OtSheetColors.panel2.withValues(
+                                  alpha: 0.30,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: _OtSheetColors.lineSoft,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _actionController,
+                                focusNode: _actionFocus,
+                                textInputAction: TextInputAction.done,
+                                cursorColor: _OtSheetColors.blueSoft,
+                                style: TextStyle(
+                                  color: _OtSheetColors.text,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  hintText: 'First aid / support / escalation',
+                                  hintStyle: TextStyle(
+                                    color: _OtSheetColors.textSoft.withValues(
+                                      alpha: 0.60,
+                                    ),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Removed error text block
+                            const SizedBox(height: 24),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
+                      child: Row(
+                        spacing: 10,
                         children: [
-                          _otSectionLabel('STUDENT'),
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2.withValues(
-                                alpha: 0.30,
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: _OtSheetColors.lineSoft,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _studentController,
-                              focusNode: _studentFocus,
-                              textInputAction: TextInputAction.next,
-                              onSubmitted: (_) {
-                                _detailsFocus.requestFocus();
-                              },
-                              cursorColor: _OtSheetColors.blueSoft,
-                              style: TextStyle(
-                                color: _OtSheetColors.text,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              decoration: InputDecoration(
-                                hintText: 'Name and candidate number',
-                                hintStyle: TextStyle(
-                                  color: _OtSheetColors.textSoft.withValues(
-                                    alpha: 0.60,
-                                  ),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                              ),
+                          Expanded(
+                            child: _otUtilityButton(
+                              'Cancel',
+                              onTap: () => Navigator.pop(context),
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          _otSectionLabel('DETAILS'),
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2.withValues(
-                                alpha: 0.30,
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: _OtSheetColors.lineSoft,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _detailsController,
-                              focusNode: _detailsFocus,
-                              textInputAction: TextInputAction.next,
-                              onSubmitted: (_) {
-                                _actionFocus.requestFocus();
-                              },
-                              minLines: 3,
-                              maxLines: 5,
-                              cursorColor: _OtSheetColors.blueSoft,
-                              style: TextStyle(
-                                color: _OtSheetColors.text,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              decoration: InputDecoration(
-                                hintText:
-                                    'Describe the incident detail and symptoms...',
-                                hintStyle: TextStyle(
-                                  color: _OtSheetColors.textSoft.withValues(
-                                    alpha: 0.60,
-                                  ),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                              ),
+                          Expanded(
+                            child: _otFilledButton(
+                              'Save Entry',
+                              onTap: _isFormValid ? _saveEntry : null,
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          _otSectionLabel('ACTION TAKEN'),
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2.withValues(
-                                alpha: 0.30,
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: _OtSheetColors.lineSoft,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _actionController,
-                              focusNode: _actionFocus,
-                              textInputAction: TextInputAction.done,
-                              cursorColor: _OtSheetColors.blueSoft,
-                              style: TextStyle(
-                                color: _OtSheetColors.text,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              decoration: InputDecoration(
-                                hintText: 'First aid / support / escalation',
-                                hintStyle: TextStyle(
-                                  color: _OtSheetColors.textSoft.withValues(
-                                    alpha: 0.60,
-                                  ),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Removed error text block
-                          const SizedBox(height: 24),
                         ],
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
-                    child: Row(
-                      spacing: 10,
-                      children: [
-                        Expanded(
-                          child: _otUtilityButton(
-                            'Cancel',
-                            onTap: () => Navigator.pop(context),
-                          ),
-                        ),
-                        Expanded(
-                          child: _otFilledButton(
-                            'Save Entry',
-                            onTap: _isFormValid ? _saveEntry : null,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _MalpracticeIncidentDialog extends StatefulWidget {
@@ -5869,7 +5913,9 @@ class _MalpracticeIncidentDialogState
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Container(
-                constraints: BoxConstraints(maxHeight: media.size.height * 0.82),
+                constraints: BoxConstraints(
+                  maxHeight: media.size.height * 0.82,
+                ),
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -5884,110 +5930,22 @@ class _MalpracticeIncidentDialogState
                     ),
                   ],
                 ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8, left: 8, right: 4),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: _OtSheetColors.orange.withValues(
-                              alpha: 0.15,
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: _OtSheetColors.orange.withValues(
-                                alpha: 0.7,
-                              ),
-                              width: .7,
-                            ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.warning_amber_rounded,
-                            color: _OtSheetColors.orange,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  'Malpractice',
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                    color: _OtSheetColors.text,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Record a malpractice concern',
-                                style: TextStyle(
-                                  color: _OtSheetColors.textSoft,
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Tooltip(
-                          message: 'Close',
-                          child: InkWell(
-                            onTap: () => Navigator.pop(context),
-                            borderRadius: BorderRadius.circular(14),
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.close_rounded,
-                                size: 24,
-                                color: _OtSheetColors.textSoft,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, left: 8, right: 4),
+                      child: Row(
                         children: [
                           Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
+                            width: 50,
+                            height: 50,
                             decoration: BoxDecoration(
                               color: _OtSheetColors.orange.withValues(
-                                alpha: .05,
+                                alpha: 0.15,
                               ),
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(14),
                               border: Border.all(
                                 color: _OtSheetColors.orange.withValues(
                                   alpha: 0.7,
@@ -5995,198 +5953,287 @@ class _MalpracticeIncidentDialogState
                                 width: .7,
                               ),
                             ),
-                            child: Text(
-                              'Use factual wording only. This records malpractice, not a confirmed outcome.',
-                              style: TextStyle(
-                                color: _OtSheetColors.orange,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                height: 1.45,
-                              ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.warning_amber_rounded,
+                              color: _OtSheetColors.orange,
+                              size: 26,
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          _otSectionLabel('STUDENT'),
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2.withValues(
-                                alpha: 0.30,
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: _OtSheetColors.lineSoft,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _studentController,
-                              focusNode: _studentFocus,
-                              textInputAction: TextInputAction.next,
-                              onSubmitted: (_) {
-                                _detailsFocus.requestFocus();
-                              },
-                              cursorColor: _OtSheetColors.blueSoft,
-                              style: TextStyle(
-                                color: _OtSheetColors.text,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              decoration: InputDecoration(
-                                hintText: 'Name and candidate number',
-                                hintStyle: TextStyle(
-                                  color: _OtSheetColors.textSoft.withValues(
-                                    alpha: 0.60,
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'Malpractice',
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                      color: _OtSheetColors.text,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                    ),
                                   ),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
                                 ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          _otSectionLabel('DETAILS'),
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2.withValues(
-                                alpha: 0.30,
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: _OtSheetColors.lineSoft,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _detailsController,
-                              focusNode: _detailsFocus,
-                              textInputAction: TextInputAction.next,
-                              onSubmitted: (_) {
-                                _actionFocus.requestFocus();
-                              },
-                              minLines: 3,
-                              maxLines: 5,
-                              cursorColor: _OtSheetColors.blueSoft,
-                              style: TextStyle(
-                                color: _OtSheetColors.text,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              decoration: InputDecoration(
-                                hintText:
-                                    'Describe the observed behaviour factually...',
-                                hintStyle: TextStyle(
-                                  color: _OtSheetColors.textSoft.withValues(
-                                    alpha: 0.60,
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Record a malpractice concern',
+                                  style: TextStyle(
+                                    color: _OtSheetColors.textSoft,
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
                                   ),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
                                 ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                              ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          _otSectionLabel('ACTION TAKEN'),
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2.withValues(
-                                alpha: 0.30,
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: _OtSheetColors.lineSoft,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _actionController,
-                              focusNode: _actionFocus,
-                              textInputAction: TextInputAction.done,
-                              cursorColor: _OtSheetColors.blueSoft,
-                              style: TextStyle(
-                                color: _OtSheetColors.text,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              decoration: InputDecoration(
-                                hintText: 'Reported to EO / evidence retained',
-                                hintStyle: TextStyle(
-                                  color: _OtSheetColors.textSoft.withValues(
-                                    alpha: 0.60,
+                          const SizedBox(width: 10),
+                          Tooltip(
+                            message: 'Close',
+                            child: InkWell(
+                              onTap: () => Navigator.pop(context),
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: _OtSheetColors.panel2,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: _OtSheetColors.lineSoft,
                                   ),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
                                 ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12,
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 24,
+                                  color: _OtSheetColors.textSoft,
                                 ),
                               ),
                             ),
                           ),
-                          // Removed error text block
-                          const SizedBox(height: 24),
                         ],
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
-                    child: Row(
-                      spacing: 10,
-                      children: [
-                        Expanded(
-                          child: _otUtilityButton(
-                            'Cancel',
-                            onTap: () => Navigator.pop(context),
-                          ),
+                    const SizedBox(height: 24),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _OtSheetColors.orange.withValues(
+                                  alpha: .05,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: _OtSheetColors.orange.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                  width: .7,
+                                ),
+                              ),
+                              child: Text(
+                                'Use factual wording only. This records malpractice, not a confirmed outcome.',
+                                style: TextStyle(
+                                  color: _OtSheetColors.orange,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.45,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _otSectionLabel('STUDENT'),
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _OtSheetColors.panel2.withValues(
+                                  alpha: 0.30,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: _OtSheetColors.lineSoft,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _studentController,
+                                focusNode: _studentFocus,
+                                textInputAction: TextInputAction.next,
+                                onSubmitted: (_) {
+                                  _detailsFocus.requestFocus();
+                                },
+                                cursorColor: _OtSheetColors.blueSoft,
+                                style: TextStyle(
+                                  color: _OtSheetColors.text,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  hintText: 'Name and candidate number',
+                                  hintStyle: TextStyle(
+                                    color: _OtSheetColors.textSoft.withValues(
+                                      alpha: 0.60,
+                                    ),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _otSectionLabel('DETAILS'),
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _OtSheetColors.panel2.withValues(
+                                  alpha: 0.30,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: _OtSheetColors.lineSoft,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _detailsController,
+                                focusNode: _detailsFocus,
+                                textInputAction: TextInputAction.next,
+                                onSubmitted: (_) {
+                                  _actionFocus.requestFocus();
+                                },
+                                minLines: 3,
+                                maxLines: 5,
+                                cursorColor: _OtSheetColors.blueSoft,
+                                style: TextStyle(
+                                  color: _OtSheetColors.text,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  hintText:
+                                      'Describe the observed behaviour factually...',
+                                  hintStyle: TextStyle(
+                                    color: _OtSheetColors.textSoft.withValues(
+                                      alpha: 0.60,
+                                    ),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _otSectionLabel('ACTION TAKEN'),
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _OtSheetColors.panel2.withValues(
+                                  alpha: 0.30,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: _OtSheetColors.lineSoft,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _actionController,
+                                focusNode: _actionFocus,
+                                textInputAction: TextInputAction.done,
+                                cursorColor: _OtSheetColors.blueSoft,
+                                style: TextStyle(
+                                  color: _OtSheetColors.text,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  hintText:
+                                      'Reported to EO / evidence retained',
+                                  hintStyle: TextStyle(
+                                    color: _OtSheetColors.textSoft.withValues(
+                                      alpha: 0.60,
+                                    ),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Removed error text block
+                            const SizedBox(height: 24),
+                          ],
                         ),
-                        Expanded(
-                          child: _otFilledButton(
-                            'Save Entry',
-                            onTap: _isFormValid ? _saveEntry : null,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
+                      child: Row(
+                        spacing: 10,
+                        children: [
+                          Expanded(
+                            child: _otUtilityButton(
+                              'Cancel',
+                              onTap: () => Navigator.pop(context),
+                            ),
+                          ),
+                          Expanded(
+                            child: _otFilledButton(
+                              'Save Entry',
+                              onTap: _isFormValid ? _saveEntry : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _ToiletVisitIncidentDialog extends StatefulWidget {
@@ -6294,9 +6341,7 @@ class _ToiletVisitIncidentDialogState
           child: Text(
             '$mins min',
             style: TextStyle(
-              color: selected
-                  ? _OtSheetColors.purple
-                  : _OtSheetColors.textSoft,
+              color: selected ? _OtSheetColors.purple : _OtSheetColors.textSoft,
               fontSize: 15.5,
               fontWeight: FontWeight.w900,
             ),
@@ -6390,7 +6435,9 @@ class _ToiletVisitIncidentDialogState
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Container(
-                constraints: BoxConstraints(maxHeight: media.size.height * 0.82),
+                constraints: BoxConstraints(
+                  maxHeight: media.size.height * 0.82,
+                ),
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -6405,288 +6452,288 @@ class _ToiletVisitIncidentDialogState
                     ),
                   ],
                 ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8, left: 8, right: 4),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: _OtSheetColors.purple.withValues(
-                              alpha: 0.15,
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, left: 8, right: 4),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
                               color: _OtSheetColors.purple.withValues(
-                                alpha: 0.70,
+                                alpha: 0.15,
                               ),
-                              width: .7,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: _OtSheetColors.purple.withValues(
+                                  alpha: 0.70,
+                                ),
+                                width: .7,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.timer_outlined,
+                              color: _OtSheetColors.purple,
+                              size: 26,
                             ),
                           ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.timer_outlined,
-                            color: _OtSheetColors.purple,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  'Toilet Visit',
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                    color: _OtSheetColors.text,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w900,
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'Toilet Visit',
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                      color: _OtSheetColors.text,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Record a toilet visit',
-                                style: TextStyle(
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Record a toilet visit',
+                                  style: TextStyle(
+                                    color: _OtSheetColors.textSoft,
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Tooltip(
+                            message: 'Close',
+                            child: InkWell(
+                              onTap: () => Navigator.pop(context),
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: _OtSheetColors.panel2,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: _OtSheetColors.lineSoft,
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 24,
                                   color: _OtSheetColors.textSoft,
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Tooltip(
-                          message: 'Close',
-                          child: InkWell(
-                            onTap: () => Navigator.pop(context),
-                            borderRadius: BorderRadius.circular(14),
-                            child: Container(
-                              width: 44,
-                              height: 44,
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _otSectionLabel('STUDENT'),
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2,
-                                borderRadius: BorderRadius.circular(14),
+                                color: _OtSheetColors.panel2.withValues(
+                                  alpha: 0.30,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: _OtSheetColors.lineSoft,
                                 ),
                               ),
-                              child: Icon(
-                                Icons.close_rounded,
-                                size: 24,
-                                color: _OtSheetColors.textSoft,
+                              child: TextField(
+                                controller: _studentController,
+                                focusNode: _studentFocus,
+                                textInputAction: TextInputAction.next,
+                                onSubmitted: (_) {
+                                  _notesFocus.requestFocus();
+                                },
+                                cursorColor: _OtSheetColors.purple,
+                                style: TextStyle(
+                                  color: _OtSheetColors.text,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  hintText: 'Name and candidate number',
+                                  hintStyle: TextStyle(
+                                    color: _OtSheetColors.textSoft.withValues(
+                                      alpha: 0.60,
+                                    ),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                            const SizedBox(height: 20),
+                            _otSectionLabel('TIMING'),
+                            const SizedBox(height: 10),
+                            Row(
+                              spacing: 10,
+                              children: [
+                                _otDurationOptionButton(5),
+                                _otDurationOptionButton(10),
+                                _otDurationOptionButton(15),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _OtSheetColors.panel2.withValues(
+                                  alpha: 0.30,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: _OtSheetColors.lineSoft,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _notesController,
+                                focusNode: _notesFocus,
+                                textInputAction: TextInputAction.next,
+                                onSubmitted: (_) {
+                                  _actionFocus.requestFocus();
+                                },
+                                minLines: 3,
+                                maxLines: 5,
+                                cursorColor: _OtSheetColors.purple,
+                                style: TextStyle(
+                                  color: _OtSheetColors.text,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  hintText: 'Time returned / notes',
+                                  hintStyle: TextStyle(
+                                    color: _OtSheetColors.textSoft.withValues(
+                                      alpha: 0.60,
+                                    ),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _otSectionLabel('ACTION TAKEN'),
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _OtSheetColors.panel2.withValues(
+                                  alpha: 0.30,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: _OtSheetColors.lineSoft,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _actionController,
+                                focusNode: _actionFocus,
+                                textInputAction: TextInputAction.done,
+                                cursorColor: _OtSheetColors.purple,
+                                style: TextStyle(
+                                  color: _OtSheetColors.text,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  hintText: 'Student escorted / returned',
+                                  hintStyle: TextStyle(
+                                    color: _OtSheetColors.textSoft.withValues(
+                                      alpha: 0.60,
+                                    ),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Removed error text block
+                            const SizedBox(height: 24),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
+                      child: Row(
+                        spacing: 10,
                         children: [
-                          _otSectionLabel('STUDENT'),
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2.withValues(
-                                alpha: 0.30,
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: _OtSheetColors.lineSoft,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _studentController,
-                              focusNode: _studentFocus,
-                              textInputAction: TextInputAction.next,
-                              onSubmitted: (_) {
-                                _notesFocus.requestFocus();
-                              },
-                              cursorColor: _OtSheetColors.purple,
-                              style: TextStyle(
-                                color: _OtSheetColors.text,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              decoration: InputDecoration(
-                                hintText: 'Name and candidate number',
-                                hintStyle: TextStyle(
-                                  color: _OtSheetColors.textSoft.withValues(
-                                    alpha: 0.60,
-                                  ),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                              ),
+                          Expanded(
+                            child: _otUtilityButton(
+                              'Cancel',
+                              onTap: () => Navigator.pop(context),
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          _otSectionLabel('TIMING'),
-                          const SizedBox(height: 10),
-                          Row(
-                            spacing: 10,
-                            children: [
-                              _otDurationOptionButton(5),
-                              _otDurationOptionButton(10),
-                              _otDurationOptionButton(15),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2.withValues(
-                                alpha: 0.30,
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: _OtSheetColors.lineSoft,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _notesController,
-                              focusNode: _notesFocus,
-                              textInputAction: TextInputAction.next,
-                              onSubmitted: (_) {
-                                _actionFocus.requestFocus();
-                              },
-                              minLines: 3,
-                              maxLines: 5,
-                              cursorColor: _OtSheetColors.purple,
-                              style: TextStyle(
-                                color: _OtSheetColors.text,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              decoration: InputDecoration(
-                                hintText: 'Time returned / notes',
-                                hintStyle: TextStyle(
-                                  color: _OtSheetColors.textSoft.withValues(
-                                    alpha: 0.60,
-                                  ),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                              ),
+                          Expanded(
+                            child: _otFilledButton(
+                              'Save Entry',
+                              onTap: _isFormValid ? _saveEntry : null,
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          _otSectionLabel('ACTION TAKEN'),
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2.withValues(
-                                alpha: 0.30,
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: _OtSheetColors.lineSoft,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _actionController,
-                              focusNode: _actionFocus,
-                              textInputAction: TextInputAction.done,
-                              cursorColor: _OtSheetColors.purple,
-                              style: TextStyle(
-                                color: _OtSheetColors.text,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              decoration: InputDecoration(
-                                hintText: 'Student escorted / returned',
-                                hintStyle: TextStyle(
-                                  color: _OtSheetColors.textSoft.withValues(
-                                    alpha: 0.60,
-                                  ),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Removed error text block
-                          const SizedBox(height: 24),
                         ],
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
-                    child: Row(
-                      spacing: 10,
-                      children: [
-                        Expanded(
-                          child: _otUtilityButton(
-                            'Cancel',
-                            onTap: () => Navigator.pop(context),
-                          ),
-                        ),
-                        Expanded(
-                          child: _otFilledButton(
-                            'Save Entry',
-                            onTap: _isFormValid ? _saveEntry : null,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _RoleSelectorDialog extends StatefulWidget {
@@ -6904,4 +6951,3 @@ class _GroupedMessage {
     required this.isToMessage,
   });
 }
-

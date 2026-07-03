@@ -52,15 +52,40 @@ class _HomeScreenState extends State<HomeScreen>
   bool _tickInFlight = false;
   bool _isAdjustingProgress = false;
 
-  int get allInvigilators => _cards
-      .expand(
-        (s) => s.scheduleList != null && s.phase != ExamPhase.finished
-            ? s.scheduleList!.expand((p) => p.invigilators)
-            : [],
-      )
-      .toSet()
-      .toList()
-      .length;
+  List<String> _getUniqueInvigilators(ExamCardData s) {
+    if (s.scheduleList != null && s.scheduleList!.isNotEmpty) {
+      final names = s.scheduleList!
+          .expand((p) => p.invigilators)
+          .map((name) => name.trim())
+          .where((name) => name.isNotEmpty)
+          .toSet()
+          .toList();
+      names.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      return names;
+    }
+    if (s.invigilatorsSnapshot.trim().isNotEmpty) {
+      final names = s.invigilatorsSnapshot
+          .replaceAll('\r', '\n')
+          .split(RegExp(r'[\n,;|.]+'))
+          .map((name) => name.trim())
+          .where((name) => name.isNotEmpty)
+          .toSet()
+          .toList();
+      names.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      return names;
+    }
+    return const [];
+  }
+
+  int get allInvigilators {
+    final allNames = <String>{};
+    for (final s in _cards) {
+      if (s.phase != ExamPhase.finished) {
+        allNames.addAll(_getUniqueInvigilators(s));
+      }
+    }
+    return allNames.length;
+  }
 
   // Last-used for wizard prefill
   String? _lastSchool,
