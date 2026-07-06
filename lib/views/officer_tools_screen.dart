@@ -2093,10 +2093,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               child: Text(
                 text,
-                softWrap: false,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.start,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 15,
@@ -2325,8 +2322,6 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               children: [
                 Text(
                   title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: _OtSheetColors.text,
                     fontSize: 16,
