@@ -6477,7 +6477,7 @@ class _ToiletVisitIncidentDialogState
                             ),
                             alignment: Alignment.center,
                             child: Icon(
-                              Icons.timer_outlined,
+                              Icons.wc,
                               color: _OtSheetColors.purple,
                               size: 26,
                             ),
