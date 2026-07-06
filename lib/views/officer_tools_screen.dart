@@ -1679,7 +1679,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               statusIcon = Icons.check_circle_outline_rounded;
               statusTitle = "Exam Completed";
             } else if (data.isPaused) {
-              statusColor = _OtSheetColors.orange;
+              statusColor = data.phase == ExamPhase.extra
+                  ? _OtSheetColors.orange
+                  : _OtSheetColors.blue;
               statusIcon = Icons.pause_circle_outline_rounded;
               statusTitle = "Exam Paused";
             } else if (data.phase == ExamPhase.extra) {
