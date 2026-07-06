@@ -383,12 +383,17 @@ class _HomeScreenState extends State<HomeScreen>
     required int updatedMinutes,
   }) {
     final diffMinutes = updatedMinutes - previousMinutes;
-    final durationText = _formatMinutesDescription(diffMinutes);
-    if (diffMinutes >= 0) {
-      return 'Extra Time increased by $durationText';
-    } else {
-      return 'Extra Time reduced by $durationText';
-    }
+    final sign = diffMinutes >= 0 ? '+' : '';
+    return 'Extra Time Updated (${previousMinutes}m -> ${updatedMinutes}m, $sign${diffMinutes}m)';
+  }
+
+  String _formatNormalTimeUpdateReason({
+    required int previousMinutes,
+    required int updatedMinutes,
+  }) {
+    final diffMinutes = updatedMinutes - previousMinutes;
+    final sign = diffMinutes >= 0 ? '+' : '';
+    return 'Normal Time Updated (${previousMinutes}m -> ${updatedMinutes}m, $sign${diffMinutes}m)';
   }
 
   ExamCardData _recompute(ExamCardData c) {
@@ -1434,18 +1439,14 @@ class _HomeScreenState extends State<HomeScreen>
                                     await _saveState();
                                     final recordId = _cards[idx].recordId;
                                     if (recordId != null) {
-                                      final String reason;
-                                      final durationText = _formatMinutesDescription(diff);
-                                      if (diff >= 0) {
-                                        reason = "Normal Time increased by $durationText";
-                                      } else {
-                                        reason = "Normal Time reduced by $durationText";
-                                      }
                                       await _sessionService.updatePlannedDuration(
                                         examRecordId: recordId,
                                         normalDurationMs: _cards[idx].normalSeconds * 1000,
                                         extraTimeMs: _cards[idx].extraSeconds * 1000,
-                                        reason: reason,
+                                        reason: _formatNormalTimeUpdateReason(
+                                          previousMinutes: _toMin(c.normalDuration),
+                                          updatedMinutes: _toMin(res),
+                                        ),
                                         detail: detail,
                                       );
                                       await _refreshCards();

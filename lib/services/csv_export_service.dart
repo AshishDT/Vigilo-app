@@ -684,23 +684,35 @@ class CsvExportService {
   }
 
   (String, String) _controlActionFields(Map<String, dynamic> payload) {
-    final message = _payloadMessage(payload);
+    final rawMsg = _rawPayloadMessage(payload);
     final payloadDetail = _normalizeControlActionDetail(
       _readText(payload['detail']),
     );
-    if (message.isEmpty) {
-      return ('Control action', payloadDetail);
-    }
-    if (payloadDetail.isNotEmpty) {
-      return (message, payloadDetail);
+
+    final message = _formatDurationWording(rawMsg);
+    
+    String mainDesc = message;
+    String finalDetail = payloadDetail;
+
+    if (mainDesc.isEmpty) {
+      mainDesc = 'Control action';
     }
 
-    final split = _splitInlineDetail(message);
-    if (split.$1.isNotEmpty && split.$2.isNotEmpty) {
-      return (split.$1, _normalizeControlActionDetail(split.$2));
+    if (finalDetail.isEmpty) {
+      final split = _splitInlineDetail(mainDesc);
+      if (split.$1.isNotEmpty && split.$2.isNotEmpty) {
+        mainDesc = split.$1;
+        finalDetail = _normalizeControlActionDetail(split.$2);
+      }
     }
 
-    return (message, '');
+    final isNormalAdjustment = RegExp(r'Normal\s+Time\s+Updated\s*', caseSensitive: false).hasMatch(rawMsg);
+    final isExtraAdjustment = RegExp(r'Extra\s+Time\s+updated\s*', caseSensitive: false).hasMatch(rawMsg);
+    if ((isNormalAdjustment || isExtraAdjustment) && rawMsg.isNotEmpty && rawMsg != message) {
+      mainDesc = '$message\n$rawMsg';
+    }
+
+    return (mainDesc, finalDetail);
   }
 
   (String, String) _splitInlineDetail(String value) {
@@ -1068,7 +1080,10 @@ class CsvExportService {
   }
 
   String _formatDurationWording(String message) {
-    final normalMatch = RegExp(r'Normal Time Updated \(([+-]?\d+)m\)', caseSensitive: false).firstMatch(message);
+    final normalMatch = RegExp(
+      r'Normal\s+Time\s+Updated\s*\((?:.*\s*,\s*)?([+-]?\d+)m\)',
+      caseSensitive: false,
+    ).firstMatch(message);
     if (normalMatch != null) {
       final diff = int.tryParse(normalMatch.group(1) ?? '0') ?? 0;
       final durationText = _formatMinutesDescription(diff);
@@ -1094,7 +1109,7 @@ class CsvExportService {
     return message;
   }
 
-  String _payloadMessage(Map<String, dynamic> payload) {
+  String _rawPayloadMessage(Map<String, dynamic> payload) {
     String msg = '';
     if (payload['incident'] is Map) {
       final incidentMap = (payload['incident'] as Map).cast<String, dynamic>();
@@ -1104,7 +1119,11 @@ class CsvExportService {
       final message = payload['message'];
       if (message is String) msg = message;
     }
-    return _formatDurationWording(msg);
+    return msg;
+  }
+
+  String _payloadMessage(Map<String, dynamic> payload) {
+    return _formatDurationWording(_rawPayloadMessage(payload));
   }
 
   bool _isRestartPayload(Map<String, dynamic> payload) {

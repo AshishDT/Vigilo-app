@@ -246,7 +246,7 @@ void main() {
         expect(
           text,
           contains(
-            ',Control,Normal Time,Extra Time increased by 2 minutes,H1,,,Adjustment entered before extra time',
+            ',Control,Normal Time,"Extra Time increased by 2 minutes\nExtra time updated (+2m)",H1,,,Adjustment entered before extra time',
           ),
         );
         expect(
@@ -315,7 +315,7 @@ void main() {
         expect(
           text,
           contains(
-            ',Control,Normal Time,Extra Time increased by 5 minutes,H1,,,Adjustment entered before extra time',
+            ',Control,Normal Time,"Extra Time increased by 5 minutes\nExtra Time Updated (25m -> 30m, +5m)",H1,,,Adjustment entered before extra time',
           ),
         );
       },
@@ -370,7 +370,7 @@ void main() {
         expect(
           text,
           contains(
-            ',Control,Normal Time,Normal Time increased by 2 minutes,H1,,,Adjustment entered before extra time',
+            ',Control,Normal Time,"Normal Time increased by 2 minutes\nNormal Time Updated (+2m)",H1,,,Adjustment entered before extra time',
           ),
         );
       },

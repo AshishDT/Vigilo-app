@@ -38,7 +38,10 @@ String _formatMinutesDescription(int minutes) {
 }
 
 String _formatDurationWording(String message) {
-  final normalMatch = RegExp(r'Normal Time Updated \(([+-]?\d+)m\)', caseSensitive: false).firstMatch(message);
+  final normalMatch = RegExp(
+    r'Normal\s+Time\s+Updated\s*\((?:.*\s*,\s*)?([+-]?\d+)m\)',
+    caseSensitive: false,
+  ).firstMatch(message);
   if (normalMatch != null) {
     final diff = int.tryParse(normalMatch.group(1) ?? '0') ?? 0;
     final durationText = _formatMinutesDescription(diff);

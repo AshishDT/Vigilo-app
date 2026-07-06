@@ -2495,7 +2495,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
   String _formatDurationWording(String message) {
     final normalMatch = RegExp(
-      r'Normal Time Updated \(([+-]?\d+)m\)',
+      r'Normal\s+Time\s+Updated\s*\((?:.*\s*,\s*)?([+-]?\d+)m\)',
       caseSensitive: false,
     ).firstMatch(message);
     if (normalMatch != null) {
