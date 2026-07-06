@@ -1622,7 +1622,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           child: TextField(
             controller: _setupNotesController,
             focusNode: _setupNotesFocus,
-            textInputAction: TextInputAction.done,
+            textInputAction: TextInputAction.newline,
             cursorColor: _OtSheetColors.blueSoft,
             minLines: 3,
             maxLines: 5,
@@ -1824,6 +1824,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   label: 'Room',
                   controller: _setupRoomController,
                   disabled: _isExamCompleted,
+                  textInputAction: TextInputAction.newline,
                   onChanged: (_) => _updateOperationalSetup(),
                 ),
                 _setupRowDivider(),
@@ -1851,6 +1852,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   label: 'Invigilators',
                   controller: _setupInvigilatorsController,
                   disabled: _isExamCompleted,
+                  textInputAction: TextInputAction.newline,
                   onChanged: (_) => _updateOperationalSetup(),
                   focusNode: _setupInvigilatorsFocus,
                   nextFocusNode: _setUpByFocus,
@@ -1860,6 +1862,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   label: 'Set Up By',
                   controller: _setUpByController,
                   disabled: _isExamCompleted,
+                  textInputAction: TextInputAction.newline,
                   focusNode: _setUpByFocus,
                   nextFocusNode: _setupNotesFocus,
                   onChanged: (value) {
