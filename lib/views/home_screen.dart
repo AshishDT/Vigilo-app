@@ -14,7 +14,6 @@ import '../utils/export_logs.dart';
 import '../utils/id_generator.dart';
 import 'briefings_library_sheet.dart';
 import 'license_activation_screen.dart';
-import '../utils/screen_util.dart';
 import '../utils/notifications.dart';
 import 'officer_tools_screen.dart';
 import 'widgets/add_exam_sheet.dart';
@@ -96,10 +95,7 @@ class _HomeScreenState extends State<HomeScreen>
       _lastDuration,
       _lastExtra;
 
-  late final AnimationController _pulse = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1200),
-  )..repeat(reverse: true);
+  late final AnimationController _pulse;
   Timer? _ticker;
   Timer? _extraPulseTicker;
   Timer? _clickTimer;
@@ -109,6 +105,10 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
     WidgetsBinding.instance.addObserver(this);
     _initializeHomeState();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
@@ -119,9 +119,13 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _initializeHomeState() async {
     await _sessionService.initialize();
+    if (!mounted) return;
     await _loadState();
+    if (!mounted) return;
     await _clearLegacyLicenceCentrePrefillIfNeeded();
+    if (!mounted) return;
     await _seedOrganizationFromLicenseIfNeeded();
+    if (!mounted) return;
     await _loadLicenseStatus();
   }
 
@@ -353,30 +357,6 @@ class _HomeScreenState extends State<HomeScreen>
     return "${h.toString().padLeft(2, '0')}:${mm.toString().padLeft(2, '0')}";
   }
 
-  String _formatMinutesDescription(int minutes) {
-    final absMinutes = minutes.abs();
-    if (absMinutes == 0) return '0 minutes';
-    final hours = absMinutes ~/ 60;
-    final remainingMinutes = absMinutes % 60;
-
-    String hoursStr = '';
-    if (hours > 0) {
-      hoursStr = '$hours ${hours == 1 ? "hour" : "hours"}';
-    }
-
-    String minsStr = '';
-    if (remainingMinutes > 0) {
-      minsStr = '$remainingMinutes ${remainingMinutes == 1 ? "minute" : "minutes"}';
-    }
-
-    if (hoursStr.isNotEmpty && minsStr.isNotEmpty) {
-      return '$hoursStr and $minsStr';
-    } else if (hoursStr.isNotEmpty) {
-      return hoursStr;
-    } else {
-      return minsStr;
-    }
-  }
 
   String _formatExtraTimeUpdateReason({
     required int previousMinutes,
@@ -504,6 +484,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _tick() {
+    if (!mounted) return;
     if (_licenseRequired || _tickInFlight || _isAdjustingProgress) return;
     _tickInFlight = true;
     _tickAsync().whenComplete(() {
@@ -512,6 +493,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _tickAsync() async {
+    if (!mounted) return;
     final now = DateTime.now();
     bool autoStartTriggered = false;
 
@@ -1422,7 +1404,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       int.parse(res.split(":")[0]),
                                       int.parse(res.split(":")[1]),
                                     );
-                                    int diff = dateTime2.difference(dateTime1).inMinutes;
+                                    int _ = dateTime2.difference(dateTime1).inMinutes;
                                     String detail = "";
                                     if (c.phase == ExamPhase.normal) {
                                       detail = "Adjustment entered before extra time";
@@ -1630,16 +1612,16 @@ class _HomeScreenState extends State<HomeScreen>
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: VigiloUiColors.panel(dark).withOpacity(dark ? 0.72 : 0.92),
+          color: VigiloUiColors.panel(dark).withValues(alpha:dark ? 0.72 : 0.92),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: dark
-                ? VigiloUiColors.line(dark).withOpacity(0.70)
+                ? VigiloUiColors.line(dark).withValues(alpha:0.70)
                 : VigiloUiColors.line(dark),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(dark ? 0.16 : 0.07),
+              color: Colors.black.withValues(alpha:dark ? 0.16 : 0.07),
               blurRadius: dark ? 8 : 10,
               offset: Offset(0, dark ? 3 : 4),
             ),

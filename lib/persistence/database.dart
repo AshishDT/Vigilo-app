@@ -467,5 +467,6 @@ class AppDatabase {
   Future<void> close() async {
     final db = await database;
     await db.close();
+    _database = null;
   }
 }

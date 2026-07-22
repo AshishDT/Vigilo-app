@@ -73,8 +73,8 @@ class LicenseService {
   static const String _activationDateKey = 'vigilo_licence_activation_date';
   static const String _expiryDateKey = 'vigilo_licence_expiry_date';
   static const String _licenceProofKey = 'vigilo_licence_proof';
-  static const String _schoolNameKey = 'vigilo_licence_school_name';
-  static const String _schoolNumberKey = 'vigilo_licence_school_number';
+  static const String _organizationNameKey = 'vigilo_licence_school_name';
+  static const String _organizationCodeKey = 'vigilo_licence_school_number';
   static const String _licenceTypeKey = 'vigilo_licence_type';
   static const String _usedLicensesKey = 'vigilo_used_licenses';
   static const String _highestTierKey = 'vigilo_highest_activated_tier';
@@ -107,9 +107,9 @@ class LicenseService {
     final activation = _readDate(prefs.getString(_activationDateKey));
     final storedExpiry = _readDate(prefs.getString(_expiryDateKey));
     final storedProof = prefs.getString(_licenceProofKey);
-    final organizationName = _readText(prefs.getString(_schoolNameKey));
+    final organizationName = _readText(prefs.getString(_organizationNameKey));
     final organizationCode = _normalizeOrganizationCode(
-      prefs.getString(_schoolNumberKey),
+      prefs.getString(_organizationCodeKey),
     );
     final storedType = _readText(prefs.getString(_licenceTypeKey));
     final now = DateTime.now();
@@ -223,15 +223,15 @@ class LicenseService {
       await prefs.setString(_licenceProofKey, expectedProof);
 
       if (organizationName == null) {
-        await prefs.remove(_schoolNameKey);
+        await prefs.remove(_organizationNameKey);
       } else {
-        await prefs.setString(_schoolNameKey, organizationName);
+        await prefs.setString(_organizationNameKey, organizationName);
       }
 
       if (organizationCode == null) {
-        await prefs.remove(_schoolNumberKey);
+        await prefs.remove(_organizationCodeKey);
       } else {
-        await prefs.setString(_schoolNumberKey, organizationCode);
+        await prefs.setString(_organizationCodeKey, organizationCode);
       }
     }
 
@@ -395,7 +395,7 @@ class LicenseService {
     if (resolved == null) {
       final prefs = await SharedPreferences.getInstance();
       final storedOrgCode = _normalizeOrganizationCode(
-        prefs.getString(_schoolNumberKey),
+        prefs.getString(_organizationCodeKey),
       );
       final derivedOrgCode = _normalizeOrganizationCode(
         deriveOrganizationCode(normalizedOrganizationName),
@@ -714,15 +714,15 @@ class LicenseService {
     await prefs.setString(_licenceProofKey, proof);
 
     if (normalizedOrganizationName == null) {
-      await prefs.remove(_schoolNameKey);
+      await prefs.remove(_organizationNameKey);
     } else {
-      await prefs.setString(_schoolNameKey, normalizedOrganizationName);
+      await prefs.setString(_organizationNameKey, normalizedOrganizationName);
     }
 
     if (normalizedOrganizationCode == null) {
-      await prefs.remove(_schoolNumberKey);
+      await prefs.remove(_organizationCodeKey);
     } else {
-      await prefs.setString(_schoolNumberKey, normalizedOrganizationCode);
+      await prefs.setString(_organizationCodeKey, normalizedOrganizationCode);
     }
 
     return LicenseSnapshot(
@@ -832,8 +832,8 @@ class LicenseService {
     await prefs.remove(_activationDateKey);
     await prefs.remove(_expiryDateKey);
     await prefs.remove(_licenceProofKey);
-    await prefs.remove(_schoolNameKey);
-    await prefs.remove(_schoolNumberKey);
+    await prefs.remove(_organizationNameKey);
+    await prefs.remove(_organizationCodeKey);
     await prefs.remove(_licenceTypeKey);
   }
 }

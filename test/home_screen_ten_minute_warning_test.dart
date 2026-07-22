@@ -7,6 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:vibration_platform_interface/vibration_platform_interface.dart';
 import 'package:vigilo/models/exam_card_data.dart';
 import 'package:vigilo/enums/exam_phase.dart';
 import 'package:vigilo/persistence/database.dart';
@@ -23,8 +24,6 @@ void main() {
     late Directory dbDir;
     late Directory hiveDir;
     late SessionService sessionService;
-    int vibrationCallCount = 0;
-
     setUpAll(() async {
       sandboxRoot = await Directory.systemTemp.createTemp('vigilo_warning_test_');
       dbDir = Directory(path.join(sandboxRoot.path, 'db'));
@@ -55,27 +54,10 @@ void main() {
 
       await AppDatabase().clearAllData();
 
-      vibrationCallCount = 0;
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(const MethodChannel('vibration'), (MethodCall methodCall) async {
-        if (methodCall.method == 'vibrate') {
-          vibrationCallCount++;
-        }
-        if (methodCall.method == 'hasVibrator') {
-          return true;
-        }
-        return null;
-      });
+      MockVibrationPlatform.vibrationCallCount = 0;
+      VibrationPlatform.instance = MockVibrationPlatform();
       
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(const MethodChannel('flutter/platform'), (MethodCall methodCall) async {
-        if (methodCall.method == 'HapticFeedback.vibrate') {
-          vibrationCallCount++;
-        }
-        return null;
-      });
-      
-      final issuedAt = DateTime(2026, 3, 26, 10, 0);
+      final issuedAt = DateTime.now();
       final encodedExpiry = LicenseService.fixedPilotExpiryFromIssueDate(issuedAt);
       final licenceKey = LicenseService.generateLicenceKey(
         organizationCode: 'BA',
@@ -92,50 +74,88 @@ void main() {
       );
     });
 
+    tearDownAll(() async {
+      await AppDatabase().close();
+    });
     testWidgets('triggers vibration at 10 minutes before normal and extra time ends', (WidgetTester tester) async {
-      await sessionService.initialize();
-      
-      final cardId = generateId();
-      final card = ExamCardData(
-        recordId: cardId,
-        school: 'Battersea Academy',
-        centreNumber: '12345',
-        date: '26/03/2026',
-        subject: 'Maths',
-        start: '09:00',
-        duration: '01:00', // 60 minutes
-        end: '10:00',
-        normalStart: '09:00',
-        normalDuration: '01:00',
-        normalEnd: '10:00',
-        extraTime: '00:15', // 15 minutes extra
-        totalDuration: '01:15',
-        extraEnd: '10:15',
-        autoStart: true,
-        vibrateOn: true,
-        phase: ExamPhase.normal,
-        running: true,
-        isPaused: false,
-        // Set progress to exactly 50 minutes elapsed, which triggers the normal time warning
-        progress: (50 * 60) / (75 * 60), 
-      );
-      
-      await sessionService.persistHomeState(
-        cards: [card],
-        archiveCards: [],
-        lastUsed: {},
-      );
+      await tester.runAsync(() async {
+        await sessionService.initialize();
+        
+        final cardId = generateId();
+        final card = ExamCardData(
+          recordId: cardId,
+          school: 'Battersea Academy',
+          centreNumber: '12345',
+          date: '26/03/2026',
+          subject: 'Maths',
+          start: '09:00',
+          duration: '01:00', // 60 minutes
+          end: '10:00',
+          normalStart: '09:00',
+          normalDuration: '01:00',
+          normalEnd: '10:00',
+          extraTime: '00:15', // 15 minutes extra
+          totalDuration: '01:15',
+          extraEnd: '10:15',
+          autoStart: true,
+          vibrateOn: true,
+          phase: ExamPhase.normal,
+          running: true,
+          isPaused: false,
+          epochStart: DateTime.now().subtract(const Duration(minutes: 50)),
+          // Set progress to exactly 50 minutes elapsed, which triggers the normal time warning
+          progress: (50 * 60) / (75 * 60), 
+        );
+        
+        await sessionService.persistHomeState(
+          cards: [card],
+          archiveCards: [],
+          lastUsed: {},
+        );
 
-      await tester.pumpWidget(
-        MaterialApp(home: HomeScreen(dark: false, onToggleTheme: () {})),
-      );
-      await tester.pump();
-      
-      // Wait for tick
-      await tester.pump(const Duration(seconds: 2));
-      
-      // The tick should trigger the vibration because exactly 50 minutes (3000s) has elapsed.
-      expect(vibrationCallCount, greaterThan(0));
+        await tester.pumpWidget(
+          MaterialApp(home: HomeScreen(dark: false, onToggleTheme: () {})),
+        );
+        await Future.delayed(const Duration(milliseconds: 500));
+        await tester.pump();
+        
+        // Wait for tick
+        await tester.pump(const Duration(seconds: 2));
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        // The tick should trigger the vibration because exactly 50 minutes (3000s) has elapsed.
+        expect(MockVibrationPlatform.vibrationCallCount, greaterThan(0));
+      });
     });
   });
+}
+
+class MockVibrationPlatform extends VibrationPlatform {
+  static int vibrationCallCount = 0;
+
+  @override
+  Future<bool> hasVibrator() async {
+    return true;
+  }
+
+  @override
+  Future<void> vibrate({
+    int duration = 500,
+    List<int> pattern = const [],
+    int repeat = -1,
+    List<int> intensities = const [],
+    int amplitude = -1,
+    double sharpness = 0.5,
+  }) async {
+    vibrationCallCount++;
+  }
+
+  @override
+  Future<bool> hasAmplitudeControl() async => false;
+
+  @override
+  Future<bool> hasCustomVibrationsSupport() async => false;
+
+  @override
+  Future<void> cancel() async {}
 }

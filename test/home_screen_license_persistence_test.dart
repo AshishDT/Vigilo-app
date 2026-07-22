@@ -61,10 +61,15 @@ void main() {
       await AppDatabase().clearAllData();
     });
 
+    tearDownAll(() async {
+      await AppDatabase().close();
+    });
+
     Future<void> pumpHomeScreen(WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(home: HomeScreen(dark: false, onToggleTheme: () {})),
       );
+      await Future.delayed(const Duration(milliseconds: 500));
       await tester.pump();
       await tester.pump(const Duration(seconds: 2));
     }
@@ -81,7 +86,7 @@ void main() {
     }
 
     Future<String> activatePilotLicence() async {
-      final issuedAt = DateTime(2026, 3, 26, 10, 0);
+      final issuedAt = DateTime.now();
       final encodedExpiry = LicenseService.fixedPilotExpiryFromIssueDate(
         issuedAt,
       );
@@ -145,50 +150,54 @@ void main() {
     testWidgets(
       'seeds the organisation context from a stored licence and keeps it active after restart',
       (tester) async {
-        await activatePilotLicence();
+        await tester.runAsync(() async {
+          await activatePilotLicence();
 
-        await pumpHomeScreen(tester);
+          await pumpHomeScreen(tester);
 
-        expect(find.text('Licence Required'), findsNothing);
+          expect(find.text('Licence Required'), findsNothing);
 
-        final lastUsed = await sessionService.loadLastUsed();
-        expect(lastUsed['school'], 'Battersea Academy');
-        expect(lastUsed['centre'], isNull);
+          final lastUsed = await sessionService.loadLastUsed();
+          expect(lastUsed?['school'], 'Battersea Academy');
+          expect(lastUsed?['centre'], isNull);
 
-        await restartHomeScreen(tester);
+          await restartHomeScreen(tester);
 
-        expect(find.text('Licence Required'), findsNothing);
-        await disposeHomeScreen(tester);
+          expect(find.text('Licence Required'), findsNothing);
+          await disposeHomeScreen(tester);
+        });
       },
     );
 
     testWidgets(
       'keeps the stored licence active when persisted exams use centre numbers',
       (tester) async {
-        await activatePilotLicence();
-        await sessionService.initialize();
-        await sessionService.persistHomeState(
-          cards: [buildExamCard()],
-          archiveCards: const [],
-          lastUsed: buildLastUsed(
-            school: 'Other Academy',
-            centre: 'OA',
-            subject: 'Maths',
-            board: 'AQA',
-            start: '09:00',
-            duration: '00:02',
-            extra: '00:01',
-          ),
-        );
+        await tester.runAsync(() async {
+          await activatePilotLicence();
+          await sessionService.initialize();
+          await sessionService.persistHomeState(
+            cards: [buildExamCard()],
+            archiveCards: const [],
+            lastUsed: buildLastUsed(
+              school: 'Other Academy',
+              centre: 'OA',
+              subject: 'Maths',
+              board: 'AQA',
+              start: '09:00',
+              duration: '00:02',
+              extra: '00:01',
+            ),
+          );
 
-        await pumpHomeScreen(tester);
+          await pumpHomeScreen(tester);
 
-        expect(find.text('Licence Required'), findsNothing);
+          expect(find.text('Licence Required'), findsNothing);
 
-        await restartHomeScreen(tester);
+          await restartHomeScreen(tester);
 
-        expect(find.text('Licence Required'), findsNothing);
-        await disposeHomeScreen(tester);
+          expect(find.text('Licence Required'), findsNothing);
+          await disposeHomeScreen(tester);
+        });
       },
     );
   });
