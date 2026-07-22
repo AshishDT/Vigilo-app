@@ -4,13 +4,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/constants.dart';
 import '../utils/app_config.dart';
-import '../utils/id_generator.dart';
-import '../utils/screen_util.dart';
 import '../utils/notifications.dart';
-
 import '../services/license_key_codec.dart';
 import '../services/license_service.dart';
-import 'widgets/animated_scale_on_press.dart';
 
 class LicenseActivationScreen extends StatefulWidget {
   const LicenseActivationScreen({super.key});
@@ -21,7 +17,7 @@ class LicenseActivationScreen extends StatefulWidget {
 }
 
 class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
-  _VigiloColors get colors => _VigiloColors(context);
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
 
   static const String _privacyNoticeText =
       'Vigilo ERC stores exam data locally on the device and does not transmit it to any external server.\n\n'
@@ -382,9 +378,9 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: colors.panel,
+                      color: VigiloUiColors.panel(isDark),
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: colors.line),
+                      border: Border.all(color: VigiloUiColors.line(isDark)),
                       boxShadow: const [
                         BoxShadow(
                           color: Colors.black45,
@@ -410,19 +406,21 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                 width: 50,
                                 height: 50,
                                 decoration: BoxDecoration(
-                                  color: colors.signalBlue
-                                      .withValues(alpha: 0.15),
+                                  color: VigiloUiColors.blue(
+                                    isDark,
+                                  ).withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: colors.signalBlue
-                                        .withValues(alpha: 0.70),
+                                    color: VigiloUiColors.blue(
+                                      isDark,
+                                    ).withValues(alpha: 0.70),
                                     width: .7,
                                   ),
                                 ),
                                 alignment: Alignment.center,
                                 child: Icon(
                                   Icons.description_outlined,
-                                  color: colors.signalBlue,
+                                  color: VigiloUiColors.blue(isDark),
                                   size: 26,
                                 ),
                               ),
@@ -437,7 +435,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                         title,
                                         maxLines: 1,
                                         style: TextStyle(
-                                          color: colors.text,
+                                          color: VigiloUiColors.text(isDark),
                                           fontSize: 22,
                                           fontWeight: FontWeight.w900,
                                         ),
@@ -458,16 +456,16 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                     width: 44,
                                     height: 44,
                                     decoration: BoxDecoration(
-                                      color: colors.panel2,
+                                      color: VigiloUiColors.panel3(isDark),
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
-                                        color: colors.lineSoft,
+                                        color: VigiloUiColors.lineSoft(isDark),
                                       ),
                                     ),
                                     child: Icon(
                                       Icons.close_rounded,
                                       size: 24,
-                                      color: colors.textSoft,
+                                      color: VigiloUiColors.textSoft(isDark),
                                     ),
                                   ),
                                 ),
@@ -487,7 +485,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                   Text(
                                     paragraphs[i],
                                     style: TextStyle(
-                                      color: colors.textSoft,
+                                      color: VigiloUiColors.textSoft(isDark),
                                       fontSize: 15,
                                       height: 1.6,
                                     ),
@@ -592,11 +590,11 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
   Color get _statusColor {
     switch (_displayState) {
       case _LicenceDisplayState.active:
-        return colors.green;
+        return VigiloUiColors.green(isDark);
       case _LicenceDisplayState.expired:
-      // return colors.red;
+      // return VigiloUiColors.red(isDark);
       case _LicenceDisplayState.required:
-        return colors.amber;
+        return VigiloUiColors.amber(isDark);
     }
   }
 
@@ -645,36 +643,21 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
 
   String get _usersValue => LicenseService.userAllowance;
 
-  String get _platformLabel {
-    switch (Theme.of(context).platform) {
-      case TargetPlatform.android:
-        return 'Android';
-      case TargetPlatform.iOS:
-        return 'iOS';
-      case TargetPlatform.macOS:
-        return 'macOS';
-      case TargetPlatform.windows:
-        return 'Windows';
-      case TargetPlatform.linux:
-        return 'Linux';
-      case TargetPlatform.fuchsia:
-        return 'Fuchsia';
-    }
-  }
-
   Widget _buildActivationFeedback() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colors.panel2,
+        color: VigiloUiColors.panel3(isDark),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.line),
+        border: Border.all(color: VigiloUiColors.line(isDark)),
       ),
       child: Text(
         _activationMessage!,
         style: TextStyle(
-          color: _activationError ? colors.red : colors.green,
+          color: _activationError
+              ? VigiloUiColors.red(isDark)
+              : VigiloUiColors.green(isDark),
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -725,7 +708,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                     LengthLimitingTextInputFormatter(index == 0 ? 32 : 1),
                   ],
                   style: TextStyle(
-                    color: colors.text,
+                    color: VigiloUiColors.text(isDark),
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
@@ -733,21 +716,25 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                   decoration: InputDecoration(
                     counterText: '',
                     filled: true,
-                    fillColor: colors.panel2,
+                    fillColor: VigiloUiColors.panel3(isDark),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(vertical: 18),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: colors.line),
+                      borderSide: BorderSide(
+                        color: VigiloUiColors.line(isDark),
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: colors.line),
+                      borderSide: BorderSide(
+                        color: VigiloUiColors.line(isDark),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(
-                        color: colors.signalBlue,
+                        color: VigiloUiColors.blue(isDark),
                         width: 1.4,
                       ),
                     ),
@@ -777,7 +764,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                   '-',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: colors.signalBlueSoft,
+                    color: VigiloUiColors.blueSoft(isDark),
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
                   ),
@@ -797,6 +784,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -805,7 +793,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
           child: SafeArea(
             child: Center(
               child: CircularProgressIndicator(
-                color: colors.signalBlue,
+                color: VigiloUiColors.blue(isDark),
               ),
             ),
           ),
@@ -825,7 +813,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                     IconButton(
                       onPressed: () => Navigator.of(context).maybePop(),
                       icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      color: colors.text,
+                      color: VigiloUiColors.text(isDark),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -835,7 +823,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           Text(
                             'Vigilo ERC',
                             style: TextStyle(
-                              color: colors.text,
+                              color: VigiloUiColors.text(isDark),
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
                             ),
@@ -844,7 +832,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           Text(
                             'Licence & Information',
                             style: TextStyle(
-                              color: colors.textSoft,
+                              color: VigiloUiColors.textSoft(isDark),
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.4,
@@ -870,7 +858,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                             subtitle: Text(
                               '30-day evaluation licence for organisation testing Vigilo ERC.',
                               style: TextStyle(
-                                color: colors.textSoft,
+                                color: VigiloUiColors.textSoft(isDark),
                                 fontSize: 15,
                                 height: 1.5,
                               ),
@@ -883,7 +871,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                             subtitle: Text(
                               'Full operational licence for organisation running examinations.',
                               style: TextStyle(
-                                color: colors.textSoft,
+                                color: VigiloUiColors.textSoft(isDark),
                                 fontSize: 15,
                                 height: 1.5,
                               ),
@@ -896,7 +884,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                             subtitle: Text(
                               'Includes everything in Core plus additional coordination features.\n(Pro features will be introduced in Version 1.1)',
                               style: TextStyle(
-                                color: colors.textSoft,
+                                color: VigiloUiColors.textSoft(isDark),
                                 fontSize: 15,
                                 height: 1.5,
                               ),
@@ -952,7 +940,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                         Text(
                                           _statusLabelText!,
                                           style: TextStyle(
-                                            color: colors.text,
+                                            color: VigiloUiColors.text(isDark),
                                             fontSize: 13,
                                             fontWeight: FontWeight.w800,
                                             letterSpacing: 0.3,
@@ -963,7 +951,9 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                       Text(
                                         _statusSupportText,
                                         style: TextStyle(
-                                          color: colors.textSoft,
+                                          color: VigiloUiColors.textSoft(
+                                            isDark,
+                                          ),
                                           height: 1.5,
                                         ),
                                       ),
@@ -981,9 +971,11 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                               vertical: 15,
                             ),
                             decoration: BoxDecoration(
-                              color: colors.panel2,
+                              color: VigiloUiColors.panel3(isDark),
                               borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: colors.line),
+                              border: Border.all(
+                                color: VigiloUiColors.line(isDark),
+                              ),
                             ),
                             child: Text(
                               _hasStoredLicence && _activationMessage != null
@@ -1032,7 +1024,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                   ? 'Your previous licence has expired. Enter your organisation details and a new activation code below.'
                                   : 'Enter your organisation details and the 6-character activation code issued by Vigilo.',
                               style: TextStyle(
-                                color: colors.textSoft,
+                                color: VigiloUiColors.textSoft(isDark),
                                 fontSize: 15,
                                 height: 1.5,
                               ),
@@ -1041,7 +1033,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                             Text(
                               'Codes are displayed as XXX-XXX for readability.',
                               style: TextStyle(
-                                color: colors.textFaint,
+                                color: VigiloUiColors.textFaint(isDark),
                                 fontSize: 14,
                                 height: 1.45,
                               ),
@@ -1102,7 +1094,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                               width: double.infinity,
                               child: FilledButton(
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: colors.signalBlue,
+                                  backgroundColor: VigiloUiColors.blue(isDark),
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 15,
@@ -1138,8 +1130,15 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                         children: [
                           _StaticInfoRow('App Version', _appVersion),
                           _StaticInfoRow('Build', _buildNumber),
-                          const _StaticInfoRow('Release Date', AppConfig.releaseDate),
-                          const _StaticInfoRow('Storage', 'Local Device', paddingBottom: 0),
+                          const _StaticInfoRow(
+                            'Release Date',
+                            AppConfig.releaseDate,
+                          ),
+                          const _StaticInfoRow(
+                            'Storage',
+                            'Local Device',
+                            paddingBottom: 0,
+                          ),
                         ],
                       ),
                     ),
@@ -1152,7 +1151,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           Text(
                             'All exam session data is stored locally on this device. Data is not transmitted to any external server.',
                             style: TextStyle(
-                              color: colors.textSoft,
+                              color: VigiloUiColors.textSoft(isDark),
                               height: 1.6,
                             ),
                           ),
@@ -1168,12 +1167,15 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           Text(
                             'Exam session data is stored locally on this device.',
                             style: TextStyle(
-                              color: colors.textSoft,
+                              color: VigiloUiColors.textSoft(isDark),
                               height: 1.6,
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const _StaticInfoRow('Data Storage', 'Local device only'),
+                          const _StaticInfoRow(
+                            'Data Storage',
+                            'Local device only',
+                          ),
                           const _StaticInfoRow(
                             'Export Responsibility',
                             'User must export required records',
@@ -1244,7 +1246,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           Text(
                             _aboutText,
                             style: TextStyle(
-                              color: colors.textSoft,
+                              color: VigiloUiColors.textSoft(isDark),
                               height: 1.6,
                             ),
                           ),
@@ -1254,7 +1256,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                               _aboutLegalText,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: colors.textFaint,
+                                color: VigiloUiColors.textFaint(isDark),
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
                                 height: 1.55,
@@ -1296,31 +1298,6 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
 
 enum _LicenceDisplayState { required, active, expired }
 
-class _VigiloColors {
-  final BuildContext context;
-  _VigiloColors(this.context);
-
-  bool get isDark => Theme.of(context).brightness == Brightness.dark;
-
-  Color get bg => VigiloUiColors.bg(isDark);
-  Color get bg2 => VigiloUiColors.bg2(isDark);
-  Color get panel => VigiloUiColors.panel(isDark);
-  Color get panel2 => isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
-  Color get line => VigiloUiColors.line(isDark);
-  Color get lineSoft => VigiloUiColors.lineSoft(isDark);
-
-  Color get signalBlue => isDark ? const Color(0xFF2EA7FF) : const Color(0xFF256BDB);
-  Color get signalBlueSoft => VigiloUiColors.blueSoft(isDark);
-
-  Color get green => VigiloUiColors.green(isDark);
-  Color get amber => VigiloUiColors.amber(isDark);
-  Color get red => isDark ? const Color(0xFFE85D75) : const Color(0xFFDC2626);
-
-  Color get text => VigiloUiColors.text(isDark);
-  Color get textSoft => VigiloUiColors.textSoft(isDark);
-  Color get textFaint => VigiloUiColors.textFaint(isDark);
-}
-
 class _GradientScaffold extends StatelessWidget {
   const _GradientScaffold({required this.child});
 
@@ -1328,11 +1305,11 @@ class _GradientScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _VigiloColors(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [colors.bg, colors.bg2],
+          colors: [VigiloUiColors.bg(isDark), VigiloUiColors.bg2(isDark)],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -1350,7 +1327,7 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _VigiloColors(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return _BlueprintPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1358,7 +1335,7 @@ class _SectionCard extends StatelessWidget {
           Text(
             title.toUpperCase(),
             style: TextStyle(
-              color: colors.signalBlueSoft,
+              color: VigiloUiColors.blueSoft(isDark),
               fontSize: 13,
               fontWeight: FontWeight.w900,
               letterSpacing: 1.1,
@@ -1366,7 +1343,7 @@ class _SectionCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Divider(
-            color: colors.lineSoft.withValues(alpha: 0.8),
+            color: VigiloUiColors.lineSoft(isDark).withValues(alpha: 0.8),
             thickness: 1.0,
             height: 1,
           ),
@@ -1385,13 +1362,13 @@ class _BlueprintPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _VigiloColors(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(
-        color: colors.panel.withValues(alpha: 0.96),
+        color: VigiloUiColors.panel(isDark).withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: colors.line),
+        border: Border.all(color: VigiloUiColors.line(isDark)),
         boxShadow: const [
           BoxShadow(
             color: Colors.black26,
@@ -1422,7 +1399,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _VigiloColors(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: EdgeInsets.only(bottom: paddingBottom),
       child: Row(
@@ -1433,7 +1410,7 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: colors.textSoft,
+                color: VigiloUiColors.textSoft(isDark),
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
               ),
@@ -1449,7 +1426,7 @@ class _InfoRow extends StatelessWidget {
                       value,
                       softWrap: false,
                       style: TextStyle(
-                        color: colors.text,
+                        color: VigiloUiColors.text(isDark),
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
                         height: 1.45,
@@ -1461,7 +1438,7 @@ class _InfoRow extends StatelessWidget {
                     softWrap: !singleLine,
                     overflow: singleLine ? TextOverflow.fade : null,
                     style: TextStyle(
-                      color: colors.text,
+                      color: VigiloUiColors.text(isDark),
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
                       height: 1.45,
@@ -1487,14 +1464,14 @@ class _LicenceTypePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _VigiloColors(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(
-        color: colors.panel,
+        color: VigiloUiColors.panel(isDark),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: colors.line),
+        border: Border.all(color: VigiloUiColors.line(isDark)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1502,7 +1479,7 @@ class _LicenceTypePanel extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: colors.text,
+              color: VigiloUiColors.text(isDark),
               fontSize: 20,
               fontWeight: FontWeight.w900,
             ),
@@ -1529,7 +1506,7 @@ class _FeatureBullet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _VigiloColors(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: EdgeInsets.only(bottom: paddingBottom),
       child: Row(
@@ -1540,7 +1517,7 @@ class _FeatureBullet extends StatelessWidget {
             child: Icon(
               Icons.circle,
               size: 8,
-              color: colors.signalBlueSoft,
+              color: VigiloUiColors.blueSoft(isDark),
             ),
           ),
           const SizedBox(width: 12),
@@ -1548,7 +1525,7 @@ class _FeatureBullet extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: colors.text,
+                color: VigiloUiColors.text(isDark),
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 height: 1.45,
@@ -1595,11 +1572,11 @@ class _FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _VigiloColors(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Text(
       label,
       style: TextStyle(
-        color: colors.textSoft,
+        color: VigiloUiColors.textSoft(isDark),
         fontSize: 15,
         fontWeight: FontWeight.w800,
       ),
@@ -1615,14 +1592,14 @@ class _ReadOnlyField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _VigiloColors(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       decoration: BoxDecoration(
-        color: colors.panel2,
+        color: VigiloUiColors.panel3(isDark),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: colors.line),
+        border: Border.all(color: VigiloUiColors.line(isDark)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1630,7 +1607,7 @@ class _ReadOnlyField extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: colors.textSoft,
+              color: VigiloUiColors.textSoft(isDark),
               fontSize: 14,
               fontWeight: FontWeight.w800,
             ),
@@ -1639,7 +1616,7 @@ class _ReadOnlyField extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              color: colors.text,
+              color: VigiloUiColors.text(isDark),
               fontSize: 16,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.4,
@@ -1659,13 +1636,13 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _VigiloColors(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
         style: OutlinedButton.styleFrom(
-          foregroundColor: colors.text,
-          side: BorderSide(color: colors.line),
+          foregroundColor: VigiloUiColors.text(isDark),
+          side: BorderSide(color: VigiloUiColors.line(isDark)),
           padding: const EdgeInsets.symmetric(vertical: 20),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -1704,7 +1681,7 @@ class _InputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _VigiloColors(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TextField(
       controller: controller,
       focusNode: focusNode,
@@ -1714,34 +1691,34 @@ class _InputField extends StatelessWidget {
       inputFormatters: inputFormatters,
       onChanged: onChanged,
       style: TextStyle(
-        color: colors.text,
+        color: VigiloUiColors.text(isDark),
         fontWeight: FontWeight.w800,
       ),
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: TextStyle(
-          color: colors.textFaint,
+          color: VigiloUiColors.textFaint(isDark),
           fontSize: 15,
           fontWeight: FontWeight.w700,
         ),
         filled: true,
-        fillColor: colors.panel2,
+        fillColor: VigiloUiColors.panel3(isDark),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 18,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide(color: colors.line),
+          borderSide: BorderSide(color: VigiloUiColors.line(isDark)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide(color: colors.line),
+          borderSide: BorderSide(color: VigiloUiColors.line(isDark)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide(
-            color: colors.signalBlue,
+            color: VigiloUiColors.blue(isDark),
             width: 1.4,
           ),
         ),
