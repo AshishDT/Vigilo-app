@@ -18,9 +18,10 @@ class ToolChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
-        backgroundColor: isExamCompleted ? Colors.grey : kBlue,
+        backgroundColor: isExamCompleted ? Colors.grey : VigiloUiColors.blue(isDark),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         padding: const EdgeInsets.symmetric(vertical: 16),
         minimumSize: const Size(0, 60),

@@ -11,7 +11,9 @@ class MessageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bubbleColor = message.isMe ? kBlue : VigiloUiColors.panel(isDark);
+    final bubbleColor = message.isMe
+        ? VigiloUiColors.blue(isDark)
+        : VigiloUiColors.panel(isDark);
     final textColor = Colors.white;
 
     return Column(

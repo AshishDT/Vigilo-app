@@ -45,7 +45,7 @@ class ScheduleCard extends StatelessWidget {
           trailing: IconButton(
             icon: Icon(
               Icons.edit,
-              color: isExamCompleted ? Colors.grey : kBlue,
+              color: isExamCompleted ? Colors.grey : VigiloUiColors.blue(!isLight),
             ),
             onPressed: onEdit,
           ),

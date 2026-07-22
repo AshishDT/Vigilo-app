@@ -5,10 +5,10 @@ import 'constants.dart';
 ThemeData darkTheme() => ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
-  scaffoldBackgroundColor: kDarkBg,
+  scaffoldBackgroundColor: VigiloUiColors.bg(true),
   colorScheme: ColorScheme.dark(
-    primary: kBlue,
-    secondary: kAmber,
+    primary: VigiloUiColors.blue(true),
+    secondary: VigiloUiColors.amber(true),
     surface: VigiloUiColors.panel(true),
   ),
   appBarTheme: const AppBarTheme(
@@ -32,10 +32,10 @@ ThemeData darkTheme() => ThemeData(
 ThemeData lightTheme() => ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  scaffoldBackgroundColor: kLightBg,
-  colorScheme: const ColorScheme.light(
-    primary: kBlue,
-    secondary: kAmber,
+  scaffoldBackgroundColor: VigiloUiColors.bg(false),
+  colorScheme: ColorScheme.light(
+    primary: VigiloUiColors.blue(false),
+    secondary: VigiloUiColors.amber(false),
     surface: Colors.white,
   ),
   appBarTheme: const AppBarTheme(

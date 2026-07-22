@@ -19,6 +19,7 @@ class ActionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -28,7 +29,7 @@ class ActionWidget extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(6.0),
-            child: Icon(icon, size: 28, color: color ?? kBlue),
+            child: Icon(icon, size: 28, color: color ?? VigiloUiColors.blue(isDark)),
           ),
           const SizedBox(height: 4),
           Text(
