@@ -12,16 +12,12 @@ import '../models/incident.dart';
 import '../models/session_event.dart';
 import '../models/session_snapshot.dart';
 import '../persistence/database.dart';
+import '../utils/audit_constants.dart';
 import '../utils/id_generator.dart';
 
 const String _migrationStateKey = 'migration_hive_to_sqlite_v1';
 const String _lastUsedStateKey = 'vigilo_last_json';
 const String _briefingsLibraryStateKey = 'vigilo_briefings_library_v1';
-const String _auditExamStartedMessage = 'Exam started';
-const String _auditEndNormalTimeMessage = 'End of normal time';
-const String _auditStartExtraTimeMessage = 'Start of extra time';
-const String _auditExamEndedMessage = 'Exam ended';
-const String _auditInvigilatorUpdateMessage = 'Invigilator list updated';
 
 class HomeStateSnapshot {
   final List<ExamCardData> cards;
@@ -1536,14 +1532,14 @@ class SessionService {
 
     final normalizedMessage = _normalizeAuditMessage(incident.message);
     if (normalizedMessage ==
-        _normalizeAuditMessage(_auditEndNormalTimeMessage)) {
+        _normalizeAuditMessage(AuditConstants.examEndNormalTimeMessage)) {
       return SessionEventType.endNormalTime;
     }
     if (normalizedMessage ==
-        _normalizeAuditMessage(_auditStartExtraTimeMessage)) {
+        _normalizeAuditMessage(AuditConstants.examStartExtraTimeMessage)) {
       return SessionEventType.startExtraTime;
     }
-    if (normalizedMessage == _normalizeAuditMessage(_auditExamStartedMessage)) {
+    if (normalizedMessage == _normalizeAuditMessage(AuditConstants.examStartedMessage)) {
       return SessionEventType.start;
     }
     if (normalizedMessage ==
@@ -1556,7 +1552,7 @@ class SessionService {
     if (normalizedMessage == _normalizeAuditMessage('Exam resumed')) {
       return SessionEventType.resume;
     }
-    if (normalizedMessage == _normalizeAuditMessage(_auditExamEndedMessage)) {
+    if (normalizedMessage == _normalizeAuditMessage(AuditConstants.examEndedMessage)) {
       return SessionEventType.end;
     }
     if (normalizedMessage == _normalizeAuditMessage('Exam ended manually')) {
@@ -1594,7 +1590,7 @@ class SessionService {
     final message = _payloadMessage(payload);
     if (message.isEmpty) return false;
     return _normalizeAuditMessage(message) ==
-        _normalizeAuditMessage(_auditInvigilatorUpdateMessage);
+        _normalizeAuditMessage(AuditConstants.invigilatorUpdateMessage);
   }
 
   bool _isRestartPayload(Map<String, dynamic> payload) {
@@ -1746,15 +1742,15 @@ class SessionService {
       String eventType;
       switch (event.type) {
         case SessionEventType.start:
-          message = _auditExamStartedMessage;
+          message = AuditConstants.examStartedMessage;
           eventType = 'core';
           break;
         case SessionEventType.endNormalTime:
-          message = _auditEndNormalTimeMessage;
+          message = AuditConstants.examEndNormalTimeMessage;
           eventType = 'core';
           break;
         case SessionEventType.startExtraTime:
-          message = _auditStartExtraTimeMessage;
+          message = AuditConstants.examStartExtraTimeMessage;
           eventType = 'core';
           break;
         case SessionEventType.pause:
@@ -1767,7 +1763,7 @@ class SessionService {
           break;
         case SessionEventType.end:
         case SessionEventType.recoveryAutoEnd:
-          message = _auditExamEndedMessage;
+          message = AuditConstants.examEndedMessage;
           eventType = 'core';
           break;
         case SessionEventType.incident:

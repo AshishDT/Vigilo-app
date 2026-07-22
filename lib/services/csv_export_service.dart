@@ -11,12 +11,10 @@ import '../models/export_artifact.dart';
 import '../models/session_event.dart';
 import '../models/session_snapshot.dart';
 import '../persistence/database.dart';
+import '../utils/audit_constants.dart';
 import '../utils/id_generator.dart';
 import 'license_service.dart';
 
-const String _auditExamStartedMessage = 'Exam started';
-const String _auditExamEndedMessage = 'Exam ended';
-const String _auditInvigilatorUpdateMessage = 'Invigilator list updated';
 const String _noneValue = 'None';
 const String _naValue = 'N/A';
 const String _exportLogFormat = 'ERC-LOG-V1';
@@ -595,7 +593,7 @@ class CsvExportService {
   ) {
     switch (event.type) {
       case SessionEventType.start:
-        return _auditExamStartedMessage;
+        return AuditConstants.examStartedMessage;
       case SessionEventType.endNormalTime:
         return 'Normal time ended';
       case SessionEventType.startExtraTime:
@@ -606,7 +604,7 @@ class CsvExportService {
         return 'Exam resumed';
       case SessionEventType.end:
       case SessionEventType.recoveryAutoEnd:
-        return _auditExamEndedMessage;
+        return AuditConstants.examEndedMessage;
       case SessionEventType.incident:
         final incidentMap = _incidentPayload(payload);
         if (incidentMap == null) return 'Incident detected';
@@ -1137,7 +1135,7 @@ class CsvExportService {
     final message = _payloadMessage(payload);
     if (message.isEmpty) return false;
     return _normalizeAuditMessage(message) ==
-        _normalizeAuditMessage(_auditInvigilatorUpdateMessage);
+        _normalizeAuditMessage(AuditConstants.invigilatorUpdateMessage);
   }
 
   SessionEvent? _firstEventByTypeAfter(
