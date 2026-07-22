@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
 
 import '../services/license_service.dart';
 import 'license_activation_screen.dart';
@@ -10,9 +11,9 @@ class ProFeatureScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [_ProPalette.bg, _ProPalette.bg2],
+            colors: [VigiloUiColors.bg(true), VigiloUiColors.bg2(true)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -27,26 +28,26 @@ class ProFeatureScreen extends StatelessWidget {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: _ProPalette.panel.withValues(alpha: 0.98),
+                  color: VigiloUiColors.panel(true).withValues(alpha: 0.98),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: _ProPalette.line),
+                  border: Border.all(color: VigiloUiColors.line(true)),
                 ),
                 child: Row(
                   children: [
                     IconButton(
                       onPressed: () => Navigator.of(context).maybePop(),
                       icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      color: _ProPalette.text,
+                      color: VigiloUiColors.text(true),
                     ),
                     const SizedBox(width: 2),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Vigilo ERC',
                             style: TextStyle(
-                              color: _ProPalette.text,
+                              color: VigiloUiColors.text(true),
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
                             ),
@@ -55,7 +56,7 @@ class ProFeatureScreen extends StatelessWidget {
                           Text(
                             'Messages',
                             style: TextStyle(
-                              color: _ProPalette.textSoft,
+                              color: VigiloUiColors.textSoft(true),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -75,9 +76,9 @@ class ProFeatureScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: _ProPalette.panel.withValues(alpha: 0.98),
+                          color: VigiloUiColors.panel(true).withValues(alpha: 0.98),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: _ProPalette.line),
+                          border: Border.all(color: VigiloUiColors.line(true)),
                           boxShadow: const [
                             BoxShadow(
                               color: Colors.black26,
@@ -93,49 +94,49 @@ class ProFeatureScreen extends StatelessWidget {
                               width: 62,
                               height: 62,
                               decoration: BoxDecoration(
-                                color: _ProPalette.amber.withValues(
+                                color: VigiloUiColors.amber(true).withValues(
                                   alpha: 0.12,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _ProPalette.amber.withValues(
+                                  color: VigiloUiColors.amber(true).withValues(
                                     alpha: 0.35,
                                   ),
                                 ),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.military_tech,
-                                color: _ProPalette.amber,
+                                color: VigiloUiColors.amber(true),
                                 size: 32,
                               ),
                             ),
                             const SizedBox(height: 16),
-                            const Text(
+                            Text(
                               'Pro Feature',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: _ProPalette.text,
+                                color: VigiloUiColors.text(true),
                                 fontSize: 26,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
                             const SizedBox(height: 12),
-                            const Text(
+                            Text(
                               'Messaging is available with Vigilo ERC Pro.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: _ProPalette.text,
+                                color: VigiloUiColors.text(true),
                                 fontSize: 17,
                                 fontWeight: FontWeight.w700,
                                 height: 1.4,
                               ),
                             ),
                             const SizedBox(height: 12),
-                            const Text(
+                            Text(
                               'Upgrade to Pro to enable exam team messaging, Officer Tools quick messages, photo / PDF sharing and multi-device coordination.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: _ProPalette.textSoft,
+                                color: VigiloUiColors.textSoft(true),
                                 fontSize: 15,
                                 height: 1.55,
                               ),
@@ -145,9 +146,9 @@ class ProFeatureScreen extends StatelessWidget {
                               width: double.infinity,
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: _ProPalette.panel2,
+                                color: VigiloUiColors.panel3(true),
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: _ProPalette.lineSoft),
+                                border: Border.all(color: VigiloUiColors.lineSoft(true)),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,7 +162,7 @@ class ProFeatureScreen extends StatelessWidget {
                               width: double.infinity,
                               child: FilledButton(
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: _ProPalette.blue,
+                                  backgroundColor: VigiloUiColors.blue(true),
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 15,
@@ -189,9 +190,9 @@ class ProFeatureScreen extends StatelessWidget {
                               width: double.infinity,
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: _ProPalette.text,
-                                  side: const BorderSide(
-                                    color: _ProPalette.line,
+                                  foregroundColor: VigiloUiColors.text(true),
+                                  side: BorderSide(
+                                    color: VigiloUiColors.line(true),
                                   ),
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 15,
@@ -235,16 +236,16 @@ class _ProBulletLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 4),
-            child: Icon(Icons.circle, size: 7, color: _ProPalette.blueSoft),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Icon(Icons.circle, size: 7, color: VigiloUiColors.blueSoft(true)),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: _ProPalette.text,
+              style: TextStyle(
+                color: VigiloUiColors.text(true),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -255,18 +256,4 @@ class _ProBulletLine extends StatelessWidget {
   }
 }
 
-class _ProPalette {
-  static const Color bg = Color(0xFF081A2B);
-  static const Color bg2 = Color(0xFF0D2236);
-  static const Color panel = Color(0xFF10263D);
-  static const Color panel2 = Color(0xFF16314D);
-  static const Color line = Color(0xFF284867);
-  static const Color lineSoft = Color(0xFF395B7D);
 
-  static const Color blue = Color(0xFF2EA7FF);
-  static const Color blueSoft = Color(0xFF8FD4FF);
-  static const Color amber = Color(0xFFFFC857);
-
-  static const Color text = Color(0xFFF3F7FC);
-  static const Color textSoft = Color(0xFFB6C7D8);
-}
