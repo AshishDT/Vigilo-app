@@ -30,5 +30,9 @@ class VigiloUiColors {
   static Color amber(bool dark) => dark ? const Color(0xFFFFB64D) : const Color(0xFFE59422);
   static Color finished(bool dark) => dark ? const Color(0xFF8FA6BE) : const Color(0xFF7C91A8);
   static Color green(bool dark) => dark ? const Color(0xFF5ED68A) : const Color(0xFF249B62);
+  static Color panel2(bool dark) => dark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
+  static Color red(bool dark) => dark ? const Color(0xFFE05D74) : const Color(0xFFDC2626);
+  static Color purple(bool dark) => const Color(0xFF7C5CFA);
+  static Color blackWhite(bool dark) => dark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
 }
 

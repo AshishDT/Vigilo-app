@@ -18,6 +18,7 @@ import '../models/message.dart';
 import '../models/schedule.dart';
 import '../services/session_service.dart';
 import '../utils/notifications.dart';
+import '../utils/constants.dart';
 
 class OfficerToolsSheet extends StatefulWidget {
   const OfficerToolsSheet({
@@ -59,58 +60,12 @@ class OfficerToolsSheet extends StatefulWidget {
   State<OfficerToolsSheet> createState() => _OfficerToolsSheetState();
 }
 
-class _OtSheetColorPalette {
-  final BuildContext context;
 
-  _OtSheetColorPalette(this.context);
-
-  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
-
-  Color get panel =>
-      _isDark ? const Color(0xFF10263D) : const Color(0xFFFFFFFF);
-
-  Color get panel2 =>
-      _isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
-
-  Color get panel3 =>
-      _isDark ? const Color(0xFF0D2035) : const Color(0xFFE4E8EE);
-
-  Color get line => _isDark ? const Color(0xFF294867) : const Color(0xFFD0D7DE);
-
-  Color get lineSoft =>
-      _isDark ? const Color(0xFF395B7D) : const Color(0xFFCBD5E1);
-
-  Color get text => _isDark ? const Color(0xFFF3F7FC) : const Color(0xFF0B253A);
-
-  Color get textSoft =>
-      _isDark ? const Color(0xFFB6C7D8) : const Color(0xFF475569);
-
-  Color get textFaint =>
-      _isDark ? const Color(0xFF7E98B2) : const Color(0xFF94A3B8);
-
-  Color get blue => _isDark ? const Color(0xFF4B86F8) : const Color(0xFF2563EB);
-
-  Color get blueSoft =>
-      _isDark ? const Color(0xFF8FD4FF) : const Color(0xFF3B82F6);
-
-  Color get green =>
-      _isDark ? const Color(0xFF5ED68A) : const Color(0xFF249B62);
-
-  Color get orange =>
-      _isDark ? const Color(0xFFFFB64D) : const Color(0xFFD97706);
-
-  Color get red => _isDark ? const Color(0xFFE05D74) : const Color(0xFFDC2626);
-
-  Color get purple => const Color(0xFF7C5CFA);
-
-  Color get blackWhite =>
-      _isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
-}
 
 class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     with SingleTickerProviderStateMixin {
   // ignore: non_constant_identifier_names
-  _OtSheetColorPalette get _OtSheetColors => _OtSheetColorPalette(context);
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
   static const String _requiredFieldWarning =
       "Required fields cannot be empty. Please fill in all mandatory fields.";
 
@@ -791,12 +746,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         width: isActive ? 104 : 88,
         decoration: BoxDecoration(
           color: isActive
-              ? _OtSheetColors.blue.withValues(alpha: 0.11)
+              ? VigiloUiColors.blue(_isDark).withValues(alpha: 0.11)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isActive
-                ? _OtSheetColors.blue.withValues(alpha: 0.65)
+                ? VigiloUiColors.blue(_isDark).withValues(alpha: 0.65)
                 : Colors.transparent,
           ),
         ),
@@ -805,7 +760,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           children: [
             Icon(
               icon,
-              color: isActive ? _OtSheetColors.blue : _OtSheetColors.textSoft,
+              color: isActive ? VigiloUiColors.blue(_isDark) : VigiloUiColors.textSoft(_isDark),
               size: 25,
             ),
             const SizedBox(height: 8),
@@ -817,8 +772,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 softWrap: false,
                 style: TextStyle(
                   color: isActive
-                      ? _OtSheetColors.blue
-                      : _OtSheetColors.textSoft,
+                      ? VigiloUiColors.blue(_isDark)
+                      : VigiloUiColors.textSoft(_isDark),
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
                 ),
@@ -890,9 +845,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        color: _OtSheetColors.panel2,
+        color: VigiloUiColors.panel2(_isDark),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _OtSheetColors.line),
+        border: Border.all(color: VigiloUiColors.line(_isDark)),
       ),
       child: child,
     );
@@ -907,23 +862,23 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     required bool disabled,
   }) {
     final Color borderColor = disabled
-        ? _OtSheetColors.line.withValues(alpha: 0.4)
-        : (color == _OtSheetColors.red
-              ? _OtSheetColors.red.withValues(alpha: 0.7)
+        ? VigiloUiColors.line(_isDark).withValues(alpha: 0.4)
+        : (color == VigiloUiColors.red(_isDark)
+              ? VigiloUiColors.red(_isDark).withValues(alpha: 0.7)
               : color.withValues(alpha: 0.7));
     final Color iconColor = disabled
-        ? _OtSheetColors.textFaint.withValues(alpha: 0.4)
+        ? VigiloUiColors.textFaint(_isDark).withValues(alpha: 0.4)
         : color;
     final Color titleColor = disabled
-        ? _OtSheetColors.textFaint.withValues(alpha: 0.58)
-        : _OtSheetColors.text;
+        ? VigiloUiColors.textFaint(_isDark).withValues(alpha: 0.58)
+        : VigiloUiColors.text(_isDark);
     final Color subtitleColor = disabled
-        ? _OtSheetColors.textFaint.withValues(alpha: 0.4)
-        : _OtSheetColors.textSoft;
+        ? VigiloUiColors.textFaint(_isDark).withValues(alpha: 0.4)
+        : VigiloUiColors.textSoft(_isDark);
     final Color backgroundColor = disabled
-        ? _OtSheetColors.panel2.withValues(alpha: 0.4)
-        : (color == _OtSheetColors.red
-              ? _OtSheetColors.red.withValues(alpha: 0.03)
+        ? VigiloUiColors.panel2(_isDark).withValues(alpha: 0.4)
+        : (color == VigiloUiColors.red(_isDark)
+              ? VigiloUiColors.red(_isDark).withValues(alpha: 0.03)
               : color.withValues(alpha: 0.04));
 
     return IgnorePointer(
@@ -993,19 +948,19 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     required bool disabled,
   }) {
     final Color borderColor = disabled
-        ? _OtSheetColors.line.withValues(alpha: 0.4)
+        ? VigiloUiColors.line(_isDark).withValues(alpha: 0.4)
         : color.withValues(alpha: 0.7);
     final Color iconColor = disabled
-        ? _OtSheetColors.textFaint.withValues(alpha: 0.4)
+        ? VigiloUiColors.textFaint(_isDark).withValues(alpha: 0.4)
         : color;
     final Color titleColor = disabled
-        ? _OtSheetColors.textFaint.withValues(alpha: 0.58)
-        : _OtSheetColors.text;
+        ? VigiloUiColors.textFaint(_isDark).withValues(alpha: 0.58)
+        : VigiloUiColors.text(_isDark);
     final Color subtitleColor = disabled
-        ? _OtSheetColors.textFaint.withValues(alpha: 0.4)
-        : _OtSheetColors.textSoft;
+        ? VigiloUiColors.textFaint(_isDark).withValues(alpha: 0.4)
+        : VigiloUiColors.textSoft(_isDark);
     final Color backgroundColor = disabled
-        ? _OtSheetColors.panel2.withValues(alpha: 0.2)
+        ? VigiloUiColors.panel2(_isDark).withValues(alpha: 0.2)
         : color.withValues(alpha: 0.04);
 
     return IgnorePointer(
@@ -1078,9 +1033,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     if (disabled) {
       backgroundColor = Colors.grey.shade700;
     } else if (danger) {
-      backgroundColor = _OtSheetColors.red;
+      backgroundColor = VigiloUiColors.red(_isDark);
     } else {
-      backgroundColor = _OtSheetColors.blue;
+      backgroundColor = VigiloUiColors.blue(_isDark);
     }
 
     return AnimatedScaleOnPress(
@@ -1090,7 +1045,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         child: FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: isExtraTime
-                ? _OtSheetColors.orange
+                ? VigiloUiColors.amber(_isDark)
                 : backgroundColor,
             disabledBackgroundColor: Colors.grey.shade700,
             disabledForegroundColor: Colors.white70,
@@ -1128,8 +1083,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         height: 44,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: _OtSheetColors.lineSoft),
-            backgroundColor: _OtSheetColors.panel2.withValues(alpha: 0.62),
+            side: BorderSide(color: VigiloUiColors.lineSoft(_isDark)),
+            backgroundColor: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
@@ -1138,7 +1093,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 17, color: _OtSheetColors.blue),
+                Icon(icon, size: 17, color: VigiloUiColors.blue(_isDark)),
                 const SizedBox(width: 4),
               ],
               Flexible(
@@ -1148,7 +1103,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: _OtSheetColors.blackWhite,
+                    color: VigiloUiColors.blackWhite(_isDark),
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
@@ -1189,9 +1144,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: backgroundColor ?? _OtSheetColors.panel2,
+            color: backgroundColor ?? VigiloUiColors.panel2(_isDark),
             borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(color: borderColor ?? _OtSheetColors.line),
+            border: Border.all(color: borderColor ?? VigiloUiColors.line(_isDark)),
           ),
           child: Icon(icon, size: iconSize),
         ),
@@ -1206,9 +1161,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _OtSheetColors.panel2.withValues(alpha: 0.75),
+        color: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _OtSheetColors.line),
+        border: Border.all(color: VigiloUiColors.line(_isDark)),
       ),
       child: Column(
         children: [
@@ -1219,15 +1174,15 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: _OtSheetColors.panel2.withValues(alpha: 0.72),
+                  color: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.72),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: _OtSheetColors.lineSoft.withValues(alpha: 0.70),
+                    color: VigiloUiColors.lineSoft(_isDark).withValues(alpha: 0.70),
                   ),
                 ),
                 child: Icon(
                   Icons.library_books_rounded,
-                  color: _OtSheetColors.blueSoft,
+                  color: VigiloUiColors.blueSoft(_isDark),
                   size: 24,
                 ),
               ),
@@ -1249,7 +1204,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     Text(
                       'SESSION OVERVIEW',
                       style: TextStyle(
-                        color: _OtSheetColors.blueSoft,
+                        color: VigiloUiColors.blueSoft(_isDark),
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 1.3,
@@ -1264,10 +1219,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           Container(
             padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
-              color: _OtSheetColors.panel3.withValues(alpha: 0.86),
+              color: VigiloUiColors.panel3(_isDark).withValues(alpha: 0.86),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: _OtSheetColors.line.withValues(alpha: 0.75),
+                color: VigiloUiColors.line(_isDark).withValues(alpha: 0.75),
               ),
             ),
             child: Row(
@@ -1282,7 +1237,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     ),
                     _setupPhaseLabel(data.phase) == 'Finished'
                         ? Colors.grey
-                        : _OtSheetColors.blue,
+                        : VigiloUiColors.blue(_isDark),
                   ),
                 ),
                 _setupTimingDivider(),
@@ -1294,7 +1249,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     ),
                     _setupPhaseLabel(data.phase) == 'Finished'
                         ? Colors.grey
-                        : _OtSheetColors.blue,
+                        : VigiloUiColors.blue(_isDark),
                   ),
                 ),
                 _setupTimingDivider(),
@@ -1303,10 +1258,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     'PHASE',
                     data.isPaused ? 'Paused' : _setupPhaseLabel(data.phase),
                     data.phase == ExamPhase.extra
-                        ? _OtSheetColors.orange
+                        ? VigiloUiColors.amber(_isDark)
                         : data.phase == ExamPhase.finished
-                            ? _OtSheetColors.green
-                            : _OtSheetColors.blue,
+                            ? VigiloUiColors.green(_isDark)
+                            : VigiloUiColors.blue(_isDark),
                   ),
                 ),
               ],
@@ -1334,7 +1289,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         Text(
           label,
           style: TextStyle(
-            color: _OtSheetColors.textSoft,
+            color: VigiloUiColors.textSoft(_isDark),
             fontSize: 11,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.1,
@@ -1361,7 +1316,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     return Container(
       width: 1,
       height: 44,
-      color: _OtSheetColors.line.withValues(alpha: 0.65),
+      color: VigiloUiColors.line(_isDark).withValues(alpha: 0.65),
     );
   }
 
@@ -1369,7 +1324,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     return Text(
       text,
       style: TextStyle(
-        color: _OtSheetColors.blueSoft,
+        color: VigiloUiColors.blueSoft(_isDark),
         fontSize: 12.5,
         fontWeight: FontWeight.w900,
         letterSpacing: 1.1,
@@ -1382,9 +1337,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
-        color: _OtSheetColors.panel2.withValues(alpha: 0.76),
+        color: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.76),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _OtSheetColors.line),
+        border: Border.all(color: VigiloUiColors.line(_isDark)),
       ),
       child: Column(children: children),
     );
@@ -1393,7 +1348,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   Widget _setupRowDivider() {
     return Container(
       height: 1,
-      color: _OtSheetColors.line.withValues(alpha: 0.72),
+      color: VigiloUiColors.line(_isDark).withValues(alpha: 0.72),
     );
   }
 
@@ -1406,7 +1361,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     final trimmed = value.trim();
     final effectiveColor = isCompleted
         ? Colors.grey
-        : valueColor ?? _OtSheetColors.text;
+        : valueColor ?? VigiloUiColors.text(_isDark);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1417,7 +1372,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             child: Text(
               label,
               style: TextStyle(
-                color: _OtSheetColors.textSoft,
+                color: VigiloUiColors.textSoft(_isDark),
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
               ),
@@ -1431,7 +1386,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 textAlign: TextAlign.right,
                 style: TextStyle(
                   color: trimmed.isEmpty
-                      ? _OtSheetColors.textFaint
+                      ? VigiloUiColors.textFaint(_isDark)
                       : effectiveColor,
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -1469,7 +1424,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               child: Text(
                 label,
                 style: TextStyle(
-                  color: _OtSheetColors.textSoft,
+                  color: VigiloUiColors.textSoft(_isDark),
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                 ),
@@ -1494,12 +1449,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                       nextFocusNode.requestFocus();
                     }
                   },
-                  cursorColor: _OtSheetColors.blueSoft,
+                  cursorColor: VigiloUiColors.blueSoft(_isDark),
                   textAlign: TextAlign.right,
                   minLines: 1,
                   maxLines: 2,
                   style: TextStyle(
-                    color: disabled ? Colors.grey : _OtSheetColors.text,
+                    color: disabled ? Colors.grey : VigiloUiColors.text(_isDark),
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                     height: 1.25,
@@ -1508,7 +1463,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   decoration: InputDecoration(
                     hintText: hintText,
                     hintStyle: TextStyle(
-                      color: _OtSheetColors.textFaint,
+                      color: VigiloUiColors.textFaint(_isDark),
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                     ),
@@ -1553,7 +1508,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           Text(
             'Set Up Role',
             style: TextStyle(
-              color: _OtSheetColors.textSoft,
+              color: VigiloUiColors.textSoft(_isDark),
               fontSize: 14,
               fontWeight: FontWeight.w800,
             ),
@@ -1570,9 +1525,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: _OtSheetColors.panel2,
+                  color: VigiloUiColors.panel2(_isDark),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: _OtSheetColors.line),
+                  border: Border.all(color: VigiloUiColors.line(_isDark)),
                 ),
                 child: Row(
                   children: [
@@ -1583,8 +1538,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: isSelected
-                              ? _OtSheetColors.text
-                              : _OtSheetColors.textFaint,
+                              ? VigiloUiColors.text(_isDark)
+                              : VigiloUiColors.textFaint(_isDark),
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                         ),
@@ -1593,7 +1548,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     const SizedBox(width: 10),
                     Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      color: _OtSheetColors.textSoft,
+                      color: VigiloUiColors.textSoft(_isDark),
                       size: 26,
                     ),
                   ],
@@ -1611,9 +1566,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _OtSheetColors.panel2.withValues(alpha: 0.76),
+        color: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.76),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _OtSheetColors.line),
+        border: Border.all(color: VigiloUiColors.line(_isDark)),
       ),
       child: Opacity(
         opacity: disabled ? 0.58 : 1,
@@ -1623,12 +1578,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             controller: _setupNotesController,
             focusNode: _setupNotesFocus,
             textInputAction: TextInputAction.newline,
-            cursorColor: _OtSheetColors.blueSoft,
+            cursorColor: VigiloUiColors.blueSoft(_isDark),
             minLines: 3,
             maxLines: 5,
             keyboardType: TextInputType.multiline,
             style: TextStyle(
-              color: _OtSheetColors.textSoft,
+              color: VigiloUiColors.textSoft(_isDark),
               fontSize: 15,
               fontWeight: FontWeight.w700,
               height: 1.45,
@@ -1638,7 +1593,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               hintText:
                   'Add exam notes, special arrangements and briefing references',
               hintStyle: TextStyle(
-                color: _OtSheetColors.textFaint,
+                color: VigiloUiColors.textFaint(_isDark),
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 height: 1.45,
@@ -1660,7 +1615,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         Text(
           "CURRENT STATUS",
           style: TextStyle(
-            color: _OtSheetColors.blueSoft,
+            color: VigiloUiColors.blueSoft(_isDark),
             fontSize: 12.5,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.3,
@@ -1670,27 +1625,27 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         Builder(
           builder: (context) {
             final Color statusColor;
-            Color borderColor = _OtSheetColors.lineSoft;
+            Color borderColor = VigiloUiColors.lineSoft(_isDark);
             final IconData statusIcon;
             final String statusTitle;
 
             if (_isExamCompleted) {
-              statusColor = _OtSheetColors.green;
+              statusColor = VigiloUiColors.green(_isDark);
               statusIcon = Icons.check_circle_outline_rounded;
               statusTitle = "Exam Completed";
             } else if (data.isPaused) {
               statusColor = data.phase == ExamPhase.extra
-                  ? _OtSheetColors.orange
-                  : _OtSheetColors.blue;
+                  ? VigiloUiColors.amber(_isDark)
+                  : VigiloUiColors.blue(_isDark);
               statusIcon = Icons.pause_circle_outline_rounded;
               statusTitle = "Exam Paused";
             } else if (data.phase == ExamPhase.extra) {
-              statusColor = _OtSheetColors.orange;
-              borderColor = _OtSheetColors.orange;
+              statusColor = VigiloUiColors.amber(_isDark);
+              borderColor = VigiloUiColors.amber(_isDark);
               statusIcon = Icons.access_time_rounded;
               statusTitle = "Extra Time Active";
             } else {
-              statusColor = _OtSheetColors.blue;
+              statusColor = VigiloUiColors.blue(_isDark);
               statusIcon = Icons.access_time_rounded;
               statusTitle = "Normal Time Active";
             }
@@ -1699,7 +1654,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
-                color: _OtSheetColors.panel2.withValues(alpha: 0.7),
+                color: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: borderColor, width: .7),
               ),
@@ -1738,7 +1693,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                 Text(
                                   "Started",
                                   style: TextStyle(
-                                    color: _OtSheetColors.textSoft,
+                                    color: VigiloUiColors.textSoft(_isDark),
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -1751,7 +1706,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                         : data.start,
                                   ),
                                   style: TextStyle(
-                                    color: _OtSheetColors.text,
+                                    color: VigiloUiColors.text(_isDark),
                                     fontSize: 17,
                                     fontWeight: FontWeight.w900,
                                   ),
@@ -1764,7 +1719,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                 Text(
                                   _isExamCompleted ? "Ended" : "Expected End",
                                   style: TextStyle(
-                                    color: _OtSheetColors.textSoft,
+                                    color: VigiloUiColors.textSoft(_isDark),
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -1777,7 +1732,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                         : data.end,
                                   ),
                                   style: TextStyle(
-                                    color: _OtSheetColors.text,
+                                    color: VigiloUiColors.text(_isDark),
                                     fontSize: 17,
                                     fontWeight: FontWeight.w900,
                                   ),
@@ -1816,7 +1771,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 _setupInfoRow(
                   label: 'Exam Time',
                   value: _setupTimeRange(),
-                  valueColor: _OtSheetColors.blue,
+                  valueColor: VigiloUiColors.blue(_isDark),
                   isCompleted: _setupPhaseLabel(data.phase) == 'Finished',
                 ),
                 _setupRowDivider(),
@@ -1831,14 +1786,14 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 _setupInfoRow(
                   label: 'Duration',
                   value: data.normalDuration,
-                  valueColor: _OtSheetColors.blue,
+                  valueColor: VigiloUiColors.blue(_isDark),
                   isCompleted: _setupPhaseLabel(data.phase) == 'Finished',
                 ),
                 _setupRowDivider(),
                 _setupInfoRow(
                   label: 'Extra Time',
                   value: data.extraTime,
-                  valueColor: _OtSheetColors.orange,
+                  valueColor: VigiloUiColors.amber(_isDark),
                   isCompleted: _setupPhaseLabel(data.phase) == 'Finished',
                 ),
               ],
@@ -1950,9 +1905,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
-            color: _OtSheetColors.panel2,
+            color: VigiloUiColors.panel2(_isDark),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: _OtSheetColors.lineSoft, width: 0.7),
+            border: Border.all(color: VigiloUiColors.lineSoft(_isDark), width: 0.7),
           ),
           child: Row(
             children: [
@@ -1960,15 +1915,15 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: _OtSheetColors.blueSoft.withValues(alpha: 0.15),
+                  color: VigiloUiColors.blueSoft(_isDark).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: _OtSheetColors.blueSoft.withValues(alpha: 0.3),
+                    color: VigiloUiColors.blueSoft(_isDark).withValues(alpha: 0.3),
                   ),
                 ),
                 child: Icon(
                   Icons.groups,
-                  color: _OtSheetColors.blueSoft,
+                  color: VigiloUiColors.blueSoft(_isDark),
                   size: 24,
                 ),
               ),
@@ -1982,7 +1937,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: _OtSheetColors.text,
+                        color: VigiloUiColors.text(_isDark),
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                       ),
@@ -1993,7 +1948,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: _OtSheetColors.textSoft,
+                        color: VigiloUiColors.textSoft(_isDark),
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -2004,7 +1959,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               const SizedBox(width: 10),
               Icon(
                 Icons.keyboard_arrow_down_rounded,
-                color: _OtSheetColors.textSoft,
+                color: VigiloUiColors.textSoft(_isDark),
                 size: 24,
               ),
             ],
@@ -2031,27 +1986,27 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           enabled: !disabled,
           minLines: 1,
           maxLines: 4,
-          cursorColor: _OtSheetColors.blueSoft,
+          cursorColor: VigiloUiColors.blueSoft(_isDark),
           keyboardType: TextInputType.text,
           style: TextStyle(
-            color: _OtSheetColors.text,
+            color: VigiloUiColors.text(_isDark),
             fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
             hintText: "Type a message",
             hintStyle: TextStyle(
-              color: _OtSheetColors.textFaint,
+              color: VigiloUiColors.textFaint(_isDark),
               fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
             filled: true,
-            fillColor: _OtSheetColors.panel2,
+            fillColor: VigiloUiColors.panel2(_isDark),
             contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            border: border(_OtSheetColors.line),
-            enabledBorder: border(_OtSheetColors.line),
-            focusedBorder: border(_OtSheetColors.blueSoft),
-            disabledBorder: border(_OtSheetColors.line),
+            border: border(VigiloUiColors.line(_isDark)),
+            enabledBorder: border(VigiloUiColors.line(_isDark)),
+            focusedBorder: border(VigiloUiColors.blueSoft(_isDark)),
+            disabledBorder: border(VigiloUiColors.line(_isDark)),
             suffixIcon: Padding(
               padding: const EdgeInsets.only(right: 6.0),
               child: IconButton(
@@ -2059,8 +2014,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   Icons.send_rounded,
                   size: 20,
                   color: hasText && !disabled
-                      ? _OtSheetColors.blue
-                      : Color(0xff9FB1C4),
+                      ? VigiloUiColors.blue(_isDark)
+                      : VigiloUiColors.textFaint(_isDark),
                 ),
                 padding: const EdgeInsets.all(12),
                 constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
@@ -2086,7 +2041,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       child: ConstrainedBox(
         constraints: BoxConstraints(minHeight: 48, maxWidth: maxWidth ?? 320),
         child: Material(
-          color: _OtSheetColors.blue,
+          color: VigiloUiColors.blue(_isDark),
           borderRadius: BorderRadius.circular(24),
           elevation: 3,
           child: InkWell(
@@ -2132,7 +2087,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   //   return Text(
   //     text,
   //     style: TextStyle(
-  //       color: _OtSheetColors.blueSoft,
+  //       color: VigiloUiColors.blueSoft(_isDark),
   //       fontSize: 14,
   //       fontWeight: FontWeight.w900,
   //       letterSpacing: 0.2,
@@ -2144,7 +2099,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   //   return Text(
   //     text,
   //     style: TextStyle(
-  //       color: _OtSheetColors.text,
+  //       color: VigiloUiColors.text(_isDark),
   //       fontSize: 17,
   //       fontWeight: FontWeight.w900,
   //     ),
@@ -2155,7 +2110,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     return Container(
       height: 1,
       width: double.infinity,
-      color: _OtSheetColors.line.withValues(alpha: 0.72),
+      color: VigiloUiColors.line(_isDark).withValues(alpha: 0.72),
     );
   }
 
@@ -2172,12 +2127,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: _OtSheetColors.blueSoft),
+            Icon(icon, size: 16, color: VigiloUiColors.blueSoft(_isDark)),
             const SizedBox(width: 5),
             Text(
               text,
               style: TextStyle(
-                color: _OtSheetColors.blueSoft,
+                color: VigiloUiColors.blueSoft(_isDark),
                 fontSize: 13.5,
                 fontWeight: FontWeight.w800,
               ),
@@ -2192,14 +2147,14 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: _OtSheetColors.panel2.withValues(alpha: 0.62),
+        color: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _OtSheetColors.lineSoft),
+        border: Border.all(color: VigiloUiColors.lineSoft(_isDark)),
       ),
       child: Text(
         text,
         style: TextStyle(
-          color: _OtSheetColors.blackWhite,
+          color: VigiloUiColors.blackWhite(_isDark),
           fontSize: 12.5,
           fontWeight: FontWeight.w800,
         ),
@@ -2299,9 +2254,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: _OtSheetColors.panel2.withValues(alpha: 0.30),
+        color: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.30),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _OtSheetColors.lineSoft, width: 0.7),
+        border: Border.all(color: VigiloUiColors.lineSoft(_isDark), width: 0.7),
       ),
       child: Row(
         children: [
@@ -2309,13 +2264,13 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: _OtSheetColors.blue.withValues(alpha: 0.15),
+              color: VigiloUiColors.blue(_isDark).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: _OtSheetColors.blue.withValues(alpha: 0.3),
+                color: VigiloUiColors.blue(_isDark).withValues(alpha: 0.3),
               ),
             ),
-            child: Icon(icon, color: _OtSheetColors.blue, size: 22),
+            child: Icon(icon, color: VigiloUiColors.blue(_isDark), size: 22),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -2326,7 +2281,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 Text(
                   title,
                   style: TextStyle(
-                    color: _OtSheetColors.text,
+                    color: VigiloUiColors.text(_isDark),
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                   ),
@@ -2338,7 +2293,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: _OtSheetColors.textSoft,
+                      color: VigiloUiColors.textSoft(_isDark),
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -2351,7 +2306,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: _OtSheetColors.textSoft.withValues(alpha: 0.65),
+                      color: VigiloUiColors.textSoft(_isDark).withValues(alpha: 0.65),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -2364,7 +2319,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           Text(
             timeString,
             style: TextStyle(
-              color: _OtSheetColors.text,
+              color: VigiloUiColors.text(_isDark),
               fontSize: 14,
               fontWeight: FontWeight.w800,
             ),
@@ -2435,17 +2390,17 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: _OtSheetColors.panel2.withValues(alpha: 0.78),
+        color: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _OtSheetColors.lineSoft.withValues(alpha: 0.72),
+          color: VigiloUiColors.lineSoft(_isDark).withValues(alpha: 0.72),
         ),
       ),
       child: Text(
         text,
         maxLines: 1,
         style: TextStyle(
-          color: _OtSheetColors.blueSoft,
+          color: VigiloUiColors.blueSoft(_isDark),
           fontSize: 11.2,
           fontWeight: FontWeight.w900,
         ),
@@ -2620,7 +2575,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: _OtSheetColors.line.withValues(alpha: 0.72),
+              color: VigiloUiColors.line(_isDark).withValues(alpha: 0.72),
               width: 1,
             ),
           ),
@@ -2646,7 +2601,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 Text(
                   time,
                   style: TextStyle(
-                    color: _OtSheetColors.textSoft,
+                    color: VigiloUiColors.textSoft(_isDark),
                     fontSize: 13.2,
                     fontWeight: FontWeight.w800,
                   ),
@@ -2654,7 +2609,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 const SizedBox(width: 10),
                 Icon(
                   _logIcon(incident),
-                  color: _OtSheetColors.blackWhite,
+                  color: VigiloUiColors.blackWhite(_isDark),
                   size: 22,
                 ),
               ],
@@ -2672,7 +2627,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                           child: Text(
                             detail,
                             style: TextStyle(
-                              color: _OtSheetColors.textSoft,
+                              color: VigiloUiColors.textSoft(_isDark),
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               height: 1.45,
@@ -2726,9 +2681,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 2),
       decoration: BoxDecoration(
-        color: _OtSheetColors.panel2.withValues(alpha: 0.7),
+        color: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _OtSheetColors.lineSoft, width: .7),
+        border: Border.all(color: VigiloUiColors.lineSoft(_isDark), width: .7),
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -2744,7 +2699,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             VerticalDivider(
               width: 1,
               thickness: .7,
-              color: _OtSheetColors.lineSoft,
+              color: VigiloUiColors.lineSoft(_isDark),
               indent: 14,
               endIndent: 14,
             ),
@@ -2760,7 +2715,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             VerticalDivider(
               width: 1,
               thickness: .7,
-              color: _OtSheetColors.lineSoft,
+              color: VigiloUiColors.lineSoft(_isDark),
               indent: 14,
               endIndent: 14,
             ),
@@ -2787,13 +2742,13 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Icon(icon, color: _OtSheetColors.blueSoft, size: 24),
+          Icon(icon, color: VigiloUiColors.blueSoft(_isDark), size: 24),
           const SizedBox(height: 8),
           Text(
             title,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: _OtSheetColors.blueSoft,
+              color: VigiloUiColors.blueSoft(_isDark),
               fontSize: 10,
               fontWeight: FontWeight.w900,
               letterSpacing: 1.1,
@@ -2804,7 +2759,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             subtitle,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: _OtSheetColors.text,
+              color: VigiloUiColors.text(_isDark),
               fontSize: 12,
               fontWeight: FontWeight.w800,
               height: 1.25,
@@ -2828,11 +2783,11 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     final bool isAction = onTap != null;
     final bool expanded = _expandedPrivacySections.contains(sectionId);
 
-    final Color primaryColor = _OtSheetColors.text;
-    final Color secondaryColor = _OtSheetColors.textSoft;
+    final Color primaryColor = VigiloUiColors.text(_isDark);
+    final Color secondaryColor = VigiloUiColors.textSoft(_isDark);
     final Color iconColor = isDanger
-        ? _OtSheetColors.red
-        : _OtSheetColors.blueSoft;
+        ? VigiloUiColors.red(_isDark)
+        : VigiloUiColors.blueSoft(_isDark);
 
     return InkWell(
       onTap: isAction
@@ -2885,7 +2840,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     padding: const EdgeInsets.only(right: 10),
                     child: Icon(
                       Icons.check_circle_outline_rounded,
-                      color: const Color(0xFF10B981),
+                      color: VigiloUiColors.green(_isDark),
                       size: 22,
                     ),
                   ),
@@ -2894,7 +2849,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   duration: const Duration(milliseconds: 180),
                   child: Icon(
                     Icons.keyboard_arrow_right_rounded,
-                    color: _OtSheetColors.textSoft,
+                    color: VigiloUiColors.textSoft(_isDark),
                     size: 24,
                   ),
                 ),
@@ -2908,7 +2863,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   child: Text(
                     content,
                     style: TextStyle(
-                      color: _OtSheetColors.textSoft,
+                      color: VigiloUiColors.textSoft(_isDark),
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       height: 1.5,
@@ -2936,10 +2891,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       child: Container(
         height: MediaQuery.of(context).size.height * 0.82,
         decoration: BoxDecoration(
-          color: _OtSheetColors.panel.withValues(alpha: 0.995),
+          color: VigiloUiColors.panel(_isDark).withValues(alpha: 0.995),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           border: Border.all(
-            color: _OtSheetColors.lineSoft.withValues(alpha: 0.55),
+            color: VigiloUiColors.lineSoft(_isDark).withValues(alpha: 0.55),
           ),
           boxShadow: const [
             BoxShadow(
@@ -2960,7 +2915,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   width: 70,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: _OtSheetColors.lineSoft,
+                    color: VigiloUiColors.lineSoft(_isDark),
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
@@ -2975,7 +2930,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: _OtSheetColors.text,
+                            color: VigiloUiColors.text(_isDark),
                             fontSize: 23,
                             fontWeight: FontWeight.w900,
                           ),
@@ -3009,7 +2964,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Text(
                                 "CONTROL ACTIONS",
                                 style: TextStyle(
-                                  color: _OtSheetColors.blueSoft,
+                                  color: VigiloUiColors.blueSoft(_isDark),
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.3,
@@ -3032,8 +2987,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     color:
                                         _setupPhaseLabel(data.phase) ==
                                             'Extra Time'
-                                        ? _OtSheetColors.orange
-                                        : _OtSheetColors.blue,
+                                        ? VigiloUiColors.amber(_isDark)
+                                        : VigiloUiColors.blue(_isDark),
                                     onTap: widget.onPause,
                                     disabled: _isExamCompleted,
                                   ),
@@ -3044,8 +2999,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     color:
                                         _setupPhaseLabel(data.phase) ==
                                             'Extra Time'
-                                        ? _OtSheetColors.orange
-                                        : _OtSheetColors.textSoft,
+                                        ? VigiloUiColors.amber(_isDark)
+                                        : VigiloUiColors.textSoft(_isDark),
                                     onTap: widget.onReStart,
                                     disabled: _isExamCompleted || data.isPaused,
                                   ),
@@ -3054,7 +3009,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     subtitle:
                                         "End the exam and close active timing",
                                     icon: Icons.stop_rounded,
-                                    color: _OtSheetColors.red,
+                                    color: VigiloUiColors.red(_isDark),
                                     onTap: widget.onEnd,
                                     disabled: _isExamCompleted || data.isPaused,
                                   ),
@@ -3064,7 +3019,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Text(
                                 "AUTOMATION",
                                 style: TextStyle(
-                                  color: _OtSheetColors.blueSoft,
+                                  color: VigiloUiColors.blueSoft(_isDark),
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.3,
@@ -3078,12 +3033,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   vertical: 16,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _OtSheetColors.panel2.withValues(
+                                  color: VigiloUiColors.panel2(_isDark).withValues(
                                     alpha: 0.7,
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: _OtSheetColors.lineSoft,
+                                    color: VigiloUiColors.lineSoft(_isDark),
                                     width: .7,
                                   ),
                                 ),
@@ -3099,9 +3054,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                             "Auto-start exam",
                                             style: TextStyle(
                                               color: _isExamCompleted
-                                                  ? _OtSheetColors.textFaint
+                                                  ? VigiloUiColors.textFaint(_isDark)
                                                         .withValues(alpha: 0.58)
-                                                  : _OtSheetColors.text,
+                                                  : VigiloUiColors.text(_isDark),
                                               fontSize: 16,
                                               fontWeight: FontWeight.w900,
                                             ),
@@ -3111,9 +3066,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                             "Automatically start the exam at the scheduled time",
                                             style: TextStyle(
                                               color: _isExamCompleted
-                                                  ? _OtSheetColors.textFaint
+                                                  ? VigiloUiColors.textFaint(_isDark)
                                                         .withValues(alpha: 0.4)
-                                                  : _OtSheetColors.textSoft,
+                                                  : VigiloUiColors.textSoft(_isDark),
                                               fontSize: 13,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -3124,13 +3079,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     Switch(
                                       value: autoStart,
                                       activeThumbColor: Colors.white,
-                                      activeTrackColor: _OtSheetColors.blue,
-                                      inactiveTrackColor: const Color(
-                                        0xFF10263D,
-                                      ),
-                                      inactiveThumbColor: const Color(
-                                        0xFF8FA7BF,
-                                      ),
+                                      activeTrackColor: VigiloUiColors.blue(_isDark),
+                                      inactiveTrackColor: VigiloUiColors.panel(_isDark),
+                                      inactiveThumbColor: VigiloUiColors.finished(_isDark),
                                       trackOutlineColor:
                                           WidgetStateProperty.resolveWith((
                                             states,
@@ -3140,7 +3091,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                             )) {
                                               return Colors.transparent;
                                             }
-                                            return const Color(0xFF35597B);
+                                            return VigiloUiColors.lineSoft(_isDark);
                                           }),
                                       onChanged: _isExamCompleted
                                           ? null
@@ -3176,7 +3127,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                 Text(
                                   "RECIPIENTS",
                                   style: TextStyle(
-                                    color: _OtSheetColors.blueSoft,
+                                    color: VigiloUiColors.blueSoft(_isDark),
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 1.3,
@@ -3202,7 +3153,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                       child: Text(
                                         "QUICK MESSAGES",
                                         style: TextStyle(
-                                          color: _OtSheetColors.blueSoft,
+                                          color: VigiloUiColors.blueSoft(_isDark),
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 1.3,
@@ -3259,7 +3210,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                 Text(
                                   "NEW MESSAGE",
                                   style: TextStyle(
-                                    color: _OtSheetColors.blueSoft,
+                                    color: VigiloUiColors.blueSoft(_isDark),
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 1.3,
@@ -3272,7 +3223,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   Text(
                                     "RECENT MESSAGES",
                                     style: TextStyle(
-                                      color: _OtSheetColors.blueSoft,
+                                      color: VigiloUiColors.blueSoft(_isDark),
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w900,
                                       letterSpacing: 1.3,
@@ -3299,7 +3250,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Text(
                                 "LOG NEW INCIDENT",
                                 style: TextStyle(
-                                  color: _OtSheetColors.blueSoft,
+                                  color: VigiloUiColors.blueSoft(_isDark),
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.3,
@@ -3313,7 +3264,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     title: "Toilet Visit",
                                     subtitle: "Record a toilet visit",
                                     icon: Icons.wc,
-                                    color: _OtSheetColors.purple,
+                                    color: VigiloUiColors.purple(_isDark),
                                     onTap: _showToiletVisitIncidentDialog,
                                     disabled: _isExamCompleted,
                                   ),
@@ -3321,7 +3272,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     title: "Medical",
                                     subtitle: "Record a medical incident",
                                     icon: Icons.medical_services,
-                                    color: _OtSheetColors.blue,
+                                    color: VigiloUiColors.blue(_isDark),
                                     onTap: _showMedicalIncidentDialog,
                                     disabled: _isExamCompleted,
                                   ),
@@ -3329,7 +3280,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     title: "Malpractice",
                                     subtitle: "Record a malpractice concern",
                                     icon: Icons.warning_amber_rounded,
-                                    color: _OtSheetColors.orange,
+                                    color: VigiloUiColors.amber(_isDark),
                                     onTap: _showMalpracticeIncidentDialog,
                                     disabled: _isExamCompleted,
                                   ),
@@ -3339,7 +3290,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Text(
                                 "RECENT INCIDENTS",
                                 style: TextStyle(
-                                  color: _OtSheetColors.blueSoft,
+                                  color: VigiloUiColors.blueSoft(_isDark),
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.3,
@@ -3363,12 +3314,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                         vertical: 20,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: _OtSheetColors.panel2.withValues(
+                                        color: VigiloUiColors.panel2(_isDark).withValues(
                                           alpha: 0.7,
                                         ),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
-                                          color: _OtSheetColors.lineSoft,
+                                          color: VigiloUiColors.lineSoft(_isDark),
                                           width: .7,
                                         ),
                                       ),
@@ -3376,7 +3327,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                         child: Text(
                                           "No recent incidents logged",
                                           style: TextStyle(
-                                            color: _OtSheetColors.textSoft,
+                                            color: VigiloUiColors.textSoft(_isDark),
                                             fontSize: 14,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -3403,30 +3354,30 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                       if (incident.message == 'Toilet break') {
                                         visualTitle = "Toilet Visit";
                                         visualIcon = Icons.wc;
-                                        visualColor = _OtSheetColors.purple;
+                                        visualColor = VigiloUiColors.purple(_isDark);
                                       } else if (incident.message ==
                                           'Medical incident') {
                                         visualTitle = "Medical";
                                         visualIcon = Icons.medical_services;
-                                        visualColor = _OtSheetColors.blue;
+                                        visualColor = VigiloUiColors.blue(_isDark);
                                       } else {
                                         visualTitle = "Malpractice";
                                         visualIcon =
                                             Icons.warning_amber_rounded;
-                                        visualColor = _OtSheetColors.orange;
+                                        visualColor = VigiloUiColors.amber(_isDark);
                                       }
 
                                       return Container(
                                         width: double.infinity,
                                         clipBehavior: Clip.antiAlias,
                                         decoration: BoxDecoration(
-                                          color: _OtSheetColors.panel2
+                                          color: VigiloUiColors.panel2(_isDark)
                                               .withValues(alpha: 0.7),
                                           borderRadius: BorderRadius.circular(
                                             20,
                                           ),
                                           border: Border.all(
-                                            color: _OtSheetColors.lineSoft,
+                                            color: VigiloUiColors.lineSoft(_isDark),
                                             width: .7,
                                           ),
                                         ),
@@ -3468,8 +3419,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                       Text(
                                                         timeStr,
                                                         style: TextStyle(
-                                                          color: _OtSheetColors
-                                                              .text,
+                                                          color: VigiloUiColors.text(_isDark),
                                                           fontSize: 15.5,
                                                           fontWeight:
                                                               FontWeight.w900,
@@ -3500,8 +3450,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                               "Student: ${incident.studentID.trim()}",
                                                               style: TextStyle(
                                                                 color:
-                                                                    _OtSheetColors
-                                                                        .textSoft,
+                                                                    VigiloUiColors.textSoft(_isDark),
                                                                 fontSize: 13.8,
                                                                 fontWeight:
                                                                     FontWeight
@@ -3530,7 +3479,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                                         "Room: ${incident.room}",
                                                                         style: TextStyle(
                                                                           color:
-                                                                              _OtSheetColors.textSoft,
+                                                                              VigiloUiColors.textSoft(_isDark),
                                                                           fontSize:
                                                                               13.8,
                                                                           fontWeight:
@@ -3544,7 +3493,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                                         "Duration: ${incident.duration} minutes",
                                                                         style: TextStyle(
                                                                           color:
-                                                                              _OtSheetColors.textSoft,
+                                                                              VigiloUiColors.textSoft(_isDark),
                                                                           fontSize:
                                                                               13.8,
                                                                           fontWeight:
@@ -3558,7 +3507,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                                         "Details: ${incident.detail}",
                                                                         style: TextStyle(
                                                                           color:
-                                                                              _OtSheetColors.textSoft,
+                                                                              VigiloUiColors.textSoft(_isDark),
                                                                           fontSize:
                                                                               13.8,
                                                                           fontWeight:
@@ -3572,7 +3521,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                                         "Action: ${incident.action}",
                                                                         style: TextStyle(
                                                                           color:
-                                                                              _OtSheetColors.textSoft,
+                                                                              VigiloUiColors.textSoft(_isDark),
                                                                           fontSize:
                                                                               13.8,
                                                                           fontWeight:
@@ -3618,8 +3567,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                             Icons
                                                                 .keyboard_arrow_right_rounded,
                                                             color:
-                                                                _OtSheetColors
-                                                                    .textSoft,
+                                                                VigiloUiColors.textSoft(_isDark),
                                                             size: 24,
                                                           ),
                                                         ),
@@ -3655,7 +3603,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     child: Text(
                                       "EXAM TIMELINE",
                                       style: TextStyle(
-                                        color: _OtSheetColors.blueSoft,
+                                        color: VigiloUiColors.blueSoft(_isDark),
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: 1.3,
@@ -3712,7 +3660,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     child: Text(
                                       "No log entries yet",
                                       style: TextStyle(
-                                        color: _OtSheetColors.textSoft,
+                                        color: VigiloUiColors.textSoft(_isDark),
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -3750,7 +3698,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Text(
                                 "DATA & PRIVACY",
                                 style: TextStyle(
-                                  color: _OtSheetColors.blueSoft,
+                                  color: VigiloUiColors.blueSoft(_isDark),
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.3,
@@ -3760,12 +3708,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: _OtSheetColors.panel2.withValues(
+                                  color: VigiloUiColors.panel2(_isDark).withValues(
                                     alpha: 0.7,
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: _OtSheetColors.lineSoft,
+                                    color: VigiloUiColors.lineSoft(_isDark),
                                     width: .7,
                                   ),
                                 ),
@@ -3784,7 +3732,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     Container(
                                       height: .7,
                                       width: double.infinity,
-                                      color: _OtSheetColors.lineSoft,
+                                      color: VigiloUiColors.lineSoft(_isDark),
                                     ),
                                     _otPrivacyTile(
                                       icon: Icons.download_rounded,
@@ -3803,7 +3751,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Text(
                                 "COMPLIANCE",
                                 style: TextStyle(
-                                  color: _OtSheetColors.blueSoft,
+                                  color: VigiloUiColors.blueSoft(_isDark),
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.3,
@@ -3813,12 +3761,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: _OtSheetColors.panel2.withValues(
+                                  color: VigiloUiColors.panel2(_isDark).withValues(
                                     alpha: 0.7,
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: _OtSheetColors.lineSoft,
+                                    color: VigiloUiColors.lineSoft(_isDark),
                                     width: .7,
                                   ),
                                 ),
@@ -3836,7 +3784,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     Container(
                                       height: .7,
                                       width: double.infinity,
-                                      color: _OtSheetColors.lineSoft,
+                                      color: VigiloUiColors.lineSoft(_isDark),
                                     ),
                                     _otPrivacyTile(
                                       icon: Icons.info_outline_rounded,
@@ -3854,7 +3802,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Text(
                                 "CRITICAL ACTIONS",
                                 style: TextStyle(
-                                  color: _OtSheetColors.blueSoft,
+                                  color: VigiloUiColors.blueSoft(_isDark),
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.3,
@@ -3864,12 +3812,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: _OtSheetColors.red.withValues(
+                                  color: VigiloUiColors.red(_isDark).withValues(
                                     alpha: 0.03,
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: _OtSheetColors.red.withValues(
+                                    color: VigiloUiColors.red(_isDark).withValues(
                                       alpha: 0.4,
                                     ),
                                     width: .7,
@@ -3960,7 +3908,7 @@ class _InvigilatorSelectorDialog extends StatefulWidget {
 class _InvigilatorSelectorDialogState
     extends State<_InvigilatorSelectorDialog> {
   // ignore: non_constant_identifier_names
-  _OtSheetColorPalette get _OtSheetColors => _OtSheetColorPalette(context);
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
   late final Set<String> _selection = widget.initialSelection
       .where(widget.invigilators.contains)
       .toSet();
@@ -4019,13 +3967,13 @@ class _InvigilatorSelectorDialogState
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: selected
-              ? _OtSheetColors.blue.withValues(alpha: 0.15)
-              : _OtSheetColors.panel2.withValues(alpha: 0.30),
+              ? VigiloUiColors.blue(_isDark).withValues(alpha: 0.15)
+              : VigiloUiColors.panel2(_isDark).withValues(alpha: 0.30),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected
-                ? _OtSheetColors.blue.withValues(alpha: 0.70)
-                : _OtSheetColors.lineSoft,
+                ? VigiloUiColors.blue(_isDark).withValues(alpha: 0.70)
+                : VigiloUiColors.lineSoft(_isDark),
             width: .7,
           ),
         ),
@@ -4036,19 +3984,19 @@ class _InvigilatorSelectorDialogState
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: selected ? _OtSheetColors.blue : _OtSheetColors.panel3,
+                color: selected ? VigiloUiColors.blue(_isDark) : VigiloUiColors.panel3(_isDark),
               ),
               alignment: Alignment.center,
               child: isSelectAll
                   ? Icon(
                       Icons.group_rounded,
-                      color: _OtSheetColors.text,
+                      color: VigiloUiColors.text(_isDark),
                       size: 20,
                     )
                   : Text(
                       initialLetter,
                       style: TextStyle(
-                        color: _OtSheetColors.text,
+                        color: VigiloUiColors.text(_isDark),
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                       ),
@@ -4061,7 +4009,7 @@ class _InvigilatorSelectorDialogState
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: _OtSheetColors.text,
+                  color: VigiloUiColors.text(_isDark),
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                 ),
@@ -4074,11 +4022,11 @@ class _InvigilatorSelectorDialogState
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: selected ? _OtSheetColors.blueSoft : Colors.transparent,
+                color: selected ? VigiloUiColors.blueSoft(_isDark) : Colors.transparent,
                 border: selected
                     ? null
                     : Border.all(
-                        color: _OtSheetColors.textSoft.withValues(alpha: 0.5),
+                        color: VigiloUiColors.textSoft(_isDark).withValues(alpha: 0.5),
                         width: 2.0,
                       ),
               ),
@@ -4086,7 +4034,7 @@ class _InvigilatorSelectorDialogState
               child: selected
                   ? Icon(
                       Icons.check,
-                      color: _OtSheetColors.blue,
+                      color: VigiloUiColors.blue(_isDark),
                       size: 18,
                       fontWeight: FontWeight.w700,
                     )
@@ -4112,9 +4060,9 @@ class _InvigilatorSelectorDialogState
             width: double.infinity,
             margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             decoration: BoxDecoration(
-              color: _OtSheetColors.panel,
+              color: VigiloUiColors.panel(_isDark),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: _OtSheetColors.line),
+              border: Border.all(color: VigiloUiColors.line(_isDark)),
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black45,
@@ -4136,17 +4084,17 @@ class _InvigilatorSelectorDialogState
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: _OtSheetColors.blue.withValues(alpha: 0.15),
+                          color: VigiloUiColors.blue(_isDark).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: _OtSheetColors.blue.withValues(alpha: 0.70),
+                            color: VigiloUiColors.blue(_isDark).withValues(alpha: 0.70),
                             width: .7,
                           ),
                         ),
                         alignment: Alignment.center,
                         child: Icon(
                           Icons.group_rounded,
-                          color: _OtSheetColors.blue,
+                          color: VigiloUiColors.blue(_isDark),
                           size: 26,
                         ),
                       ),
@@ -4160,7 +4108,7 @@ class _InvigilatorSelectorDialogState
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: _OtSheetColors.text,
+                                color: VigiloUiColors.text(_isDark),
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -4173,7 +4121,7 @@ class _InvigilatorSelectorDialogState
                                         ? '1 Invigilator selected'
                                         : '${_selection.length} Invigilators selected'),
                               style: TextStyle(
-                                color: _OtSheetColors.textSoft,
+                                color: VigiloUiColors.textSoft(_isDark),
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -4191,16 +4139,16 @@ class _InvigilatorSelectorDialogState
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2,
+                              color: VigiloUiColors.panel2(_isDark),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: _OtSheetColors.lineSoft,
+                                color: VigiloUiColors.lineSoft(_isDark),
                               ),
                             ),
                             child: Icon(
                               Icons.close_rounded,
                               size: 24,
-                              color: _OtSheetColors.textSoft,
+                              color: VigiloUiColors.textSoft(_isDark),
                             ),
                           ),
                         ),
@@ -4214,7 +4162,7 @@ class _InvigilatorSelectorDialogState
                   child: Text(
                     'AVAILABLE INVIGILATORS',
                     style: TextStyle(
-                      color: _OtSheetColors.blueSoft,
+                      color: VigiloUiColors.blueSoft(_isDark),
                       fontSize: 12.5,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.1,
@@ -4242,7 +4190,7 @@ class _InvigilatorSelectorDialogState
                                 'No invigilators available',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: _OtSheetColors.textSoft,
+                                  color: VigiloUiColors.textSoft(_isDark),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -4301,9 +4249,9 @@ class _InvigilatorSelectorDialogState
     if (disabled) {
       backgroundColor = Colors.grey.shade700;
     } else if (danger) {
-      backgroundColor = _OtSheetColors.red;
+      backgroundColor = VigiloUiColors.red(_isDark);
     } else {
-      backgroundColor = _OtSheetColors.blue;
+      backgroundColor = VigiloUiColors.blue(_isDark);
     }
 
     return AnimatedScaleOnPress(
@@ -4313,7 +4261,7 @@ class _InvigilatorSelectorDialogState
         child: FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: isExtraTime
-                ? _OtSheetColors.orange
+                ? VigiloUiColors.amber(_isDark)
                 : backgroundColor,
             disabledBackgroundColor: Colors.grey.shade700,
             disabledForegroundColor: Colors.white70,
@@ -4347,8 +4295,8 @@ class _InvigilatorSelectorDialogState
         height: 44,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: _OtSheetColors.lineSoft),
-            backgroundColor: _OtSheetColors.panel2.withValues(alpha: 0.62),
+            side: BorderSide(color: VigiloUiColors.lineSoft(_isDark)),
+            backgroundColor: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
@@ -4361,7 +4309,7 @@ class _InvigilatorSelectorDialogState
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: _OtSheetColors.blackWhite,
+                color: VigiloUiColors.blackWhite(_isDark),
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
               ),
@@ -4389,7 +4337,7 @@ class _PresetMessagesDialog extends StatefulWidget {
 }
 
 class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
-  _OtSheetColorPalette get _OtSheetColors => _OtSheetColorPalette(context);
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
   final TextEditingController _newPresetController = TextEditingController();
   late final List<TextEditingController> _presetControllers;
 
@@ -4477,10 +4425,10 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: _OtSheetColors.panel,
+                  color: VigiloUiColors.panel(_isDark),
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(
-                    color: _OtSheetColors.line.withValues(alpha: 0.75),
+                    color: VigiloUiColors.line(_isDark).withValues(alpha: 0.75),
                   ),
                   boxShadow: const [
                     BoxShadow(
@@ -4500,19 +4448,19 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                             width: 58,
                             height: 58,
                             decoration: BoxDecoration(
-                              color: _OtSheetColors.blue.withValues(
+                              color: VigiloUiColors.blue(_isDark).withValues(
                                 alpha: 0.12,
                               ),
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(
-                                color: _OtSheetColors.blue.withValues(
+                                color: VigiloUiColors.blue(_isDark).withValues(
                                   alpha: 0.5,
                                 ),
                               ),
                             ),
                             child: Icon(
                               Icons.edit_note_rounded,
-                              color: _OtSheetColors.blue,
+                              color: VigiloUiColors.blue(_isDark),
                               size: 31,
                             ),
                           ),
@@ -4523,7 +4471,7 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: _OtSheetColors.text,
+                                color: VigiloUiColors.text(_isDark),
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
                                 height: 1.1,
@@ -4542,7 +4490,7 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                             'No preset messages yet',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: _OtSheetColors.textSoft,
+                              color: VigiloUiColors.textSoft(_isDark),
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                             ),
@@ -4565,21 +4513,21 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                                       horizontal: 16,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: _OtSheetColors.panel2.withValues(
+                                      color: VigiloUiColors.panel2(_isDark).withValues(
                                         alpha: 0.58,
                                       ),
                                       borderRadius: BorderRadius.circular(18),
                                       border: Border.all(
-                                        color: _OtSheetColors.lineSoft
+                                        color: VigiloUiColors.lineSoft(_isDark)
                                             .withValues(alpha: 0.28),
                                       ),
                                     ),
                                     child: TextField(
                                       controller: _presetControllers[index],
                                       maxLines: null,
-                                      cursorColor: _OtSheetColors.blue,
+                                      cursorColor: VigiloUiColors.blue(_isDark),
                                       style: TextStyle(
-                                        color: _OtSheetColors.text,
+                                        color: VigiloUiColors.text(_isDark),
                                         fontSize: 16,
                                         fontWeight: FontWeight.w800,
                                         height: 1.35,
@@ -4599,7 +4547,7 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                                   onTap: () => _removePreset(index),
                                   child: Icon(
                                     Icons.delete_rounded,
-                                    color: _OtSheetColors.red,
+                                    color: VigiloUiColors.red(_isDark),
                                     size: 27,
                                   ),
                                 ),
@@ -4613,7 +4561,7 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
 
                       Container(
                         height: 1,
-                        color: _OtSheetColors.line.withValues(alpha: 0.18),
+                        color: VigiloUiColors.line(_isDark).withValues(alpha: 0.18),
                       ),
 
                       const SizedBox(height: 22),
@@ -4623,7 +4571,7 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                         child: Text(
                           'Add new preset',
                           style: TextStyle(
-                            color: _OtSheetColors.textSoft,
+                            color: VigiloUiColors.textSoft(_isDark),
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                           ),
@@ -4636,17 +4584,17 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                         height: 60,
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         decoration: BoxDecoration(
-                          color: _OtSheetColors.panel2,
+                          color: VigiloUiColors.panel2(_isDark),
                           borderRadius: BorderRadius.circular(22),
                           border: Border.all(
-                            color: _OtSheetColors.lineSoft.withValues(
+                            color: VigiloUiColors.lineSoft(_isDark).withValues(
                               alpha: 0.45,
                             ),
                           ),
                         ),
                         child: TextField(
                           controller: _newPresetController,
-                          cursorColor: _OtSheetColors.blue,
+                          cursorColor: VigiloUiColors.blue(_isDark),
                           onChanged: (_) {
                             setState(() {
                               if (_presetControllers.length >= 50 &&
@@ -4658,7 +4606,7 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                             });
                           },
                           style: TextStyle(
-                            color: _OtSheetColors.text,
+                            color: VigiloUiColors.text(_isDark),
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
@@ -4666,7 +4614,7 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                             border: InputBorder.none,
                             hintText: 'Type message...',
                             hintStyle: TextStyle(
-                              color: _OtSheetColors.textFaint,
+                              color: VigiloUiColors.textFaint(_isDark),
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                             ),
@@ -4679,7 +4627,7 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                         Text(
                           'Quick Message limit reached (50). Delete an existing message to create a new one.',
                           style: TextStyle(
-                            color: _OtSheetColors.red,
+                            color: VigiloUiColors.red(_isDark),
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
@@ -4698,9 +4646,9 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                                   onPressed: () => Navigator.pop(context),
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(
-                                      color: _OtSheetColors.lineSoft,
+                                      color: VigiloUiColors.lineSoft(_isDark),
                                     ),
-                                    backgroundColor: _OtSheetColors.panel2
+                                    backgroundColor: VigiloUiColors.panel2(_isDark)
                                         .withValues(alpha: 0.62),
                                     shape: const StadiumBorder(),
                                     padding: const EdgeInsets.symmetric(
@@ -4712,7 +4660,7 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                                     child: Text(
                                       'Close',
                                       style: TextStyle(
-                                        color: _OtSheetColors.blackWhite,
+                                        color: VigiloUiColors.blackWhite(_isDark),
                                         fontSize: 14,
                                         fontWeight: FontWeight.w900,
                                       ),
@@ -4737,9 +4685,8 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                                     child: FilledButton(
                                       onPressed: isEnabled ? _addPreset : null,
                                       style: FilledButton.styleFrom(
-                                        backgroundColor: _OtSheetColors.blue,
-                                        disabledBackgroundColor: _OtSheetColors
-                                            .blue
+                                        backgroundColor: VigiloUiColors.blue(_isDark),
+                                        disabledBackgroundColor: VigiloUiColors.blue(_isDark)
                                             .withValues(alpha: 0.45),
                                         foregroundColor: Colors.white,
                                         disabledForegroundColor: Colors.white
@@ -4793,7 +4740,7 @@ class _RequestRunnerDialog extends StatefulWidget {
 
 class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
   // ignore: non_constant_identifier_names
-  _OtSheetColorPalette get _OtSheetColors => _OtSheetColorPalette(context);
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
 
   late final TextEditingController _roomController = TextEditingController(
     text: widget.initialRoom,
@@ -4833,7 +4780,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
     return Text(
       text,
       style: TextStyle(
-        color: _OtSheetColors.blueSoft,
+        color: VigiloUiColors.blueSoft(_isDark),
         fontSize: 12.5,
         fontWeight: FontWeight.w900,
         letterSpacing: 1.1,
@@ -4849,8 +4796,8 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
         height: 44,
         child: FilledButton(
           style: FilledButton.styleFrom(
-            backgroundColor: _OtSheetColors.blue,
-            disabledBackgroundColor: _OtSheetColors.blue.withValues(
+            backgroundColor: VigiloUiColors.blue(_isDark),
+            disabledBackgroundColor: VigiloUiColors.blue(_isDark).withValues(
               alpha: 0.45,
             ),
             foregroundColor: Colors.white,
@@ -4884,8 +4831,8 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
         height: 44,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: _OtSheetColors.lineSoft),
-            backgroundColor: _OtSheetColors.panel2.withValues(alpha: 0.62),
+            side: BorderSide(color: VigiloUiColors.lineSoft(_isDark)),
+            backgroundColor: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
@@ -4898,7 +4845,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: _OtSheetColors.blackWhite,
+                color: VigiloUiColors.blackWhite(_isDark),
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
               ),
@@ -4931,9 +4878,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: _OtSheetColors.panel,
+                  color: VigiloUiColors.panel(_isDark),
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: _OtSheetColors.line),
+                  border: Border.all(color: VigiloUiColors.line(_isDark)),
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black45,
@@ -4954,12 +4901,12 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: _OtSheetColors.blue.withValues(
+                              color: VigiloUiColors.blue(_isDark).withValues(
                                 alpha: 0.15,
                               ),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: _OtSheetColors.blue.withValues(
+                                color: VigiloUiColors.blue(_isDark).withValues(
                                   alpha: 0.70,
                                 ),
                                 width: .7,
@@ -4968,7 +4915,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                             alignment: Alignment.center,
                             child: Icon(
                               Icons.directions_run_rounded,
-                              color: _OtSheetColors.blue,
+                              color: VigiloUiColors.blue(_isDark),
                               size: 26,
                             ),
                           ),
@@ -4980,7 +4927,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 Text(
                                   'Request Runner',
                                   style: TextStyle(
-                                    color: _OtSheetColors.text,
+                                    color: VigiloUiColors.text(_isDark),
                                     fontSize: 22,
                                     fontWeight: FontWeight.w900,
                                   ),
@@ -4989,7 +4936,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 Text(
                                   'Send an operational request for room support',
                                   style: TextStyle(
-                                    color: _OtSheetColors.textSoft,
+                                    color: VigiloUiColors.textSoft(_isDark),
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -5006,16 +4953,16 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  color: _OtSheetColors.panel2,
+                                  color: VigiloUiColors.panel2(_isDark),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: _OtSheetColors.lineSoft,
+                                    color: VigiloUiColors.lineSoft(_isDark),
                                   ),
                                 ),
                                 child: Icon(
                                   Icons.close_rounded,
                                   size: 24,
-                                  color: _OtSheetColors.textSoft,
+                                  color: VigiloUiColors.textSoft(_isDark),
                                 ),
                               ),
                             ),
@@ -5039,12 +4986,12 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
+                                color: VigiloUiColors.panel2(_isDark).withValues(
                                   alpha: 0.30,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
+                                  color: VigiloUiColors.lineSoft(_isDark),
                                 ),
                               ),
                               child: TextField(
@@ -5054,9 +5001,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 onSubmitted: (_) {
                                   _messageFocus.requestFocus();
                                 },
-                                cursorColor: _OtSheetColors.blueSoft,
+                                cursorColor: VigiloUiColors.blueSoft(_isDark),
                                 style: TextStyle(
-                                  color: _OtSheetColors.text,
+                                  color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -5066,7 +5013,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 decoration: InputDecoration(
                                   hintText: 'Additional papers / materials',
                                   hintStyle: TextStyle(
-                                    color: _OtSheetColors.textSoft.withValues(
+                                    color: VigiloUiColors.textSoft(_isDark).withValues(
                                       alpha: 0.60,
                                     ),
                                     fontSize: 15,
@@ -5100,19 +5047,19 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                       height: 44,
                                       decoration: BoxDecoration(
                                         color: _priority == 'Normal'
-                                            ? _OtSheetColors.blue.withValues(
+                                            ? VigiloUiColors.blue(_isDark).withValues(
                                                 alpha: 0.15,
                                               )
-                                            : _OtSheetColors.panel2.withValues(
+                                            : VigiloUiColors.panel2(_isDark).withValues(
                                                 alpha: 0.30,
                                               ),
                                         borderRadius: BorderRadius.circular(24),
                                         border: Border.all(
                                           color: _priority == 'Normal'
-                                              ? _OtSheetColors.blue.withValues(
+                                              ? VigiloUiColors.blue(_isDark).withValues(
                                                   alpha: .7,
                                                 )
-                                              : _OtSheetColors.line.withValues(
+                                              : VigiloUiColors.line(_isDark).withValues(
                                                   alpha: 0.3,
                                                 ),
                                           width: .7,
@@ -5123,8 +5070,8 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                         'Normal',
                                         style: TextStyle(
                                           color: _priority == 'Normal'
-                                              ? _OtSheetColors.blue
-                                              : _OtSheetColors.textSoft,
+                                              ? VigiloUiColors.blue(_isDark)
+                                              : VigiloUiColors.textSoft(_isDark),
                                           fontSize: 15.5,
                                           fontWeight: FontWeight.w900,
                                         ),
@@ -5146,18 +5093,18 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                       height: 44,
                                       decoration: BoxDecoration(
                                         color: _priority == 'Urgent'
-                                            ? _OtSheetColors.orange.withValues(
+                                            ? VigiloUiColors.amber(_isDark).withValues(
                                                 alpha: 0.15,
                                               )
-                                            : _OtSheetColors.panel2.withValues(
+                                            : VigiloUiColors.panel2(_isDark).withValues(
                                                 alpha: 0.30,
                                               ),
                                         borderRadius: BorderRadius.circular(24),
                                         border: Border.all(
                                           color: _priority == 'Urgent'
-                                              ? _OtSheetColors.orange
+                                              ? VigiloUiColors.amber(_isDark)
                                                     .withValues(alpha: .7)
-                                              : _OtSheetColors.line.withValues(
+                                              : VigiloUiColors.line(_isDark).withValues(
                                                   alpha: 0.3,
                                                 ),
                                           width: .7,
@@ -5168,8 +5115,8 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                         'Urgent',
                                         style: TextStyle(
                                           color: _priority == 'Urgent'
-                                              ? _OtSheetColors.orange
-                                              : _OtSheetColors.textSoft,
+                                              ? VigiloUiColors.amber(_isDark)
+                                              : VigiloUiColors.textSoft(_isDark),
                                           fontSize: 15.5,
                                           fontWeight: FontWeight.w900,
                                         ),
@@ -5189,12 +5136,12 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
+                                color: VigiloUiColors.panel2(_isDark).withValues(
                                   alpha: 0.30,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
+                                  color: VigiloUiColors.lineSoft(_isDark),
                                 ),
                               ),
                               child: TextField(
@@ -5203,9 +5150,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 textInputAction: TextInputAction.done,
                                 minLines: 3,
                                 maxLines: 5,
-                                cursorColor: _OtSheetColors.blueSoft,
+                                cursorColor: VigiloUiColors.blueSoft(_isDark),
                                 style: TextStyle(
-                                  color: _OtSheetColors.text,
+                                  color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -5215,7 +5162,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 decoration: InputDecoration(
                                   hintText: 'Add details for the runner...',
                                   hintStyle: TextStyle(
-                                    color: _OtSheetColors.textSoft.withValues(
+                                    color: VigiloUiColors.textSoft(_isDark).withValues(
                                       alpha: 0.60,
                                     ),
                                     fontSize: 15,
@@ -5238,12 +5185,12 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 vertical: 14,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.blue.withValues(
+                                color: VigiloUiColors.blue(_isDark).withValues(
                                   alpha: .05,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.blue.withValues(
+                                  color: VigiloUiColors.blue(_isDark).withValues(
                                     alpha: 0.7,
                                   ),
                                   width: .7,
@@ -5254,7 +5201,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 children: [
                                   Icon(
                                     Icons.info_outline_rounded,
-                                    color: _OtSheetColors.blue,
+                                    color: VigiloUiColors.blue(_isDark),
                                     size: 22,
                                   ),
                                   const SizedBox(width: 12),
@@ -5262,7 +5209,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                     child: Text(
                                       'Runner requests should be short, clear and operational.',
                                       style: TextStyle(
-                                        color: _OtSheetColors.blue,
+                                        color: VigiloUiColors.blue(_isDark),
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
                                         height: 1.45,
@@ -5329,7 +5276,7 @@ class _MedicalIncidentDialog extends StatefulWidget {
 
 class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
   // ignore: non_constant_identifier_names
-  _OtSheetColorPalette get _OtSheetColors => _OtSheetColorPalette(context);
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
 
   final TextEditingController _studentController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
@@ -5371,7 +5318,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
     return Text(
       text,
       style: TextStyle(
-        color: _OtSheetColors.blueSoft,
+        color: VigiloUiColors.blueSoft(_isDark),
         fontSize: 12.5,
         fontWeight: FontWeight.w900,
         letterSpacing: 1.1,
@@ -5387,8 +5334,8 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
         height: 44,
         child: FilledButton(
           style: FilledButton.styleFrom(
-            backgroundColor: _OtSheetColors.blue,
-            disabledBackgroundColor: _OtSheetColors.blue.withValues(
+            backgroundColor: VigiloUiColors.blue(_isDark),
+            disabledBackgroundColor: VigiloUiColors.blue(_isDark).withValues(
               alpha: 0.45,
             ),
             foregroundColor: Colors.white,
@@ -5422,8 +5369,8 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
         height: 44,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: _OtSheetColors.lineSoft),
-            backgroundColor: _OtSheetColors.panel2.withValues(alpha: 0.62),
+            side: BorderSide(color: VigiloUiColors.lineSoft(_isDark)),
+            backgroundColor: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
@@ -5436,7 +5383,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: _OtSheetColors.blackWhite,
+                color: VigiloUiColors.blackWhite(_isDark),
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
               ),
@@ -5469,9 +5416,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: _OtSheetColors.panel,
+                  color: VigiloUiColors.panel(_isDark),
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: _OtSheetColors.line),
+                  border: Border.all(color: VigiloUiColors.line(_isDark)),
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black45,
@@ -5492,12 +5439,12 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: _OtSheetColors.blue.withValues(
+                              color: VigiloUiColors.blue(_isDark).withValues(
                                 alpha: 0.15,
                               ),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: _OtSheetColors.blue.withValues(
+                                color: VigiloUiColors.blue(_isDark).withValues(
                                   alpha: 0.70,
                                 ),
                                 width: .7,
@@ -5506,7 +5453,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                             alignment: Alignment.center,
                             child: Icon(
                               Icons.medical_services,
-                              color: _OtSheetColors.blue,
+                              color: VigiloUiColors.blue(_isDark),
                               size: 26,
                             ),
                           ),
@@ -5521,7 +5468,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                     'Medical Incident',
                                     maxLines: 1,
                                     style: TextStyle(
-                                      color: _OtSheetColors.text,
+                                      color: VigiloUiColors.text(_isDark),
                                       fontSize: 22,
                                       fontWeight: FontWeight.w900,
                                     ),
@@ -5531,7 +5478,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 Text(
                                   'Record a medical incident',
                                   style: TextStyle(
-                                    color: _OtSheetColors.textSoft,
+                                    color: VigiloUiColors.textSoft(_isDark),
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -5549,16 +5496,16 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  color: _OtSheetColors.panel2,
+                                  color: VigiloUiColors.panel2(_isDark),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: _OtSheetColors.lineSoft,
+                                    color: VigiloUiColors.lineSoft(_isDark),
                                   ),
                                 ),
                                 child: Icon(
                                   Icons.close_rounded,
                                   size: 24,
-                                  color: _OtSheetColors.textSoft,
+                                  color: VigiloUiColors.textSoft(_isDark),
                                 ),
                               ),
                             ),
@@ -5582,12 +5529,12 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
+                                color: VigiloUiColors.panel2(_isDark).withValues(
                                   alpha: 0.30,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
+                                  color: VigiloUiColors.lineSoft(_isDark),
                                 ),
                               ),
                               child: TextField(
@@ -5597,9 +5544,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 onSubmitted: (_) {
                                   _detailsFocus.requestFocus();
                                 },
-                                cursorColor: _OtSheetColors.blueSoft,
+                                cursorColor: VigiloUiColors.blueSoft(_isDark),
                                 style: TextStyle(
-                                  color: _OtSheetColors.text,
+                                  color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -5607,7 +5554,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 decoration: InputDecoration(
                                   hintText: 'Name and candidate number',
                                   hintStyle: TextStyle(
-                                    color: _OtSheetColors.textSoft.withValues(
+                                    color: VigiloUiColors.textSoft(_isDark).withValues(
                                       alpha: 0.60,
                                     ),
                                     fontSize: 15,
@@ -5631,12 +5578,12 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
+                                color: VigiloUiColors.panel2(_isDark).withValues(
                                   alpha: 0.30,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
+                                  color: VigiloUiColors.lineSoft(_isDark),
                                 ),
                               ),
                               child: TextField(
@@ -5648,9 +5595,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 },
                                 minLines: 3,
                                 maxLines: 5,
-                                cursorColor: _OtSheetColors.blueSoft,
+                                cursorColor: VigiloUiColors.blueSoft(_isDark),
                                 style: TextStyle(
-                                  color: _OtSheetColors.text,
+                                  color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -5659,7 +5606,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                   hintText:
                                       'Describe the incident detail and symptoms...',
                                   hintStyle: TextStyle(
-                                    color: _OtSheetColors.textSoft.withValues(
+                                    color: VigiloUiColors.textSoft(_isDark).withValues(
                                       alpha: 0.60,
                                     ),
                                     fontSize: 15,
@@ -5683,21 +5630,21 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
+                                color: VigiloUiColors.panel2(_isDark).withValues(
                                   alpha: 0.30,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
+                                  color: VigiloUiColors.lineSoft(_isDark),
                                 ),
                               ),
                               child: TextField(
                                 controller: _actionController,
                                 focusNode: _actionFocus,
                                 textInputAction: TextInputAction.done,
-                                cursorColor: _OtSheetColors.blueSoft,
+                                cursorColor: VigiloUiColors.blueSoft(_isDark),
                                 style: TextStyle(
-                                  color: _OtSheetColors.text,
+                                  color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -5705,7 +5652,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 decoration: InputDecoration(
                                   hintText: 'First aid / support / escalation',
                                   hintStyle: TextStyle(
-                                    color: _OtSheetColors.textSoft.withValues(
+                                    color: VigiloUiColors.textSoft(_isDark).withValues(
                                       alpha: 0.60,
                                     ),
                                     fontSize: 15,
@@ -5779,7 +5726,7 @@ class _MalpracticeIncidentDialog extends StatefulWidget {
 class _MalpracticeIncidentDialogState
     extends State<_MalpracticeIncidentDialog> {
   // ignore: non_constant_identifier_names
-  _OtSheetColorPalette get _OtSheetColors => _OtSheetColorPalette(context);
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
 
   final TextEditingController _studentController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
@@ -5821,7 +5768,7 @@ class _MalpracticeIncidentDialogState
     return Text(
       text,
       style: TextStyle(
-        color: _OtSheetColors.blueSoft,
+        color: VigiloUiColors.blueSoft(_isDark),
         fontSize: 12.5,
         fontWeight: FontWeight.w900,
         letterSpacing: 1.1,
@@ -5837,8 +5784,8 @@ class _MalpracticeIncidentDialogState
         height: 44,
         child: FilledButton(
           style: FilledButton.styleFrom(
-            backgroundColor: _OtSheetColors.orange,
-            disabledBackgroundColor: _OtSheetColors.orange.withValues(
+            backgroundColor: VigiloUiColors.amber(_isDark),
+            disabledBackgroundColor: VigiloUiColors.amber(_isDark).withValues(
               alpha: 0.45,
             ),
             foregroundColor: Colors.white,
@@ -5872,8 +5819,8 @@ class _MalpracticeIncidentDialogState
         height: 44,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: _OtSheetColors.lineSoft),
-            backgroundColor: _OtSheetColors.panel2.withValues(alpha: 0.62),
+            side: BorderSide(color: VigiloUiColors.lineSoft(_isDark)),
+            backgroundColor: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
@@ -5886,7 +5833,7 @@ class _MalpracticeIncidentDialogState
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: _OtSheetColors.blackWhite,
+                color: VigiloUiColors.blackWhite(_isDark),
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
               ),
@@ -5919,9 +5866,9 @@ class _MalpracticeIncidentDialogState
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: _OtSheetColors.panel,
+                  color: VigiloUiColors.panel(_isDark),
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: _OtSheetColors.line),
+                  border: Border.all(color: VigiloUiColors.line(_isDark)),
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black45,
@@ -5942,12 +5889,12 @@ class _MalpracticeIncidentDialogState
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: _OtSheetColors.orange.withValues(
+                              color: VigiloUiColors.amber(_isDark).withValues(
                                 alpha: 0.15,
                               ),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: _OtSheetColors.orange.withValues(
+                                color: VigiloUiColors.amber(_isDark).withValues(
                                   alpha: 0.7,
                                 ),
                                 width: .7,
@@ -5956,7 +5903,7 @@ class _MalpracticeIncidentDialogState
                             alignment: Alignment.center,
                             child: Icon(
                               Icons.warning_amber_rounded,
-                              color: _OtSheetColors.orange,
+                              color: VigiloUiColors.amber(_isDark),
                               size: 26,
                             ),
                           ),
@@ -5971,7 +5918,7 @@ class _MalpracticeIncidentDialogState
                                     'Malpractice',
                                     maxLines: 1,
                                     style: TextStyle(
-                                      color: _OtSheetColors.text,
+                                      color: VigiloUiColors.text(_isDark),
                                       fontSize: 22,
                                       fontWeight: FontWeight.w900,
                                     ),
@@ -5981,7 +5928,7 @@ class _MalpracticeIncidentDialogState
                                 Text(
                                   'Record a malpractice concern',
                                   style: TextStyle(
-                                    color: _OtSheetColors.textSoft,
+                                    color: VigiloUiColors.textSoft(_isDark),
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -5999,16 +5946,16 @@ class _MalpracticeIncidentDialogState
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  color: _OtSheetColors.panel2,
+                                  color: VigiloUiColors.panel2(_isDark),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: _OtSheetColors.lineSoft,
+                                    color: VigiloUiColors.lineSoft(_isDark),
                                   ),
                                 ),
                                 child: Icon(
                                   Icons.close_rounded,
                                   size: 24,
-                                  color: _OtSheetColors.textSoft,
+                                  color: VigiloUiColors.textSoft(_isDark),
                                 ),
                               ),
                             ),
@@ -6030,12 +5977,12 @@ class _MalpracticeIncidentDialogState
                                 vertical: 14,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.orange.withValues(
+                                color: VigiloUiColors.amber(_isDark).withValues(
                                   alpha: .05,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.orange.withValues(
+                                  color: VigiloUiColors.amber(_isDark).withValues(
                                     alpha: 0.7,
                                   ),
                                   width: .7,
@@ -6044,7 +5991,7 @@ class _MalpracticeIncidentDialogState
                               child: Text(
                                 'Use factual wording only. This records malpractice, not a confirmed outcome.',
                                 style: TextStyle(
-                                  color: _OtSheetColors.orange,
+                                  color: VigiloUiColors.amber(_isDark),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   height: 1.45,
@@ -6061,12 +6008,12 @@ class _MalpracticeIncidentDialogState
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
+                                color: VigiloUiColors.panel2(_isDark).withValues(
                                   alpha: 0.30,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
+                                  color: VigiloUiColors.lineSoft(_isDark),
                                 ),
                               ),
                               child: TextField(
@@ -6076,9 +6023,9 @@ class _MalpracticeIncidentDialogState
                                 onSubmitted: (_) {
                                   _detailsFocus.requestFocus();
                                 },
-                                cursorColor: _OtSheetColors.blueSoft,
+                                cursorColor: VigiloUiColors.blueSoft(_isDark),
                                 style: TextStyle(
-                                  color: _OtSheetColors.text,
+                                  color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -6086,7 +6033,7 @@ class _MalpracticeIncidentDialogState
                                 decoration: InputDecoration(
                                   hintText: 'Name and candidate number',
                                   hintStyle: TextStyle(
-                                    color: _OtSheetColors.textSoft.withValues(
+                                    color: VigiloUiColors.textSoft(_isDark).withValues(
                                       alpha: 0.60,
                                     ),
                                     fontSize: 15,
@@ -6110,12 +6057,12 @@ class _MalpracticeIncidentDialogState
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
+                                color: VigiloUiColors.panel2(_isDark).withValues(
                                   alpha: 0.30,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
+                                  color: VigiloUiColors.lineSoft(_isDark),
                                 ),
                               ),
                               child: TextField(
@@ -6127,9 +6074,9 @@ class _MalpracticeIncidentDialogState
                                 },
                                 minLines: 3,
                                 maxLines: 5,
-                                cursorColor: _OtSheetColors.blueSoft,
+                                cursorColor: VigiloUiColors.blueSoft(_isDark),
                                 style: TextStyle(
-                                  color: _OtSheetColors.text,
+                                  color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -6138,7 +6085,7 @@ class _MalpracticeIncidentDialogState
                                   hintText:
                                       'Describe the observed behaviour factually...',
                                   hintStyle: TextStyle(
-                                    color: _OtSheetColors.textSoft.withValues(
+                                    color: VigiloUiColors.textSoft(_isDark).withValues(
                                       alpha: 0.60,
                                     ),
                                     fontSize: 15,
@@ -6162,21 +6109,21 @@ class _MalpracticeIncidentDialogState
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
+                                color: VigiloUiColors.panel2(_isDark).withValues(
                                   alpha: 0.30,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
+                                  color: VigiloUiColors.lineSoft(_isDark),
                                 ),
                               ),
                               child: TextField(
                                 controller: _actionController,
                                 focusNode: _actionFocus,
                                 textInputAction: TextInputAction.done,
-                                cursorColor: _OtSheetColors.blueSoft,
+                                cursorColor: VigiloUiColors.blueSoft(_isDark),
                                 style: TextStyle(
-                                  color: _OtSheetColors.text,
+                                  color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -6185,7 +6132,7 @@ class _MalpracticeIncidentDialogState
                                   hintText:
                                       'Reported to EO / evidence retained',
                                   hintStyle: TextStyle(
-                                    color: _OtSheetColors.textSoft.withValues(
+                                    color: VigiloUiColors.textSoft(_isDark).withValues(
                                       alpha: 0.60,
                                     ),
                                     fontSize: 15,
@@ -6260,7 +6207,7 @@ class _ToiletVisitIncidentDialog extends StatefulWidget {
 class _ToiletVisitIncidentDialogState
     extends State<_ToiletVisitIncidentDialog> {
   // ignore: non_constant_identifier_names
-  _OtSheetColorPalette get _OtSheetColors => _OtSheetColorPalette(context);
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
 
   final TextEditingController _studentController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
@@ -6305,7 +6252,7 @@ class _ToiletVisitIncidentDialogState
     return Text(
       text,
       style: TextStyle(
-        color: _OtSheetColors.blueSoft,
+        color: VigiloUiColors.blueSoft(_isDark),
         fontSize: 12.5,
         fontWeight: FontWeight.w900,
         letterSpacing: 1.1,
@@ -6327,13 +6274,13 @@ class _ToiletVisitIncidentDialogState
           height: 44,
           decoration: BoxDecoration(
             color: selected
-                ? _OtSheetColors.purple.withValues(alpha: 0.15)
-                : _OtSheetColors.panel2.withValues(alpha: 0.30),
+                ? VigiloUiColors.purple(_isDark).withValues(alpha: 0.15)
+                : VigiloUiColors.panel2(_isDark).withValues(alpha: 0.30),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: selected
-                  ? _OtSheetColors.purple.withValues(alpha: 0.70)
-                  : _OtSheetColors.lineSoft,
+                  ? VigiloUiColors.purple(_isDark).withValues(alpha: 0.70)
+                  : VigiloUiColors.lineSoft(_isDark),
               width: .7,
             ),
           ),
@@ -6341,7 +6288,7 @@ class _ToiletVisitIncidentDialogState
           child: Text(
             '$mins min',
             style: TextStyle(
-              color: selected ? _OtSheetColors.purple : _OtSheetColors.textSoft,
+              color: selected ? VigiloUiColors.purple(_isDark) : VigiloUiColors.textSoft(_isDark),
               fontSize: 15.5,
               fontWeight: FontWeight.w900,
             ),
@@ -6359,8 +6306,8 @@ class _ToiletVisitIncidentDialogState
         height: 44,
         child: FilledButton(
           style: FilledButton.styleFrom(
-            backgroundColor: _OtSheetColors.purple,
-            disabledBackgroundColor: _OtSheetColors.purple.withValues(
+            backgroundColor: VigiloUiColors.purple(_isDark),
+            disabledBackgroundColor: VigiloUiColors.purple(_isDark).withValues(
               alpha: 0.45,
             ),
             foregroundColor: Colors.white,
@@ -6394,8 +6341,8 @@ class _ToiletVisitIncidentDialogState
         height: 44,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: _OtSheetColors.lineSoft),
-            backgroundColor: _OtSheetColors.panel2.withValues(alpha: 0.62),
+            side: BorderSide(color: VigiloUiColors.lineSoft(_isDark)),
+            backgroundColor: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
@@ -6408,7 +6355,7 @@ class _ToiletVisitIncidentDialogState
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: _OtSheetColors.blackWhite,
+                color: VigiloUiColors.blackWhite(_isDark),
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
               ),
@@ -6441,9 +6388,9 @@ class _ToiletVisitIncidentDialogState
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: _OtSheetColors.panel,
+                  color: VigiloUiColors.panel(_isDark),
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: _OtSheetColors.line),
+                  border: Border.all(color: VigiloUiColors.line(_isDark)),
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black45,
@@ -6464,12 +6411,12 @@ class _ToiletVisitIncidentDialogState
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: _OtSheetColors.purple.withValues(
+                              color: VigiloUiColors.purple(_isDark).withValues(
                                 alpha: 0.15,
                               ),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: _OtSheetColors.purple.withValues(
+                                color: VigiloUiColors.purple(_isDark).withValues(
                                   alpha: 0.70,
                                 ),
                                 width: .7,
@@ -6478,7 +6425,7 @@ class _ToiletVisitIncidentDialogState
                             alignment: Alignment.center,
                             child: Icon(
                               Icons.wc,
-                              color: _OtSheetColors.purple,
+                              color: VigiloUiColors.purple(_isDark),
                               size: 26,
                             ),
                           ),
@@ -6493,7 +6440,7 @@ class _ToiletVisitIncidentDialogState
                                     'Toilet Visit',
                                     maxLines: 1,
                                     style: TextStyle(
-                                      color: _OtSheetColors.text,
+                                      color: VigiloUiColors.text(_isDark),
                                       fontSize: 22,
                                       fontWeight: FontWeight.w900,
                                     ),
@@ -6503,7 +6450,7 @@ class _ToiletVisitIncidentDialogState
                                 Text(
                                   'Record a toilet visit',
                                   style: TextStyle(
-                                    color: _OtSheetColors.textSoft,
+                                    color: VigiloUiColors.textSoft(_isDark),
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -6521,16 +6468,16 @@ class _ToiletVisitIncidentDialogState
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  color: _OtSheetColors.panel2,
+                                  color: VigiloUiColors.panel2(_isDark),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: _OtSheetColors.lineSoft,
+                                    color: VigiloUiColors.lineSoft(_isDark),
                                   ),
                                 ),
                                 child: Icon(
                                   Icons.close_rounded,
                                   size: 24,
-                                  color: _OtSheetColors.textSoft,
+                                  color: VigiloUiColors.textSoft(_isDark),
                                 ),
                               ),
                             ),
@@ -6554,12 +6501,12 @@ class _ToiletVisitIncidentDialogState
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
+                                color: VigiloUiColors.panel2(_isDark).withValues(
                                   alpha: 0.30,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
+                                  color: VigiloUiColors.lineSoft(_isDark),
                                 ),
                               ),
                               child: TextField(
@@ -6569,9 +6516,9 @@ class _ToiletVisitIncidentDialogState
                                 onSubmitted: (_) {
                                   _notesFocus.requestFocus();
                                 },
-                                cursorColor: _OtSheetColors.purple,
+                                cursorColor: VigiloUiColors.purple(_isDark),
                                 style: TextStyle(
-                                  color: _OtSheetColors.text,
+                                  color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -6579,7 +6526,7 @@ class _ToiletVisitIncidentDialogState
                                 decoration: InputDecoration(
                                   hintText: 'Name and candidate number',
                                   hintStyle: TextStyle(
-                                    color: _OtSheetColors.textSoft.withValues(
+                                    color: VigiloUiColors.textSoft(_isDark).withValues(
                                       alpha: 0.60,
                                     ),
                                     fontSize: 15,
@@ -6612,12 +6559,12 @@ class _ToiletVisitIncidentDialogState
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
+                                color: VigiloUiColors.panel2(_isDark).withValues(
                                   alpha: 0.30,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
+                                  color: VigiloUiColors.lineSoft(_isDark),
                                 ),
                               ),
                               child: TextField(
@@ -6629,9 +6576,9 @@ class _ToiletVisitIncidentDialogState
                                 },
                                 minLines: 3,
                                 maxLines: 5,
-                                cursorColor: _OtSheetColors.purple,
+                                cursorColor: VigiloUiColors.purple(_isDark),
                                 style: TextStyle(
-                                  color: _OtSheetColors.text,
+                                  color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -6639,7 +6586,7 @@ class _ToiletVisitIncidentDialogState
                                 decoration: InputDecoration(
                                   hintText: 'Time returned / notes',
                                   hintStyle: TextStyle(
-                                    color: _OtSheetColors.textSoft.withValues(
+                                    color: VigiloUiColors.textSoft(_isDark).withValues(
                                       alpha: 0.60,
                                     ),
                                     fontSize: 15,
@@ -6663,21 +6610,21 @@ class _ToiletVisitIncidentDialogState
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: _OtSheetColors.panel2.withValues(
+                                color: VigiloUiColors.panel2(_isDark).withValues(
                                   alpha: 0.30,
                                 ),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: _OtSheetColors.lineSoft,
+                                  color: VigiloUiColors.lineSoft(_isDark),
                                 ),
                               ),
                               child: TextField(
                                 controller: _actionController,
                                 focusNode: _actionFocus,
                                 textInputAction: TextInputAction.done,
-                                cursorColor: _OtSheetColors.purple,
+                                cursorColor: VigiloUiColors.purple(_isDark),
                                 style: TextStyle(
-                                  color: _OtSheetColors.text,
+                                  color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -6685,7 +6632,7 @@ class _ToiletVisitIncidentDialogState
                                 decoration: InputDecoration(
                                   hintText: 'Student escorted / returned',
                                   hintStyle: TextStyle(
-                                    color: _OtSheetColors.textSoft.withValues(
+                                    color: VigiloUiColors.textSoft(_isDark).withValues(
                                       alpha: 0.60,
                                     ),
                                     fontSize: 15,
@@ -6751,7 +6698,7 @@ class _RoleSelectorDialog extends StatefulWidget {
 
 class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
   // ignore: non_constant_identifier_names
-  _OtSheetColorPalette get _OtSheetColors => _OtSheetColorPalette(context);
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
   late String _selection = widget.initialSelection;
 
   void _save(String role) {
@@ -6773,13 +6720,13 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: selected
-              ? _OtSheetColors.blue.withValues(alpha: 0.15)
-              : _OtSheetColors.panel2.withValues(alpha: 0.30),
+              ? VigiloUiColors.blue(_isDark).withValues(alpha: 0.15)
+              : VigiloUiColors.panel2(_isDark).withValues(alpha: 0.30),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected
-                ? _OtSheetColors.blue.withValues(alpha: 0.70)
-                : _OtSheetColors.lineSoft,
+                ? VigiloUiColors.blue(_isDark).withValues(alpha: 0.70)
+                : VigiloUiColors.lineSoft(_isDark),
             width: .7,
           ),
         ),
@@ -6789,7 +6736,7 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
               child: Text(
                 label,
                 style: TextStyle(
-                  color: _OtSheetColors.text,
+                  color: VigiloUiColors.text(_isDark),
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                 ),
@@ -6802,13 +6749,13 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: selected ? _OtSheetColors.blueSoft : Colors.transparent,
+                color: selected ? VigiloUiColors.blueSoft(_isDark) : Colors.transparent,
               ),
               alignment: Alignment.center,
               child: selected
                   ? Icon(
                       Icons.check,
-                      color: _OtSheetColors.blue,
+                      color: VigiloUiColors.blue(_isDark),
                       size: 18,
                       fontWeight: FontWeight.w700,
                     )
@@ -6831,9 +6778,9 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
             width: double.infinity,
             margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             decoration: BoxDecoration(
-              color: _OtSheetColors.panel,
+              color: VigiloUiColors.panel(_isDark),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: _OtSheetColors.line),
+              border: Border.all(color: VigiloUiColors.line(_isDark)),
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black45,
@@ -6853,15 +6800,15 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: _OtSheetColors.blue.withValues(alpha: 0.15),
+                          color: VigiloUiColors.blue(_isDark).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: _OtSheetColors.blue.withValues(alpha: 0.3),
+                            color: VigiloUiColors.blue(_isDark).withValues(alpha: 0.3),
                           ),
                         ),
                         child: Icon(
                           Icons.badge_outlined,
-                          color: _OtSheetColors.blueSoft,
+                          color: VigiloUiColors.blueSoft(_isDark),
                           size: 24,
                         ),
                       ),
@@ -6873,7 +6820,7 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
                             Text(
                               "Set Up Role",
                               style: TextStyle(
-                                color: _OtSheetColors.text,
+                                color: VigiloUiColors.text(_isDark),
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -6882,7 +6829,7 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
                             Text(
                               "Select the role completing setup",
                               style: TextStyle(
-                                color: _OtSheetColors.textSoft,
+                                color: VigiloUiColors.textSoft(_isDark),
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -6899,16 +6846,16 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: _OtSheetColors.panel2,
+                              color: VigiloUiColors.panel2(_isDark),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: _OtSheetColors.lineSoft,
+                                color: VigiloUiColors.lineSoft(_isDark),
                               ),
                             ),
                             child: Icon(
                               Icons.close_rounded,
                               size: 24,
-                              color: _OtSheetColors.textSoft,
+                              color: VigiloUiColors.textSoft(_isDark),
                             ),
                           ),
                         ),
