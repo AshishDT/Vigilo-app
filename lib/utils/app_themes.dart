@@ -6,10 +6,10 @@ ThemeData darkTheme() => ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
   scaffoldBackgroundColor: kDarkBg,
-  colorScheme: const ColorScheme.dark(
+  colorScheme: ColorScheme.dark(
     primary: kBlue,
     secondary: kAmber,
-    surface: kDarkCard,
+    surface: VigiloUiColors.panel(true),
   ),
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.transparent,
@@ -21,8 +21,8 @@ ThemeData darkTheme() => ThemeData(
     ),
     iconTheme: IconThemeData(color: Colors.white),
   ),
-  cardTheme: const CardThemeData(
-    color: kDarkCard,
+  cardTheme: CardThemeData(
+    color: VigiloUiColors.panel(true),
     elevation: 0,
     margin: EdgeInsets.zero,
   ),
