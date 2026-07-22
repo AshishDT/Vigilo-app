@@ -10,8 +10,8 @@ class LicenseSnapshot {
     this.licenceCode,
     this.activationDate,
     this.expiryDate,
-    this.schoolName,
-    this.schoolNumber,
+    this.organizationName,
+    this.organizationCode,
     this.licenceType,
     this.isPermanentlyInvalid = false,
   });
@@ -19,13 +19,10 @@ class LicenseSnapshot {
   final String? licenceCode;
   final DateTime? activationDate;
   final DateTime? expiryDate;
-  final String? schoolName;
-  final String? schoolNumber;
+  final String? organizationName;
+  final String? organizationCode;
   final String? licenceType;
   final bool isPermanentlyInvalid;
-
-  String? get organizationName => schoolName;
-  String? get organizationCode => schoolNumber;
 
   bool get isPilot => licenceType == LicenseService.pilotLicenceType;
   bool get isPro => licenceType == LicenseService.proLicenceType;
@@ -251,8 +248,8 @@ class LicenseService {
         licenceCode: resolved.normalizedCode,
         activationDate: activation,
         expiryDate: expiry,
-        schoolName: organizationName,
-        schoolNumber: organizationCode,
+        organizationName: organizationName,
+        organizationCode: organizationCode,
         licenceType: licenceType,
         isPermanentlyInvalid: true,
       );
@@ -262,8 +259,8 @@ class LicenseService {
       licenceCode: resolved.normalizedCode,
       activationDate: activation,
       expiryDate: expiry,
-      schoolName: organizationName,
-      schoolNumber: organizationCode,
+      organizationName: organizationName,
+      organizationCode: organizationCode,
       licenceType: licenceType,
     );
   }
@@ -344,7 +341,7 @@ class LicenseService {
       throw const FormatException(_msgInvalidLicense);
     }
 
-    if (normalizedOrganizationCode != null &&
+    if (normalizedOrganizationCode.isNotEmpty &&
         resolved.organizationCode != normalizedOrganizationCode) {
       throw const FormatException(_msgOrgCodeMismatch);
     }
@@ -732,8 +729,8 @@ class LicenseService {
       licenceCode: resolved.normalizedCode,
       activationDate: activation,
       expiryDate: expiry,
-      schoolName: normalizedOrganizationName,
-      schoolNumber: normalizedOrganizationCode,
+      organizationName: normalizedOrganizationName,
+      organizationCode: normalizedOrganizationCode,
       licenceType: resolved.licenceType,
     );
   }
