@@ -44,7 +44,6 @@ class LicenseService {
   static const String proLicenceType = LicenseKeyCodec.proLicenceType;
   static const int pilotTrialDurationDays = LicenseKeyCodec.pilotDurationDays;
   static const String organizationLicenceType = coreLicenceType;
-  static const String schoolLicenceType = organizationLicenceType;
   static const String deviceAllowance = 'Unlimited';
   static const String userAllowance = 'Organisation-wide licence';
   static const List<String> pilotFeatures = <String>[
@@ -308,8 +307,6 @@ class LicenseService {
     DateTime? now,
     String? organizationName,
     String? organizationCode,
-    String? schoolName,
-    String? schoolNumber,
   }) async {
     final activation = now ?? DateTime.now();
     final sanitizedSegment = licenceIdSegment.toUpperCase().replaceAll(
@@ -320,11 +317,10 @@ class LicenseService {
       RegExp(r'[^A-Z0-9]'),
       '',
     );
-    final normalizedOrganizationName =
-        _readText(organizationName) ?? _readText(schoolName);
-    final normalizedOrganizationCode =
-        _normalizeOrganizationCode(organizationCode) ??
-        _normalizeOrganizationCode(schoolNumber);
+    final normalizedOrganizationName = _readText(organizationName);
+    final normalizedOrganizationCode = _normalizeOrganizationCode(
+      organizationCode,
+    );
 
     if (normalizedOrganizationName == null ||
         normalizedOrganizationCode == null ||
@@ -495,10 +491,6 @@ class LicenseService {
     return '$a$b';
   }
 
-  static String deriveSchoolCode(String schoolName) {
-    return deriveOrganizationCode(schoolName);
-  }
-
   static ResolvedLicenseKey? resolveActivationCodeForOrganization({
     required String organizationName,
     required String activationCode,
@@ -557,18 +549,6 @@ class LicenseService {
     }
 
     return null;
-  }
-
-  static ResolvedLicenseKey? resolveActivationCodeForSchool({
-    required String schoolName,
-    required String activationCode,
-    DateTime? now,
-  }) {
-    return resolveActivationCodeForOrganization(
-      organizationName: schoolName,
-      activationCode: activationCode,
-      now: now,
-    );
   }
 
   static bool isValidLicenseKey(String value) {
