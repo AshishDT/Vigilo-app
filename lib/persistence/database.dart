@@ -34,11 +34,20 @@ class AppDatabase {
     final path = join(await getDatabasesPath(), 'vigilo_exam_logger.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _onCreate,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          // v2: add exam_level column to exam_record (nullable – safe for
+          // existing rows, which will read as NULL until updated).
+          await db.execute(
+            'ALTER TABLE exam_record ADD COLUMN exam_level TEXT',
+          );
+        }
+      },
       singleInstance: true,
     );
   }
@@ -79,7 +88,8 @@ class AppDatabase {
         created_at_utc TEXT NOT NULL,
         closed_at_utc TEXT,
         record_status TEXT NOT NULL,
-        schema_version INTEGER NOT NULL
+        schema_version INTEGER NOT NULL,
+        exam_level TEXT
       )
     ''');
 

@@ -29,6 +29,7 @@ class ExamCardData {
     this.centreNumber = '',
     required this.date,
     required this.subject,
+    this.examLevel,
     required this.start,
     required this.duration,
     required this.end,
@@ -73,6 +74,7 @@ class ExamCardData {
 
   final String? recordId;
   final String school, centreNumber, date, subject;
+  final String? examLevel;
   final String start, duration, end;
   final String normalStart, normalDuration, normalEnd;
   final String extraTime, totalDuration, extraEnd;
@@ -147,6 +149,7 @@ class ExamCardData {
     'centreNumber': centreNumber,
     'date': date,
     'subject': subject,
+    'examLevel': examLevel,
     'start': start,
     'duration': duration,
     'end': end,
@@ -183,6 +186,7 @@ class ExamCardData {
     centreNumber: ((m['centreNumber'] ?? m['centerNumber']) ?? '') as String,
     date: m['date'],
     subject: m['subject'],
+    examLevel: m['examLevel'] as String?,
     start: m['start'],
     duration: m['duration'],
     end: m['end'],
@@ -243,6 +247,8 @@ class ExamCardData {
     String? centreNumber,
     String? date,
     String? subject,
+    String? examLevel,
+    bool clearExamLevel = false,
     String? start,
     String? duration,
     String? end,
@@ -284,6 +290,7 @@ class ExamCardData {
       centreNumber: centreNumber ?? this.centreNumber,
       date: date ?? this.date,
       subject: subject ?? this.subject,
+      examLevel: clearExamLevel ? null : (examLevel ?? this.examLevel),
       start: start ?? this.start,
       duration: duration ?? this.duration,
       end: end ?? this.end,

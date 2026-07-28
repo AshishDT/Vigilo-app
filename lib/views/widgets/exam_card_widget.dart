@@ -269,6 +269,19 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                                 height: 1.15,
                               ),
                             ),
+                            if ((data.examLevel ?? '').isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 3),
+                                child: Text(
+                                  data.examLevel!,
+                                  style: TextStyle(
+                                    color: vColors.textSoft,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.2,
+                                  ),
+                                ),
+                              ),
                             const SizedBox(height: 7),
                             Text(
                               data.date,

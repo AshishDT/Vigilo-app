@@ -35,6 +35,7 @@ class ExamRecord {
   final DateTime? closedAtUtc;
   final RecordStatus recordStatus;
   final int schemaVersion;
+  final String? examLevel;
 
   ExamRecord({
     required this.id,
@@ -45,6 +46,7 @@ class ExamRecord {
     this.examCenter,
     this.createdBy,
     this.closedAtUtc,
+    this.examLevel,
   });
 
   Map<String, dynamic> toMap() {
@@ -57,6 +59,7 @@ class ExamRecord {
       'closed_at_utc': closedAtUtc?.toIso8601String(),
       'record_status': recordStatus.code,
       'schema_version': schemaVersion,
+      'exam_level': examLevel,
     };
   }
 
@@ -74,6 +77,7 @@ class ExamRecord {
         map['record_status'] as String,
       ),
       schemaVersion: map['schema_version'] as int,
+      examLevel: map['exam_level'] as String?,
     );
   }
 }

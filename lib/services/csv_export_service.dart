@@ -204,12 +204,13 @@ class CsvExportService {
     buffer.writeln('Organisation');
     buffer.writeln();
     buffer.writeln('Organisation Name: ${_noneIfBlank(organization.name)}');
-    buffer.writeln('Centre Number: ${_noneIfBlank(organization.code)}');
+    buffer.writeln('Organisation Number: ${_noneIfBlank(organization.code)}');
     buffer.writeln();
     buffer.writeln('Exam Session');
     buffer.writeln();
     buffer.writeln('Exam Session ID: $sessionId');
     buffer.writeln('Exam Name: ${_noneIfBlank(_examName(record, card))}');
+    buffer.writeln('Exam Level: ${_noneIfBlank(record?.examLevel ?? card?.examLevel ?? '')}');
     buffer.writeln('Exam Board: ${_noneIfBlank(_examBoard(record, card))}');
     buffer.writeln(
       'Exam Date: ${_noneIfBlank(_examDate(card: card, fallbackLocal: fallbackStartLocal))}',

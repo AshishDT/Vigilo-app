@@ -33,6 +33,7 @@ class AddExamSheet extends StatefulWidget {
     this.lastCentre,
     this.lastSubject,
     this.lastBoard,
+    this.lastLevel,
     this.lastStart,
     this.lastDuration,
     this.lastExtra,
@@ -44,6 +45,7 @@ class AddExamSheet extends StatefulWidget {
   final String? lastCentre;
   final String? lastSubject;
   final String? lastBoard;
+  final String? lastLevel;
   final String? lastStart;
   final String? lastDuration;
   final String? lastExtra;
@@ -53,6 +55,7 @@ class AddExamSheet extends StatefulWidget {
     required String centre,
     required String subject,
     required String board,
+    String? level,
     required DateTime date,
     required String startTime,
     required String duration,
@@ -68,6 +71,8 @@ class _AddExamSheetState extends State<AddExamSheet> {
   late final TextEditingController _centreCtl;
   late final TextEditingController _subjectCtl;
   late final TextEditingController _boardCtl;
+
+  String? _examLevel;
 
   late final DraggableScrollableController _dragController;
   late final FocusNode _schoolFocus;
@@ -87,6 +92,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
     _centreCtl = TextEditingController(text: widget.lastCentre ?? "");
     _subjectCtl = TextEditingController(text: widget.lastSubject ?? "");
     _boardCtl = TextEditingController(text: widget.lastBoard ?? "");
+    _examLevel = widget.lastLevel;
     _previousSchoolText = _schoolCtl.text.trim();
 
     if (_centreCtl.text.trim().isEmpty && _previousSchoolText.isNotEmpty) {
@@ -416,6 +422,57 @@ class _AddExamSheetState extends State<AddExamSheet> {
     );
   }
 
+  // ── Exam Level dropdown ──────────────────────────────────────────────────
+  // Styled to match _textField: same inputBg, line border, borderRadius: 16.
+  // Optional — null value = blank/unset.
+  static const List<String> _examLevelOptions = [
+    'GCSE',
+    'A Level',
+    'Level 3',
+    'CNAT',
+    'Other',
+  ];
+
+  Widget _dropdownField({
+    required String? value,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final colors = _SheetColors(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: colors.inputBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: value != null ? colors.blue : colors.line, width: value != null ? 1.4 : 1.0),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          dropdownColor: colors.inputBg,
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: colors.textSoft),
+          hint: Text(
+            'Select exam level (optional)',
+            style: TextStyle(color: colors.textFaint, fontSize: 15, fontWeight: FontWeight.w600),
+          ),
+          style: TextStyle(color: colors.text, fontSize: 16, fontWeight: FontWeight.w700),
+          items: [
+            // Blank option to clear the selection
+            DropdownMenuItem<String>(
+              value: null,
+              child: Text('None', style: TextStyle(color: colors.textFaint, fontSize: 16, fontWeight: FontWeight.w700)),
+            ),
+            ..._examLevelOptions.map(
+              (o) => DropdownMenuItem<String>(value: o, child: Text(o)),
+            ),
+          ],
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
   Widget _tapTimingField({
     required String label,
     required String value,
@@ -697,6 +754,12 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                 nextFocusNode: _boardFocus,
                               ),
                               const SizedBox(height: 14),
+                              _formLabel('Exam Level'),
+                              _dropdownField(
+                                value: _examLevel,
+                                onChanged: (v) => setState(() => _examLevel = v),
+                              ),
+                              const SizedBox(height: 14),
                               _formLabel('Exam Board'),
                               _textField(
                                 controller: _boardCtl,
@@ -721,10 +784,10 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                 nextFocusNode: _centreFocus,
                               ),
                               const SizedBox(height: 14),
-                              _formLabel('Centre Number'),
+                              _formLabel('Organisation Number'),
                               _textField(
                                 controller: _centreCtl,
-                                hint: 'Enter centre number',
+                                hint: 'Enter organisation number',
                                 focusNode: _centreFocus,
                                 textInputAction: TextInputAction.done,
                               ),
@@ -813,6 +876,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                     centre: centre,
                                     subject: subj,
                                     board: board,
+                                    level: _examLevel,
                                     date: _selectedDate,
                                     startTime: _startHHMM,
                                     duration: _durationHHMM,

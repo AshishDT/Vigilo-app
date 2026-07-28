@@ -858,6 +858,7 @@ class SessionService {
         closedAtUtc: inferred.closedAtUtc,
         recordStatus: inferred.recordStatus,
         schemaVersion: 1,
+        examLevel: card.examLevel,
       );
       final snapshot = SessionSnapshot(
         examRecordId: id,
@@ -949,6 +950,7 @@ class SessionService {
         recordStatus: desiredStatus == SessionStatus.ended
             ? RecordStatus.closed
             : RecordStatus.open,
+        examLevel: card.examLevel,
       );
       await _db.updateExamRecord(txn, updatedRecord);
     }
@@ -2089,6 +2091,8 @@ extension on ExamRecord {
     DateTime? closedAtUtc,
     RecordStatus? recordStatus,
     int? schemaVersion,
+    String? examLevel,
+    bool clearExamLevel = false,
   }) {
     return ExamRecord(
       id: id,
@@ -2099,6 +2103,7 @@ extension on ExamRecord {
       closedAtUtc: closedAtUtc ?? this.closedAtUtc,
       recordStatus: recordStatus ?? this.recordStatus,
       schemaVersion: schemaVersion ?? this.schemaVersion,
+      examLevel: clearExamLevel ? null : (examLevel ?? this.examLevel),
     );
   }
 }

@@ -91,6 +91,7 @@ class _HomeScreenState extends State<HomeScreen>
       _lastCentre,
       _lastSubject,
       _lastBoard,
+      _lastLevel,
       _lastStart,
       _lastDuration,
       _lastExtra;
@@ -109,6 +110,14 @@ class _HomeScreenState extends State<HomeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
+    _fabDialCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+    _fabDialAnim = CurvedAnimation(
+      parent: _fabDialCtrl,
+      curve: Curves.easeOutBack,
+    );
     WidgetsBinding.instance.addObserver(this);
     _initializeHomeState();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
@@ -314,10 +323,26 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _pulse.dispose();
+    _fabDialCtrl.dispose();
     _ticker?.cancel();
     _extraPulseTicker?.cancel();
     _clickTimer?.cancel();
     super.dispose();
+  }
+
+  // ── Speed Dial FAB helpers ───────────────────────────────────────────────
+  // Tap FAB → speed dial opens (icon rotates 45°, label → "Close",
+  // backdrop dims). Tap again → closes.
+  void _toggleFab() {
+    setState(() => _fabOpen = !_fabOpen);
+    _fabOpen ? _fabDialCtrl.forward() : _fabDialCtrl.reverse();
+  }
+
+  void _closeFab() {
+    if (_fabOpen) {
+      setState(() => _fabOpen = false);
+      _fabDialCtrl.reverse();
+    }
   }
 
   // ---- recompute helpers ----
@@ -760,6 +785,7 @@ class _HomeScreenState extends State<HomeScreen>
       _lastCentre = null;
       _lastSubject = null;
       _lastBoard = null;
+      _lastLevel = null;
       _lastStart = null;
       _lastDuration = null;
       _lastExtra = null;
@@ -776,6 +802,7 @@ class _HomeScreenState extends State<HomeScreen>
         lastCentre: _lastCentre,
         lastSubject: _lastSubject,
         lastBoard: _lastBoard,
+        lastLevel: _lastLevel,
         lastStart: _lastStart,
         lastDuration: _lastDuration,
         lastExtra: _lastExtra,
@@ -785,6 +812,7 @@ class _HomeScreenState extends State<HomeScreen>
           required String centre,
           required String subject,
           required String board,
+          String? level,
           required DateTime date,
           required String startTime,
           required String duration,
@@ -819,6 +847,7 @@ class _HomeScreenState extends State<HomeScreen>
             centreNumber: centre,
             date: "$dd/$mm/$yy",
             subject: "$subject ($board)",
+            examLevel: (level?.trim().isEmpty ?? true) ? null : level!.trim(),
             start: normalizedStart,
             duration: normalizedDuration,
             end: normalizedStart,
@@ -839,6 +868,7 @@ class _HomeScreenState extends State<HomeScreen>
             _lastCentre = null;
             _lastSubject = null;
             _lastBoard = null;
+            _lastLevel = null;
             _lastStart = null;
             _lastDuration = null;
             _lastExtra = null;
@@ -899,6 +929,11 @@ class _HomeScreenState extends State<HomeScreen>
   bool isArchiveView = false;
 
   bool extraPulse = false;
+
+  // ── Speed Dial FAB state ─────────────────────────────────────────────────
+  bool _fabOpen = false;
+  late AnimationController _fabDialCtrl;
+  late Animation<double> _fabDialAnim;
 
   @override
   Widget build(BuildContext context) {
@@ -978,22 +1013,32 @@ class _HomeScreenState extends State<HomeScreen>
           child: AnimatedOpacity(
             opacity: anyOpen ? 0 : 1,
             duration: const Duration(milliseconds: 250),
+            // Speed Dial FAB: expands to reveal Import / Create options
             child: FloatingActionButton.extended(
-              tooltip: 'Quick Add',
+              tooltip: _fabOpen ? 'Close' : 'Add Exam',
               elevation: 4,
               backgroundColor: VigiloUiColors.blue(dark),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
-              onPressed: _openQuickAddWizard,
-              label: const Text(
-                "+ Exam",
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.05,
+              onPressed: _toggleFab,
+              icon: AnimatedRotation(
+                turns: _fabOpen ? 0.125 : 0,
+                duration: const Duration(milliseconds: 220),
+                child: const Icon(Icons.add, size: 22),
+              ),
+              label: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: Text(
+                  _fabOpen ? 'Close' : '+ Exam',
+                  key: ValueKey(_fabOpen),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.05,
+                  ),
                 ),
               ),
             ),
@@ -1548,6 +1593,67 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ],
               ),
+
+              // ── Speed dial backdrop ─────────────────────────────────────────
+              // Semi-transparent overlay dims content while speed dial is open.
+              // Tapping it closes the dial without navigating anywhere.
+              if (_fabOpen)
+                GestureDetector(
+                  onTap: _closeFab,
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.45),
+                  ),
+                ),
+
+              // ── Speed dial options ──────────────────────────────────────────
+              // Positioned above the FAB (bottom: 90). Each option has a label
+              // on the left and a mini circular button on the right.
+              Positioned(
+                right: 16,
+                bottom: 90,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Option 1 – Import Exam Sessions (upload icon)
+                    ScaleTransition(
+                      scale: _fabDialAnim,
+                      alignment: Alignment.bottomRight,
+                      child: FadeTransition(
+                        opacity: _fabDialAnim,
+                        child: _SpeedDialOption(
+                          icon: Icons.upload_file_rounded,
+                          label: 'Import Exam Sessions',
+                          dark: dark,
+                          onTap: () {
+                            _closeFab();
+                            // TODO (Task 3): navigate to import flow
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Option 2 – Create Single Exam (edit icon)
+                    ScaleTransition(
+                      scale: _fabDialAnim,
+                      alignment: Alignment.bottomRight,
+                      child: FadeTransition(
+                        opacity: _fabDialAnim,
+                        child: _SpeedDialOption(
+                          icon: Icons.edit_outlined,
+                          label: 'Create Single Exam',
+                          dark: dark,
+                          onTap: () {
+                            // Create Single Exam → opens existing Add Exam form
+                            _closeFab();
+                            _openQuickAddWizard();
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -1642,5 +1748,76 @@ class _HomeScreenState extends State<HomeScreen>
   }
   int getExpandedCardIndex() {
     return _cards.indexWhere((card) => card.expanded);
+  }
+}
+
+// ── Speed Dial Option ─────────────────────────────────────────────────────────
+// Each option shows a label panel on the left and a mini circular button on
+// the right. All colours use VigiloUiColors tokens only.
+class _SpeedDialOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool dark;
+  final VoidCallback onTap;
+
+  const _SpeedDialOption({
+    required this.icon,
+    required this.label,
+    required this.dark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Label on the left
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: VigiloUiColors.panel(dark),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: VigiloUiColors.line(dark)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: VigiloUiColors.text(dark),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Mini circular button on the right
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: VigiloUiColors.blue(dark),
+              shape: BoxShape.circle,
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+        ],
+      ),
+    );
   }
 }
