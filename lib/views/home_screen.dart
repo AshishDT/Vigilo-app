@@ -1352,7 +1352,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 separatorBuilder: (_, index) => const SizedBox(height: 16),
                                 itemBuilder: (context, idx) {
                                   final c = _archiveCards[idx];
-                                  return _buildExamCard(c, idx);
+                                  return _buildExamCard(c, idx, key: ValueKey('archive_${c.recordId}'));
                                 },
                               ))
                         : (_filteredCardsCached.isEmpty
@@ -1365,15 +1365,14 @@ class _HomeScreenState extends State<HomeScreen>
                                   SizedBox(height: 100),
                                 ],
                               )
-                            : ListView.builder(
+                            : ListView(
                                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                                itemCount: _flattenedItems.length,
-                                itemBuilder: (context, di) {
-                                  final item = _flattenedItems[di];
+                                children: _flattenedItems.map((item) {
                                   if (item.dateHeader != null) {
                                     final date = item.dateHeader!;
                                     final sessionsCount = _groupedCardsCached[date]?.length ?? 0;
                                     return Padding(
+                                      key: ValueKey('header_$date'),
                                       padding: const EdgeInsets.fromLTRB(2, 10, 2, 10),
                                       child: Row(
                                         children: [
@@ -1410,11 +1409,12 @@ class _HomeScreenState extends State<HomeScreen>
                                     final c = item.card!;
                                     final idx = item.cardIndex!;
                                     return Padding(
+                                      key: ValueKey('card_${c.recordId}'),
                                       padding: const EdgeInsets.only(bottom: 16),
                                       child: _buildExamCard(c, idx),
                                     );
                                   }
-                                },
+                                }).toList(),
                               )),
                   ),
                 ],
@@ -1746,9 +1746,9 @@ class _HomeScreenState extends State<HomeScreen>
     return _cards.indexWhere((card) => card.expanded);
   }
 
-  Widget _buildExamCard(ExamCardData c, int idx) {
+  Widget _buildExamCard(ExamCardData c, int idx, {Key? key}) {
     return ExamCard(
-      key: ValueKey(c.recordId),
+      key: key,
       data: c,
       pulse: _pulse,
       isExamCompleted: c.phase == ExamPhase.finished,
