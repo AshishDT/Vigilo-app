@@ -7,6 +7,7 @@ import 'package:vibration/vibration.dart';
 import '../enums/exam_phase.dart';
 import '../models/exam_card_data.dart';
 import '../models/incident.dart';
+import '../models/home_list_item.dart';
 import '../services/license_service.dart';
 import '../services/session_service.dart';
 import '../utils/constants.dart';
@@ -220,6 +221,7 @@ class _HomeScreenState extends State<HomeScreen>
       _lastStart = state.lastUsed['start'];
       _lastDuration = state.lastUsed['duration'];
       _lastExtra = state.lastUsed['extra'];
+      _updateFilteredAndGroupedCards();
     });
   }
 
@@ -245,6 +247,7 @@ class _HomeScreenState extends State<HomeScreen>
       _lastStart = state.lastUsed['start'];
       _lastDuration = state.lastUsed['duration'];
       _lastExtra = state.lastUsed['extra'];
+      _updateFilteredAndGroupedCards();
     });
   }
 
@@ -883,6 +886,7 @@ class _HomeScreenState extends State<HomeScreen>
             _lastStart = null;
             _lastDuration = null;
             _lastExtra = null;
+            _updateFilteredAndGroupedCards();
           });
           await _saveState();
           if (!mounted) return;
@@ -953,6 +957,11 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final sig = _computeCardsSignature();
+    if (sig != _lastCardsSignature) {
+      _lastCardsSignature = sig;
+      _updateFilteredAndGroupedCards();
+    }
     final dark = widget.dark;
 
     if (!_licenseLoaded) {
@@ -1298,11 +1307,18 @@ class _HomeScreenState extends State<HomeScreen>
                       dark: dark,
                       statusFilter: _statusFilter,
                       dateFilter: _dateFilter,
-                      onStatusFilterChanged: (val) => setState(() => _statusFilter = val),
-                      onDateFilterChanged: (val) => setState(() => _dateFilter = val),
+                      onStatusFilterChanged: (val) => setState(() {
+                        _statusFilter = val;
+                        _updateFilteredAndGroupedCards();
+                      }),
+                      onDateFilterChanged: (val) => setState(() {
+                        _dateFilter = val;
+                        _updateFilteredAndGroupedCards();
+                      }),
                       onClear: () => setState(() {
                         _statusFilter = 'All';
                         _dateFilter = 'All';
+                        _updateFilteredAndGroupedCards();
                       }),
                     ),
                   Expanded(
@@ -1326,7 +1342,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   return _buildExamCard(c, idx);
                                 },
                               ))
-                        : (_filteredCards.isEmpty
+                        : (_filteredCardsCached.isEmpty
                             ? const Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -1338,61 +1354,53 @@ class _HomeScreenState extends State<HomeScreen>
                               )
                             : ListView.builder(
                                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                                itemCount: _groupedCards.keys.length,
+                                itemCount: _flattenedItems.length,
                                 itemBuilder: (context, di) {
-                                  final grouped = _groupedCards;
-                                  final dates = grouped.keys.toList();
-                                  final date = dates[di];
-                                  final sessions = grouped[date]!;
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // Date Group Header
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(2, 10, 2, 6),
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              width: 3,
-                                              height: 14,
-                                              decoration: BoxDecoration(
-                                                color: VigiloUiColors.blueSoft(dark),
-                                                borderRadius: BorderRadius.circular(2),
-                                              ),
+                                  final item = _flattenedItems[di];
+                                  if (item.dateHeader != null) {
+                                    final date = item.dateHeader!;
+                                    final sessionsCount = _groupedCardsCached[date]?.length ?? 0;
+                                    return Padding(
+                                      padding: const EdgeInsets.fromLTRB(2, 10, 2, 10),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 3,
+                                            height: 14,
+                                            decoration: BoxDecoration(
+                                              color: VigiloUiColors.blueSoft(dark),
+                                              borderRadius: BorderRadius.circular(2),
                                             ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              _fd(date),
-                                              style: TextStyle(
-                                                color: VigiloUiColors.blueSoft(dark),
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 12,
-                                                letterSpacing: 0.2,
-                                              ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            _fd(date),
+                                            style: TextStyle(
+                                              color: VigiloUiColors.blueSoft(dark),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                              letterSpacing: 0.2,
                                             ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              '${sessions.length} session${sessions.length == 1 ? '' : 's'}',
-                                              style: TextStyle(
-                                                color: VigiloUiColors.textFaint(dark),
-                                                fontSize: 11,
-                                              ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            '$sessionsCount session${sessionsCount == 1 ? '' : 's'}',
+                                            style: TextStyle(
+                                              color: VigiloUiColors.textFaint(dark),
+                                              fontSize: 11,
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 4),
-                                      // Grouped Cards
-                                      ...sessions.map((c) {
-                                        final idx = _cards.indexOf(c);
-                                        if (idx == -1) return const SizedBox.shrink();
-                                        return Padding(
-                                          padding: const EdgeInsets.only(bottom: 16),
-                                          child: _buildExamCard(c, idx),
-                                        );
-                                      }),
-                                    ],
-                                  );
+                                    );
+                                  } else {
+                                    final c = item.card!;
+                                    final idx = item.cardIndex!;
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 16),
+                                      child: _buildExamCard(c, idx),
+                                    );
+                                  }
                                 },
                               )),
                   ),
@@ -1444,6 +1452,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       if (newSessions.isNotEmpty) {
                                         _lastCentre = newSessions.first.centreNumber;
                                       }
+                                      _updateFilteredAndGroupedCards();
                                     });
                                     await _saveState();
                                   },
@@ -1484,7 +1493,21 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  List<ExamCardData> get _filteredCards {
+  List<ExamCardData> _filteredCardsCached = [];
+  Map<String, List<ExamCardData>> _groupedCardsCached = {};
+  List<HomeListItem> _flattenedItems = [];
+  String? _lastCardsSignature;
+
+  String _computeCardsSignature() {
+    final sb = StringBuffer();
+    sb.write('$_statusFilter|$_dateFilter|${_cards.length}|');
+    for (final c in _cards) {
+      sb.write('${c.recordId}:${c.expanded}:${c.phase.index}:${c.running}:${c.isPaused}:${c.progress}:${c.date}:${c.normalStart}:${c.roomsSnapshot};');
+    }
+    return sb.toString();
+  }
+
+  void _updateFilteredAndGroupedCards() {
     var list = List<ExamCardData>.from(_cards);
 
     if (_statusFilter != 'All') {
@@ -1560,15 +1583,26 @@ class _HomeScreenState extends State<HomeScreen>
       return ra.toLowerCase().compareTo(rb.toLowerCase());
     });
 
-    return list;
-  }
+    _filteredCardsCached = list;
 
-  Map<String, List<ExamCardData>> get _groupedCards {
     final map = <String, List<ExamCardData>>{};
-    for (final s in _filteredCards) {
+    for (final s in list) {
       map.putIfAbsent(s.date, () => []).add(s);
     }
-    return map;
+    _groupedCardsCached = map;
+
+    final flattened = <HomeListItem>[];
+    for (final date in map.keys) {
+      final sessions = map[date]!;
+      flattened.add(HomeListItem(dateHeader: date));
+      for (final c in sessions) {
+        final idx = _cards.indexOf(c);
+        if (idx != -1) {
+          flattened.add(HomeListItem(card: c, cardIndex: idx));
+        }
+      }
+    }
+    _flattenedItems = flattened;
   }
 
   String _fd(String date) {
@@ -1748,7 +1782,9 @@ class _HomeScreenState extends State<HomeScreen>
           }
           _toast("Exam Restored", "The exam has been successfully restored", Icons.settings_backup_restore_rounded, NotificationType.success);
           _saveState();
-          setState(() {});
+          setState(() {
+            _updateFilteredAndGroupedCards();
+          });
         }
       },
       onEditDate: () async {
@@ -1994,4 +2030,3 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 }
-
