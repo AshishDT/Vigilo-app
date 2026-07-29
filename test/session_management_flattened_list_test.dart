@@ -74,4 +74,39 @@ void main() {
       expect(tapped, isTrue);
     });
   });
+
+  group('Past-Date AutoStart Suppression Tests', () {
+    bool isPastExam(String dateStr, String startStr) {
+      try {
+        final dateParts = dateStr.split('/');
+        final timeParts = startStr.split(':');
+        if (dateParts.length == 3 && timeParts.length == 2) {
+          final d = int.parse(dateParts[0]);
+          final m = int.parse(dateParts[1]);
+          final y = int.parse(dateParts[2]);
+          final hh = int.parse(timeParts[0]);
+          final mm = int.parse(timeParts[1]);
+          final scheduled = DateTime(y, m, d, hh, mm);
+          return scheduled.isBefore(DateTime.now());
+        }
+      } catch (_) {}
+      return false;
+    }
+
+    test('should identify past-dated exams correctly', () {
+      final now = DateTime.now();
+      
+      // An exam scheduled 1 day ago
+      final pastDate = now.subtract(const Duration(days: 1));
+      final pastDateStr = "${pastDate.day.toString().padLeft(2, '0')}/${pastDate.month.toString().padLeft(2, '0')}/${pastDate.year}";
+      final pastStartStr = "${pastDate.hour.toString().padLeft(2, '0')}:${pastDate.minute.toString().padLeft(2, '0')}";
+      expect(isPastExam(pastDateStr, pastStartStr), isTrue);
+
+      // An exam scheduled 1 day in the future
+      final futureDate = now.add(const Duration(days: 1));
+      final futureDateStr = "${futureDate.day.toString().padLeft(2, '0')}/${futureDate.month.toString().padLeft(2, '0')}/${futureDate.year}";
+      final futureStartStr = "${futureDate.hour.toString().padLeft(2, '0')}:${futureDate.minute.toString().padLeft(2, '0')}";
+      expect(isPastExam(futureDateStr, futureStartStr), isFalse);
+    });
+  });
 }

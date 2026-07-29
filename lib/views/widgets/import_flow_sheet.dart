@@ -560,6 +560,23 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
 
       // Each timetable row creates one session per room value detected
       for (var room in s.rooms) {
+        bool isPast = false;
+        try {
+          final dateParts = s.date.split('/');
+          final timeParts = s.startTime.split(':');
+          if (dateParts.length == 3 && timeParts.length == 2) {
+            final d = int.parse(dateParts[0]);
+            final m = int.parse(dateParts[1]);
+            final y = int.parse(dateParts[2]);
+            final hh = int.parse(timeParts[0]);
+            final mm = int.parse(timeParts[1]);
+            final scheduled = DateTime(y, m, d, hh, mm);
+            if (scheduled.isBefore(DateTime.now())) {
+              isPast = true;
+            }
+          }
+        } catch (_) {}
+
         var card = ExamCardData(
           recordId: generateId(),
           school: _orgName,
@@ -579,7 +596,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           totalDuration: '00:00',
           extraEnd: s.startTime,
           expanded: false,
-          autoStart: true,
+          autoStart: !isPast,
           roomsSnapshot: room,
           notes: s.notes,
         );
