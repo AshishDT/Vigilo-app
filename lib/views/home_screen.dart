@@ -80,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen>
   int get allInvigilators {
     int total = 0;
     for (final s in _cards) {
-      if (s.phase != ExamPhase.finished) {
+      if (s.running) {
         total += _getUniqueInvigilators(s).length;
       }
     }
@@ -228,6 +228,11 @@ class _HomeScreenState extends State<HomeScreen>
       _cards
         ..clear()
         ..addAll(state.cards);
+      if (_cards.length > 5) {
+        for (int i = 0; i < _cards.length; i++) {
+          _cards[i] = _cards[i].copyWith(expanded: false);
+        }
+      }
       _archiveCards
         ..clear()
         ..addAll(state.archiveCards);
@@ -472,6 +477,9 @@ class _HomeScreenState extends State<HomeScreen>
     required List<ExamCardData> incoming,
   }) {
     if (previous.isEmpty || incoming.isEmpty) {
+      if (incoming.length > 5) {
+        return incoming.map((c) => c.copyWith(expanded: false)).toList();
+      }
       return incoming;
     }
 
@@ -931,6 +939,11 @@ class _HomeScreenState extends State<HomeScreen>
 
   bool extraPulse = false;
 
+  // ── Session Manager Filter state ──────────────────────────────────────────
+  String _statusFilter = 'All';
+  String _dateFilter = 'All';
+  bool _showSessionMgr = false;
+
   // ── Speed Dial FAB state ─────────────────────────────────────────────────
   bool _fabOpen = false;
   late AnimationController _fabDialCtrl;
@@ -1278,319 +1291,206 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Expanded(
-                    child: (!isArchiveView && _cards.isEmpty)
-                        ? const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Spacer(),
-                              HomeEmptyStateWidget(),
-                              Spacer(),
-                              SizedBox(height: 100),
-                            ],
-                          )
-                        : ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                            itemCount: isArchiveView
-                                ? _archiveCards.length
-                                : _cards.length,
-                            separatorBuilder: (_, index) => const SizedBox(height: 16),
-                            itemBuilder: (context, idx) {
-                              final c = isArchiveView ? _archiveCards[idx] : _cards[idx];
-                              return ExamCard(
-                                key: ValueKey(c.recordId),
-                                data: c,
-                                pulse: _pulse,
-                                isExamCompleted: c.phase == ExamPhase.finished,
-                                isArchiveMode: isArchiveMode,
-                                extraPulse: extraPulse,
-                                tapScale: isArchiveView ? 1.0 : _cards[idx].tapScale,
-                                onProgressDragState: (dragging) {
-                                  _isAdjustingProgress = dragging;
-                                },
-                                onProgressChangeEnd: (v) async {
-                                  if (!mounted || idx < 0 || idx >= _cards.length) return;
-                                  _isAdjustingProgress = true;
-                                  setState(() {
-                                    _cards[idx] = _applyManualProgress(_cards[idx], v);
-                                  });
-                                  try {
-                                    await _saveState();
-                                    await _refreshCards();
-                                  } finally {
-                                    _isAdjustingProgress = false;
-                                  }
-                                },
-                                onSelect: () {
-                                  if (!isArchiveView) {
-                                    if (!_isArchivableExam(c)) {
-                                      _toast("Action Restricted", "Only finished exams can be archived", Icons.block_rounded, NotificationType.error);
-                                      return;
-                                    }
-                                    setState(() {
-                                      _cards[idx] = _cards[idx].copyWith(
-                                        isSelected: !_cards[idx].isSelected,
-                                      );
-                                    });
-                                  }
-                                },
-                                onChevronTap: () {
-                                  if (!isArchiveView) {
-                                    _toggleExpanded(idx);
-                                  } else {
-                                    _cards.add(_archiveCards[idx]);
-                                    _archiveCards.removeAt(idx);
-                                    if (_archiveCards.isEmpty) {
-                                      isArchiveView = false;
-                                    }
-                                    _toast("Exam Restored", "The exam has been successfully restored", Icons.settings_backup_restore_rounded, NotificationType.success);
-                                    _saveState();
-                                    setState(() {});
-                                  }
-                                },
-                                onEditDate: () async {
-                                  if (_cards[idx].phase == ExamPhase.finished) {
-                                    return;
-                                  }
-                                  final now = DateTime.now();
-                                  final parts = c.date.split('/');
-                                  DateTime initial = now;
-                                  if (parts.length == 3) {
-                                    final d = int.tryParse(parts[0]) ?? now.day;
-                                    final m = int.tryParse(parts[1]) ?? now.month;
-                                    final y = int.tryParse(parts[2]) ?? now.year;
-                                    initial = DateTime(y, m, d);
-                                  }
-                                  final picked = await showModalBottomSheet<DateTime>(
-                                    context: context,
-                                    backgroundColor: Colors.transparent,
-                                    isScrollControlled: true,
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                                    ),
-                                    builder: (_) => VigiloDatePickerSheet(initialDate: initial),
-                                  );
-                                  if (picked != null) {
-                                    final dd = picked.day.toString().padLeft(2, '0');
-                                    final mm = picked.month.toString().padLeft(2, '0');
-                                    final yy = picked.year.toString();
-                                    setState(() => _cards[idx] = c.copyWith(date: "$dd/$mm/$yy"));
-                                    _saveState();
-                                  }
-                                },
-                                onEditStartTime: () async {
-                                  if (_cards[idx].phase == ExamPhase.finished) {
-                                    return;
-                                  }
-                                  final t = _parseHHMM(c.normalStart);
-                                  final picked = await showModalBottomSheet<TimeOfDay>(
-                                    context: context,
-                                    backgroundColor: Colors.transparent,
-                                    isScrollControlled: true,
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                                    ),
-                                    builder: (_) => VigiloTimePickerSheet(
-                                      initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
-                                    ),
-                                  );
-                                  if (picked != null) {
-                                    final hh = picked.hour.toString().padLeft(2, '0');
-                                    final mm = picked.minute.toString().padLeft(2, '0');
-                                    final selectedStart = "$hh:$mm";
-                                    setState(
-                                      () => _cards[idx] = _recompute(
-                                        c.copyWith(normalStart: selectedStart),
+                  if (_showSessionMgr) ...[
+                    Container(
+                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                      decoration: BoxDecoration(
+                        color: VigiloUiColors.panel(dark),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: VigiloUiColors.line(dark)),
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                            decoration: BoxDecoration(
+                              color: VigiloUiColors.blue(dark).withValues(alpha: 0.1),
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                topRight: Radius.circular(12),
+                              ),
+                              border: Border(
+                                bottom: BorderSide(color: VigiloUiColors.line(dark)),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.tune_rounded,
+                                  color: VigiloUiColors.blueSoft(dark),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Session Manager',
+                                  style: TextStyle(
+                                    color: VigiloUiColors.blueSoft(dark),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const Spacer(),
+                                if (_statusFilter != 'All' || _dateFilter != 'All')
+                                  GestureDetector(
+                                    onTap: () => setState(() {
+                                      _statusFilter = 'All';
+                                      _dateFilter = 'All';
+                                    }),
+                                    child: Text(
+                                      'Clear',
+                                      style: TextStyle(
+                                        color: VigiloUiColors.amber(dark),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                    );
-                                    _saveState();
-                                  }
-                                },
-                                onEditDuration: () async {
-                                  if (_cards[idx].phase == ExamPhase.finished) {
-                                    return;
-                                  }
-                                  String res = await pickDur(c.normalDuration, "Set Duration");
-                                  if (res != "") {
-                                    int newNormalSec = _toMin(res) * 60;
-                                    int elapsedSec = (c.progress * c.totalSeconds).round();
-
-                                    if (c.phase == ExamPhase.normal && newNormalSec < elapsedSec) {
-                                      NotificationService.show(
-                                        context,
-                                        title: "Invalid Duration",
-                                        subtitle: "Cannot reduce duration below elapsed time",
-                                        type: NotificationType.error,
-                                        icon: Icons.error_outline_rounded,
-                                      );
-                                      return;
-                                    } else if (c.phase == ExamPhase.extra && newNormalSec + c.extraSeconds < elapsedSec) {
-                                      NotificationService.show(
-                                        context,
-                                        title: "Invalid Duration",
-                                        subtitle: "Cannot reduce total time below elapsed time",
-                                        type: NotificationType.error,
-                                        icon: Icons.error_outline_rounded,
-                                      );
-                                      return;
-                                    }
-
-                                    DateTime now = DateTime.now();
-                                    DateTime dateTime1 = DateTime(
-                                      now.year,
-                                      now.month,
-                                      now.day,
-                                      int.parse(c.normalDuration.split(":")[0]),
-                                      int.parse(c.normalDuration.split(":")[1]),
-                                    );
-                                    DateTime dateTime2 = DateTime(
-                                      now.year,
-                                      now.month,
-                                      now.day,
-                                      int.parse(res.split(":")[0]),
-                                      int.parse(res.split(":")[1]),
-                                    );
-                                    int _ = dateTime2.difference(dateTime1).inMinutes;
-                                    String detail = "";
-                                    if (c.phase == ExamPhase.normal) {
-                                      detail = "Adjustment entered before extra time";
-                                    } else if (c.phase == ExamPhase.extra) {
-                                      detail = "Adjustment entered during extra time";
-                                    } else {
-                                      detail = "Adjustment entered after exam finished";
-                                    }
-                                    setState(
-                                      () => _cards[idx] = _recompute(
-                                        c.copyWith(normalDuration: res),
-                                      ),
-                                    );
-                                    await _saveState();
-                                    final recordId = _cards[idx].recordId;
-                                    if (recordId != null) {
-                                      await _sessionService.updatePlannedDuration(
-                                        examRecordId: recordId,
-                                        normalDurationMs: _cards[idx].normalSeconds * 1000,
-                                        extraTimeMs: _cards[idx].extraSeconds * 1000,
-                                        reason: _formatNormalTimeUpdateReason(
-                                          previousMinutes: _toMin(c.normalDuration),
-                                          updatedMinutes: _toMin(res),
-                                        ),
-                                        detail: detail,
-                                      );
-                                      await _refreshCards();
-                                    }
-                                  }
-                                },
-                                onEditExtra: () async {
-                                  if (_cards[idx].phase == ExamPhase.finished) {
-                                    return;
-                                  }
-                                  String res = await pickDur(c.extraTime, "Add Extra Time");
-                                  if (res != "") {
-                                    int newExtraSec = _toMin(res) * 60;
-                                    int elapsedSec = (c.progress * c.totalSeconds).round();
-
-                                    if (c.phase == ExamPhase.extra && c.normalSeconds + newExtraSec < elapsedSec) {
-                                      NotificationService.show(
-                                        context,
-                                        title: "Invalid Extra Time",
-                                        subtitle: "Cannot reduce total time below elapsed time",
-                                        type: NotificationType.error,
-                                        icon: Icons.error_outline_rounded,
-                                      );
-                                      return;
-                                    }
-
-                                    final previousMinutes = _toMin(c.extraTime);
-                                    final updatedMinutes = _toMin(res);
-
-                                    setState(
-                                      () => _cards[idx] = _recompute(c.copyWith(extraTime: res)),
-                                    );
-                                    String detail = "";
-                                    if (c.phase == ExamPhase.normal) {
-                                      detail = "Adjustment entered before extra time";
-                                    } else if (c.phase == ExamPhase.extra) {
-                                      detail = "Adjustment entered during extra time";
-                                    } else {
-                                      detail = "Adjustment entered after exam finished";
-                                    }
-                                    await _saveState();
-                                    final recordId = _cards[idx].recordId;
-                                    if (recordId != null) {
-                                      await _sessionService.updatePlannedDuration(
-                                        examRecordId: recordId,
-                                        normalDurationMs: _cards[idx].normalSeconds * 1000,
-                                        extraTimeMs: _cards[idx].extraSeconds * 1000,
-                                        reason: _formatExtraTimeUpdateReason(
-                                          previousMinutes: previousMinutes,
-                                          updatedMinutes: updatedMinutes,
-                                        ),
-                                        detail: detail,
-                                      );
-                                      await _refreshCards();
-                                    }
-                                  }
-                                },
-                                onUpdate: (u) async {
-                                  final wasRunning = c.running;
-                                  final becameRunning =
-                                      u.running && !wasRunning && u.epochStart != null;
-                                  if (becameRunning) {
-                                    if (!mounted || idx < 0 || idx >= _cards.length) return;
-                                    final now = u.epochStart!;
-                                    final hh = now.hour.toString().padLeft(2, '0');
-                                    final mm = now.minute.toString().padLeft(2, '0');
-                                    final fixed = _recompute(
-                                      u.copyWith(
-                                        running: false,
-                                        isPaused: false,
-                                        epochStart: null,
-                                        pausedSeconds: 0,
-                                        progress: 0.0,
-                                        phase: ExamPhase.normal,
-                                        normalStart: "$hh:$mm",
-                                      ),
-                                    );
-                                    setState(() {
-                                      _cards[idx] = fixed;
-                                    });
-                                    await _saveState();
-                                    final recordId = fixed.recordId;
-                                    if (recordId != null) {
-                                      await _sessionService.startSession(
-                                        examRecordId: recordId,
-                                        startedAt: now,
-                                        normalDurationMs: fixed.normalSeconds * 1000,
-                                        extraTimeMs: fixed.extraSeconds * 1000,
-                                      );
-                                    }
-                                    await _refreshCards();
-                                  } else {
-                                    if (!mounted || idx < 0 || idx >= _cards.length) return;
-                                    setState(() {
-                                      _cards[idx] = _applyManualProgress(u, u.progress);
-                                    });
-                                  }
-                                },
-                                onTimeTap: () {
-                                  if (_cards[idx].phase == ExamPhase.finished) {
-                                    return;
-                                  }
-                                  _cards[idx] = c.copyWith(isActiveTime: !c.isActiveTime);
-                                  setState(() {});
-                                  if (c.isActiveTime) {
-                                    _clickTimer = Timer(const Duration(seconds: 7), () {
-                                      _cards[idx] = c.copyWith(isActiveTime: true);
-                                      setState(() {});
-                                    });
-                                  } else {
-                                    _clickTimer?.cancel();
-                                  }
-                                },
-                              );
-                            },
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'STATUS',
+                                  style: TextStyle(
+                                    color: VigiloUiColors.blueSoft(dark),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: ['All', 'Not Started', 'Running', 'Finished'].map((o) => _chip(
+                                      dark,
+                                      o,
+                                      selected: _statusFilter == o,
+                                      onTap: () => setState(() => _statusFilter = o),
+                                    )).toList(),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'DATE',
+                                  style: TextStyle(
+                                    color: VigiloUiColors.blueSoft(dark),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: ['All', 'Today', 'This Week'].map((o) => _chip(
+                                    dark,
+                                    o,
+                                    selected: _dateFilter == o,
+                                    onTap: () => setState(() => _dateFilter = o),
+                                  )).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  Expanded(
+                    child: isArchiveView
+                        ? (_archiveCards.isEmpty
+                            ? const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Spacer(),
+                                  HomeEmptyStateWidget(),
+                                  Spacer(),
+                                  SizedBox(height: 100),
+                                ],
+                              )
+                            : ListView.separated(
+                                padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                                itemCount: _archiveCards.length,
+                                separatorBuilder: (_, index) => const SizedBox(height: 16),
+                                itemBuilder: (context, idx) {
+                                  final c = _archiveCards[idx];
+                                  return _buildExamCard(c, idx);
+                                },
+                              ))
+                        : (_filteredCards.isEmpty
+                            ? const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Spacer(),
+                                  HomeEmptyStateWidget(),
+                                  Spacer(),
+                                  SizedBox(height: 100),
+                                ],
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                                itemCount: _groupedCards.keys.length,
+                                itemBuilder: (context, di) {
+                                  final grouped = _groupedCards;
+                                  final dates = grouped.keys.toList();
+                                  final date = dates[di];
+                                  final sessions = grouped[date]!;
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Date Group Header
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(2, 10, 2, 6),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 3,
+                                              height: 14,
+                                              decoration: BoxDecoration(
+                                                color: VigiloUiColors.blueSoft(dark),
+                                                borderRadius: BorderRadius.circular(2),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              _fd(date),
+                                              style: TextStyle(
+                                                color: VigiloUiColors.blueSoft(dark),
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                                letterSpacing: 0.2,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              '${sessions.length} session${sessions.length == 1 ? '' : 's'}',
+                                              style: TextStyle(
+                                                color: VigiloUiColors.textFaint(dark),
+                                                fontSize: 11,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      // Grouped Cards
+                                      ...sessions.map((c) {
+                                        final idx = _cards.indexOf(c);
+                                        if (idx == -1) return const SizedBox.shrink();
+                                        return Padding(
+                                          padding: const EdgeInsets.only(bottom: 16),
+                                          child: _buildExamCard(c, idx),
+                                        );
+                                      }).toList(),
+                                    ],
+                                  );
+                                },
+                              )),
                   ),
                 ],
               ),
@@ -1680,6 +1580,137 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  List<ExamCardData> get _filteredCards {
+    var list = List<ExamCardData>.from(_cards);
+
+    if (_statusFilter != 'All') {
+      list = list.where((c) {
+        if (_statusFilter == 'Not Started') {
+          return !c.running && !c.isPaused && c.phase != ExamPhase.finished;
+        } else if (_statusFilter == 'Running') {
+          return c.running || c.isPaused;
+        } else if (_statusFilter == 'Finished') {
+          return c.phase == ExamPhase.finished;
+        }
+        return true;
+      }).toList();
+    }
+
+    if (_dateFilter != 'All') {
+      final now = DateTime.now();
+      final todayStr = "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+      list = list.where((c) {
+        if (_dateFilter == 'Today') {
+          return c.date == todayStr;
+        } else if (_dateFilter == 'This Week') {
+          try {
+            final parts = c.date.split('/');
+            if (parts.length == 3) {
+              final d = int.parse(parts[0]);
+              final m = int.parse(parts[1]);
+              final y = int.parse(parts[2]);
+              final examDate = DateTime(y, m, d);
+              final weekday = now.weekday;
+              final startOfWeek = DateTime(now.year, now.month, now.day).subtract(Duration(days: weekday - 1));
+              final endOfWeek = startOfWeek.add(const Duration(days: 7));
+              return (examDate.isAfter(startOfWeek.subtract(const Duration(seconds: 1))) &&
+                      examDate.isBefore(endOfWeek));
+            }
+          } catch (_) {}
+          return false;
+        }
+        return true;
+      }).toList();
+    }
+
+    list.sort((a, b) {
+      // Date comparison
+      DateTime? da, db;
+      try {
+        final pa = a.date.split('/');
+        da = DateTime(int.parse(pa[2]), int.parse(pa[1]), int.parse(pa[0]));
+      } catch (_) {}
+      try {
+        final pb = b.date.split('/');
+        db = DateTime(int.parse(pb[2]), int.parse(pb[1]), int.parse(pb[0]));
+      } catch (_) {}
+
+      if (da != null && db != null) {
+        final cmp = da.compareTo(db);
+        if (cmp != 0) return cmp;
+      } else if (da != null) {
+        return -1;
+      } else if (db != null) {
+        return 1;
+      }
+
+      // Start time comparison
+      final sa = a.normalStart;
+      final sb = b.normalStart;
+      final cmpTime = sa.compareTo(sb);
+      if (cmpTime != 0) return cmpTime;
+
+      // Room alphabetically
+      final ra = a.roomsSnapshot;
+      final rb = b.roomsSnapshot;
+      return ra.toLowerCase().compareTo(rb.toLowerCase());
+    });
+
+    return list;
+  }
+
+  Map<String, List<ExamCardData>> get _groupedCards {
+    final map = <String, List<ExamCardData>>{};
+    for (final s in _filteredCards) {
+      map.putIfAbsent(s.date, () => []).add(s);
+    }
+    return map;
+  }
+
+  String _fd(String date) {
+    try {
+      final p = date.split('/');
+      if (p.length == 3) {
+        final d = int.parse(p[0]);
+        final m = int.parse(p[1]);
+        final y = int.parse(p[2]);
+        final dt = DateTime(y, m, d);
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        final weekday = days[dt.weekday - 1];
+        final monthStr = months[m];
+        return '$weekday, $d $monthStr $y';
+      }
+    } catch (_) {}
+    return date;
+  }
+
+  Widget _chip(
+    bool dark,
+    String label, {
+    required bool selected,
+    required VoidCallback onTap,
+  }) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: selected ? VigiloUiColors.blue(dark) : VigiloUiColors.panel3(dark),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: selected ? VigiloUiColors.blue(dark) : VigiloUiColors.line(dark)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: selected ? Colors.white : VigiloUiColors.textSoft(dark),
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  );
+
   Widget _header(bool dark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
@@ -1702,15 +1733,33 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           const Spacer(),
+          if (_cards.length > 5) ...[
+            _headerIcon(
+              dark,
+              Icons.tune_rounded,
+              color: _showSessionMgr ? VigiloUiColors.blue(dark) : null,
+              selected: _showSessionMgr,
+              onTap: () => setState(() {
+                _showSessionMgr = !_showSessionMgr;
+                if (_showSessionMgr) {
+                  isArchiveView = false;
+                  isArchiveMode = false;
+                }
+              }),
+            ),
+            const SizedBox(width: 10),
+          ],
           if (_archiveCards.isNotEmpty || isArchiveView) ...[
             _headerIcon(
               dark,
               isArchiveView ? Icons.archive : Icons.archive_outlined,
               color: isArchiveView ? VigiloUiColors.green(dark) : null,
+              selected: isArchiveView,
               onTap: () => setState(() {
                 isArchiveView = !isArchiveView;
                 isArchiveMode = false;
                 if (isArchiveView) {
+                  _showSessionMgr = false;
                   _toast("Showing archived exams", "Archived exam records are shown below", Icons.archive_rounded, NotificationType.information);
                 } else {
                   _toast("Showing active exams", "Current running and scheduled exams are shown below", Icons.play_circle_fill_rounded, NotificationType.information);
@@ -1729,7 +1778,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _headerIcon(bool dark, IconData icon, {required VoidCallback onTap, Color? color}) {
+  Widget _headerIcon(bool dark, IconData icon, {required VoidCallback onTap, Color? color, bool selected = false}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -1740,9 +1789,12 @@ class _HomeScreenState extends State<HomeScreen>
           color: VigiloUiColors.panel(dark).withValues(alpha:dark ? 0.72 : 0.92),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: dark
-                ? VigiloUiColors.line(dark).withValues(alpha:0.70)
-                : VigiloUiColors.line(dark),
+            color: selected
+                ? (color ?? VigiloUiColors.blue(dark))
+                : (dark
+                    ? VigiloUiColors.line(dark).withValues(alpha:0.70)
+                    : VigiloUiColors.line(dark)),
+            width: selected ? 1.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
@@ -1767,6 +1819,301 @@ class _HomeScreenState extends State<HomeScreen>
   }
   int getExpandedCardIndex() {
     return _cards.indexWhere((card) => card.expanded);
+  }
+
+  Widget _buildExamCard(ExamCardData c, int idx) {
+    return ExamCard(
+      key: ValueKey(c.recordId),
+      data: c,
+      pulse: _pulse,
+      isExamCompleted: c.phase == ExamPhase.finished,
+      isArchiveMode: isArchiveMode,
+      extraPulse: extraPulse,
+      tapScale: isArchiveView ? 1.0 : _cards[idx].tapScale,
+      onProgressDragState: (dragging) {
+        _isAdjustingProgress = dragging;
+      },
+      onProgressChangeEnd: (v) async {
+        if (!mounted || idx < 0 || idx >= _cards.length) return;
+        _isAdjustingProgress = true;
+        setState(() {
+          _cards[idx] = _applyManualProgress(_cards[idx], v);
+        });
+        try {
+          await _saveState();
+          await _refreshCards();
+        } finally {
+          _isAdjustingProgress = false;
+        }
+      },
+      onSelect: () {
+        if (!isArchiveView) {
+          if (!_isArchivableExam(c)) {
+            _toast("Action Restricted", "Only finished exams can be archived", Icons.block_rounded, NotificationType.error);
+            return;
+          }
+          setState(() {
+            _cards[idx] = _cards[idx].copyWith(
+              isSelected: !_cards[idx].isSelected,
+            );
+          });
+        }
+      },
+      onChevronTap: () {
+        if (!isArchiveView) {
+          _toggleExpanded(idx);
+        } else {
+          _cards.add(_archiveCards[idx]);
+          _archiveCards.removeAt(idx);
+          if (_archiveCards.isEmpty) {
+            isArchiveView = false;
+          }
+          _toast("Exam Restored", "The exam has been successfully restored", Icons.settings_backup_restore_rounded, NotificationType.success);
+          _saveState();
+          setState(() {});
+        }
+      },
+      onEditDate: () async {
+        if (_cards[idx].phase == ExamPhase.finished) {
+          return;
+        }
+        final now = DateTime.now();
+        final parts = c.date.split('/');
+        DateTime initial = now;
+        if (parts.length == 3) {
+          final d = int.tryParse(parts[0]) ?? now.day;
+          final m = int.tryParse(parts[1]) ?? now.month;
+          final y = int.tryParse(parts[2]) ?? now.year;
+          initial = DateTime(y, m, d);
+        }
+        final picked = await showModalBottomSheet<DateTime>(
+          context: context,
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          builder: (_) => VigiloDatePickerSheet(initialDate: initial),
+        );
+        if (picked != null) {
+          final dd = picked.day.toString().padLeft(2, '0');
+          final mm = picked.month.toString().padLeft(2, '0');
+          final yy = picked.year.toString();
+          setState(() => _cards[idx] = c.copyWith(date: "$dd/$mm/$yy"));
+          _saveState();
+        }
+      },
+      onEditStartTime: () async {
+        if (_cards[idx].phase == ExamPhase.finished) {
+          return;
+        }
+        final t = _parseHHMM(c.normalStart);
+        final picked = await showModalBottomSheet<TimeOfDay>(
+          context: context,
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          builder: (_) => VigiloTimePickerSheet(
+            initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
+          ),
+        );
+        if (picked != null) {
+          final hh = picked.hour.toString().padLeft(2, '0');
+          final mm = picked.minute.toString().padLeft(2, '0');
+          final selectedStart = "$hh:$mm";
+          setState(
+            () => _cards[idx] = _recompute(
+              c.copyWith(normalStart: selectedStart),
+            ),
+          );
+          _saveState();
+        }
+      },
+      onEditDuration: () async {
+        if (_cards[idx].phase == ExamPhase.finished) {
+          return;
+        }
+        String res = await pickDur(c.normalDuration, "Set Duration");
+        if (res != "") {
+          int newNormalSec = _toMin(res) * 60;
+          int elapsedSec = (c.progress * c.totalSeconds).round();
+
+          if (c.phase == ExamPhase.normal && newNormalSec < elapsedSec) {
+            NotificationService.show(
+              context,
+              title: "Invalid Duration",
+              subtitle: "Cannot reduce duration below elapsed time",
+              type: NotificationType.error,
+              icon: Icons.error_outline_rounded,
+            );
+            return;
+          } else if (c.phase == ExamPhase.extra && newNormalSec + c.extraSeconds < elapsedSec) {
+            NotificationService.show(
+              context,
+              title: "Invalid Duration",
+              subtitle: "Cannot reduce total time below elapsed time",
+              type: NotificationType.error,
+              icon: Icons.error_outline_rounded,
+            );
+            return;
+          }
+
+          DateTime now = DateTime.now();
+          DateTime dateTime1 = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            int.parse(c.normalDuration.split(":")[0]),
+            int.parse(c.normalDuration.split(":")[1]),
+          );
+          DateTime dateTime2 = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            int.parse(res.split(":")[0]),
+            int.parse(res.split(":")[1]),
+          );
+          int _ = dateTime2.difference(dateTime1).inMinutes;
+          String detail = "";
+          if (c.phase == ExamPhase.normal) {
+            detail = "Adjustment entered before extra time";
+          } else if (c.phase == ExamPhase.extra) {
+            detail = "Adjustment entered during extra time";
+          } else {
+            detail = "Adjustment entered after exam finished";
+          }
+          setState(
+            () => _cards[idx] = _recompute(
+              c.copyWith(normalDuration: res),
+            ),
+          );
+          await _saveState();
+          final recordId = _cards[idx].recordId;
+          if (recordId != null) {
+            await _sessionService.updatePlannedDuration(
+              examRecordId: recordId,
+              normalDurationMs: _cards[idx].normalSeconds * 1000,
+              extraTimeMs: _cards[idx].extraSeconds * 1000,
+              reason: _formatNormalTimeUpdateReason(
+                previousMinutes: _toMin(c.normalDuration),
+                updatedMinutes: _toMin(res),
+              ),
+              detail: detail,
+            );
+            await _refreshCards();
+          }
+        }
+      },
+      onEditExtra: () async {
+        if (_cards[idx].phase == ExamPhase.finished) {
+          return;
+        }
+        String res = await pickDur(c.extraTime, "Add Extra Time");
+        if (res != "") {
+          int newExtraSec = _toMin(res) * 60;
+          int elapsedSec = (c.progress * c.totalSeconds).round();
+
+          if (c.phase == ExamPhase.extra && c.normalSeconds + newExtraSec < elapsedSec) {
+            NotificationService.show(
+              context,
+              title: "Invalid Extra Time",
+              subtitle: "Cannot reduce total time below elapsed time",
+              type: NotificationType.error,
+              icon: Icons.error_outline_rounded,
+            );
+            return;
+          }
+
+          final previousMinutes = _toMin(c.extraTime);
+          final updatedMinutes = _toMin(res);
+
+          setState(
+            () => _cards[idx] = _recompute(c.copyWith(extraTime: res)),
+          );
+          String detail = "";
+          if (c.phase == ExamPhase.normal) {
+            detail = "Adjustment entered before extra time";
+          } else if (c.phase == ExamPhase.extra) {
+            detail = "Adjustment entered during extra time";
+          } else {
+            detail = "Adjustment entered after exam finished";
+          }
+          await _saveState();
+          final recordId = _cards[idx].recordId;
+          if (recordId != null) {
+            await _sessionService.updatePlannedDuration(
+              examRecordId: recordId,
+              normalDurationMs: _cards[idx].normalSeconds * 1000,
+              extraTimeMs: _cards[idx].extraSeconds * 1000,
+              reason: _formatExtraTimeUpdateReason(
+                previousMinutes: previousMinutes,
+                updatedMinutes: updatedMinutes,
+              ),
+              detail: detail,
+            );
+            await _refreshCards();
+          }
+        }
+      },
+      onUpdate: (u) async {
+        final wasRunning = c.running;
+        final becameRunning =
+            u.running && !wasRunning && u.epochStart != null;
+        if (becameRunning) {
+          if (!mounted || idx < 0 || idx >= _cards.length) return;
+          final now = u.epochStart!;
+          final hh = now.hour.toString().padLeft(2, '0');
+          final mm = now.minute.toString().padLeft(2, '0');
+          final fixed = _recompute(
+            u.copyWith(
+              running: false,
+              isPaused: false,
+              epochStart: null,
+              pausedSeconds: 0,
+              progress: 0.0,
+              phase: ExamPhase.normal,
+              normalStart: "$hh:$mm",
+            ),
+          );
+          setState(() {
+            _cards[idx] = fixed;
+          });
+          await _saveState();
+          final recordId = fixed.recordId;
+          if (recordId != null) {
+            await _sessionService.startSession(
+              examRecordId: recordId,
+              startedAt: now,
+              normalDurationMs: fixed.normalSeconds * 1000,
+              extraTimeMs: fixed.extraSeconds * 1000,
+            );
+          }
+          await _refreshCards();
+        } else {
+          if (!mounted || idx < 0 || idx >= _cards.length) return;
+          setState(() {
+            _cards[idx] = _applyManualProgress(u, u.progress);
+          });
+        }
+      },
+      onTimeTap: () {
+        if (_cards[idx].phase == ExamPhase.finished) {
+          return;
+        }
+        _cards[idx] = c.copyWith(isActiveTime: !c.isActiveTime);
+        setState(() {});
+        if (c.isActiveTime) {
+          _clickTimer = Timer(const Duration(seconds: 7), () {
+            _cards[idx] = c.copyWith(isActiveTime: true);
+            setState(() {});
+          });
+        } else {
+          _clickTimer?.cancel();
+        }
+      },
+    );
   }
 }
 
