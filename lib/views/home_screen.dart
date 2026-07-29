@@ -1611,22 +1611,6 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           const Spacer(),
-          if (_cards.length > 5) ...[
-            _headerIcon(
-              dark,
-              Icons.tune_rounded,
-              color: _showSessionMgr ? VigiloUiColors.blue(dark) : null,
-              selected: _showSessionMgr,
-              onTap: () => setState(() {
-                _showSessionMgr = !_showSessionMgr;
-                if (_showSessionMgr) {
-                  isArchiveView = false;
-                  isArchiveMode = false;
-                }
-              }),
-            ),
-            const SizedBox(width: 10),
-          ],
           if (_archiveCards.isNotEmpty || isArchiveView) ...[
             _headerIcon(
               dark,
@@ -1641,6 +1625,22 @@ class _HomeScreenState extends State<HomeScreen>
                   _toast("Showing archived exams", "Archived exam records are shown below", Icons.archive_rounded, NotificationType.information);
                 } else {
                   _toast("Showing active exams", "Current running and scheduled exams are shown below", Icons.play_circle_fill_rounded, NotificationType.information);
+                }
+              }),
+            ),
+            const SizedBox(width: 10),
+          ],
+          if (_cards.length > 5) ...[
+            _headerIcon(
+              dark,
+              Icons.tune_rounded,
+              color: _showSessionMgr ? VigiloUiColors.blue(dark) : null,
+              selected: _showSessionMgr,
+              onTap: () => setState(() {
+                _showSessionMgr = !_showSessionMgr;
+                if (_showSessionMgr) {
+                  isArchiveView = false;
+                  isArchiveMode = false;
                 }
               }),
             ),
