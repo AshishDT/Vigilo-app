@@ -186,15 +186,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     super.initState();
     // _loadResolvedIncidents();
     _currentData = widget.data;
-    autoStart = widget.data.autoStartUserModified
-        ? widget.data.autoStart
-        : true;
-    if (!widget.data.autoStartUserModified && !widget.data.autoStart) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        widget.onToggleAutoStart(true);
-      });
-    }
+    autoStart = widget.data.autoStart;
     _activeTabIndex = widget.initialTabIndex.clamp(0, _tabs.length - 1);
     _tabs.index = _activeTabIndex;
 
