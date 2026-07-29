@@ -242,8 +242,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
 
         _step = 1; // Proceed to Step 2: Map Columns
       });
-    } catch (e, stackTrace) {
-      debugPrint('[ImportFlowSheet] Error parsing file: $e\n$stackTrace');
+    } catch (e) {
       setState(() {
         _isLoading = false;
       });
@@ -985,7 +984,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'CSV (.csv)  \u00b7  Excel (.xlsx, .xls)',
+                    'CSV (.csv)  ·  Excel (.xlsx, .xls)',
                     style: TextStyle(color: colors.textFaint, fontSize: 13),
                   ),
                 ],

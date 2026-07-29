@@ -37,6 +37,7 @@ dependencies:
   file_picker: ^10.3.10
   csv: ^8.0.0
   spreadsheet_decoder: ^2.3.0
+  excel2003: ^1.0.0
   image_picker: ^1.2.2
   path_provider: ^2.1.5
   path: ^1.9.1

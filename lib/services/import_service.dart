@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:csv/csv.dart';
+import 'package:excel2003/excel2003.dart';
 import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
 
 class ImportService {
@@ -32,9 +33,7 @@ class ImportService {
         final day = int.parse(match.group(1)!);
         final month = int.parse(match.group(2)!);
         var year = int.parse(match.group(3)!);
-        if (year < 100) {
-          year += 2000;
-        }
+        if (year < 100) year += 2000;
         return '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
       }
 
@@ -47,9 +46,7 @@ class ImportService {
         final month = _months[monthStr];
 
         if (day != null && month != null && year != null) {
-          if (year < 100) {
-            year += 2000;
-          }
+          if (year < 100) year += 2000;
           return '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
         }
       }
@@ -134,7 +131,57 @@ class ImportService {
         content = latin1.decode(bytes);
       }
       rows = csv.decode(content);
-    } else if (ext == 'xlsx' || ext == 'xls') {
+    } else if (ext == 'xls') {
+      final bytes = await file.readAsBytes();
+
+      // First attempt: legacy BIFF8 format (Excel 97-2003) via excel2003
+      bool parsedWithBiff = false;
+      Object? biffError;
+      try {
+        final reader = XlsReader.fromBytes(bytes);
+        reader.open();
+
+        if (reader.sheetCount == 0) {
+          throw Exception('The .xls file contains no sheets.');
+        }
+
+        final xlsSheet = reader.sheet(0);
+        for (int r = xlsSheet.firstRow; r < xlsSheet.lastRow; r++) {
+          final List<dynamic> rowData = [];
+          for (int c = xlsSheet.firstCol; c < xlsSheet.lastCol; c++) {
+            rowData.add(xlsSheet.cell(r, c));
+          }
+          rows.add(rowData);
+        }
+
+        parsedWithBiff = true;
+      } catch (e) {
+        biffError = e;
+      }
+
+      // Fallback: some .xls files are actually OOXML (ZIP-based) with a wrong extension
+      if (!parsedWithBiff) {
+        try {
+          final decoder = SpreadsheetDecoder.decodeBytes(bytes);
+          if (decoder.tables.isNotEmpty) {
+            final table = decoder.tables[decoder.tables.keys.first];
+            if (table != null) {
+              rows.addAll(table.rows);
+            }
+          }
+          if (rows.isEmpty) {
+            throw Exception('File parsed but contained no data.');
+          }
+        } catch (xlsxError) {
+          throw Exception(
+            'Failed to read this file.\n\n'
+            'BIFF8 error: $biffError\n\n'
+            'OOXML error: $xlsxError\n\n'
+            'Try saving the file as .xlsx or .csv from Excel / Google Sheets.',
+          );
+        }
+      }
+    } else if (ext == 'xlsx') {
       final bytes = await file.readAsBytes();
       final decoder = SpreadsheetDecoder.decodeBytes(bytes);
       // Read the first sheet
