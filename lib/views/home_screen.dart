@@ -1336,25 +1336,31 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  if (_showSessionMgr)
-                    SessionManagerPanel(
-                      dark: dark,
-                      statusFilter: _statusFilter,
-                      dateFilter: _dateFilter,
-                      onStatusFilterChanged: (val) => setState(() {
-                        _statusFilter = val;
-                        _updateFilteredAndGroupedCards();
-                      }),
-                      onDateFilterChanged: (val) => setState(() {
-                        _dateFilter = val;
-                        _updateFilteredAndGroupedCards();
-                      }),
-                      onClear: () => setState(() {
-                        _statusFilter = 'All';
-                        _dateFilter = 'All';
-                        _updateFilteredAndGroupedCards();
-                      }),
-                    ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    clipBehavior: Clip.hardEdge,
+                    child: _showSessionMgr
+                        ? SessionManagerPanel(
+                            dark: dark,
+                            statusFilter: _statusFilter,
+                            dateFilter: _dateFilter,
+                            onStatusFilterChanged: (val) => setState(() {
+                              _statusFilter = val;
+                              _updateFilteredAndGroupedCards();
+                            }),
+                            onDateFilterChanged: (val) => setState(() {
+                              _dateFilter = val;
+                              _updateFilteredAndGroupedCards();
+                            }),
+                            onClear: () => setState(() {
+                              _statusFilter = 'All';
+                              _dateFilter = 'All';
+                              _updateFilteredAndGroupedCards();
+                            }),
+                          )
+                        : const SizedBox(width: double.infinity, height: 0),
+                  ),
                   Expanded(
                     child: isArchiveView
                         ? (_archiveCards.isEmpty
@@ -1444,13 +1450,19 @@ class _HomeScreenState extends State<HomeScreen>
               // ── Speed dial backdrop ─────────────────────────────────────────
               // Semi-transparent overlay dims content while speed dial is open.
               // Tapping it closes the dial without navigating anywhere.
-              if (_fabOpen)
-                GestureDetector(
-                  onTap: _closeFab,
-                  child: Container(
-                    color: Colors.black.withValues(alpha: 0.45),
+              IgnorePointer(
+                ignoring: !_fabOpen,
+                child: AnimatedOpacity(
+                  opacity: _fabOpen ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 250),
+                  child: GestureDetector(
+                    onTap: _closeFab,
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.45),
+                    ),
                   ),
                 ),
+              ),
 
               // ── Speed dial options ──────────────────────────────────────────
               // Positioned above the FAB (bottom: 90). Each option has a label
@@ -1475,8 +1487,8 @@ class _HomeScreenState extends State<HomeScreen>
                           onTap: () {
                             _closeFab();
                             Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (ctx) => ImportFlowSheet(
+                              PageRouteBuilder(
+                                pageBuilder: (context, animation, secondaryAnimation) => ImportFlowSheet(
                                   dark: dark,
                                   onToggleTheme: widget.onToggleTheme,
                                   initialCentreNumber: _lastCentre ?? (_cards.isNotEmpty ? _cards.first.centreNumber : ''),
@@ -1492,6 +1504,14 @@ class _HomeScreenState extends State<HomeScreen>
                                   },
                                   onClose: () => Navigator.of(context).pop(),
                                 ),
+                                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                  final tween = Tween(begin: const Offset(0.0, 1.0), end: Offset.zero)
+                                      .chain(CurveTween(curve: Curves.easeOutCubic));
+                                  return SlideTransition(
+                                    position: animation.drive(tween),
+                                    child: child,
+                                  );
+                                },
                               ),
                             );
                           },

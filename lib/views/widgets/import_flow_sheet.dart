@@ -208,7 +208,14 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
       final path = result.files.single.path!;
       final name = result.files.single.name;
 
+      final parseStart = DateTime.now();
       final parsed = await ImportService.parseFile(path);
+
+      final elapsed = DateTime.now().difference(parseStart);
+      final remaining = const Duration(milliseconds: 600) - elapsed;
+      if (remaining > Duration.zero) {
+        await Future.delayed(remaining);
+      }
 
       setState(() {
         _selectedFileName = name;
@@ -659,9 +666,8 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        leadingWidth: 68,
         leading: Padding(
-          padding: const EdgeInsets.only(left: 6),
+          padding: const EdgeInsets.only(left: 16),
           child: Center(
             child: GestureDetector(
               onTap: _step > 0 && _step < 3
@@ -716,35 +722,112 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: Icon(
-              colors.isDark ? Icons.light_mode : Icons.dark_mode,
-              color: colors.textSoft,
+          Padding(
+            padding: const EdgeInsets.only(right: 18),
+            child: Center(
+              child: InkWell(
+                onTap: widget.onToggleTheme,
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: VigiloUiColors.panel(colors.isDark).withValues(alpha: colors.isDark ? 0.72 : 0.92),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: colors.isDark
+                          ? VigiloUiColors.line(colors.isDark).withValues(alpha: 0.70)
+                          : VigiloUiColors.line(colors.isDark),
+                      width: 1.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: colors.isDark ? 0.16 : 0.07),
+                        blurRadius: colors.isDark ? 8 : 10,
+                        offset: Offset(0, colors.isDark ? 3 : 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    colors.isDark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
+                    color: VigiloUiColors.textSoft(colors.isDark),
+                    size: 20,
+                  ),
+                ),
+              ),
             ),
-            onPressed: widget.onToggleTheme,
           ),
-          const SizedBox(width: 6),
         ],
       ),
       body: Stack(
         children: [
-          IndexedStack(
-            index: _step,
-            children: [
-              _buildStep1FilePicker(colors),
-              _buildStep2MapColumns(colors),
-              _buildStep3Preview(colors),
-              _buildStep4Result(colors),
-            ],
-          ),
-          if (_isLoading)
-            Container(
-              color: Colors.black54,
-              child: const Center(child: CircularProgressIndicator()),
+          Align(
+            alignment: Alignment.topCenter,
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              clipBehavior: Clip.hardEdge,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                switchInCurve: Curves.easeInOut,
+                switchOutCurve: Curves.easeInOut,
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0.0, 0.04),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: _buildStepChild(colors),
+              ),
             ),
+          ),
+          IgnorePointer(
+            ignoring: !_isLoading,
+            child: AnimatedOpacity(
+              opacity: _isLoading ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 250),
+              child: Container(
+                color: Colors.black54,
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Widget _buildStepChild(_FlowColors colors) {
+    switch (_step) {
+      case 0:
+        return Container(
+          key: const ValueKey(0),
+          child: _buildStep1FilePicker(colors),
+        );
+      case 1:
+        return Container(
+          key: const ValueKey(1),
+          child: _buildStep2MapColumns(colors),
+        );
+      case 2:
+        return Container(
+          key: const ValueKey(2),
+          child: _buildStep3Preview(colors),
+        );
+      case 3:
+        return Container(
+          key: const ValueKey(3),
+          child: _buildStep4Result(colors),
+        );
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
   // ── STEP 1: FILE PICKER ──────────────────────────────────────────────────
@@ -930,7 +1013,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           color: colors.green.withValues(alpha: 0.08),
           child: Row(
             children: [
@@ -958,7 +1041,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
         Divider(height: 1, color: colors.line),
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             children: [
               Text(
                 'ORGANISATION',
@@ -1145,7 +1228,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           color: colors.panel,
           child: Row(
             children: [
@@ -1176,7 +1259,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
         Divider(height: 1, color: colors.line),
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             itemCount: dates.length,
             itemBuilder: (ctx, idx) {
               final date = dates[idx];
@@ -1636,7 +1719,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
     required VoidCallback? onPressed,
   }) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       color: colors.bg,
       child: SizedBox(
         width: double.infinity,
@@ -1645,9 +1728,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           style: ElevatedButton.styleFrom(
             backgroundColor: colors.blue,
             foregroundColor: Colors.white,
-            disabledBackgroundColor: colors.isDark
-                ? const Color(0xFF13283F)
-                : const Color(0xFFE2E8F0),
+            disabledBackgroundColor: colors.panel2,
             disabledForegroundColor: colors.textFaint.withValues(alpha: 0.5),
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
