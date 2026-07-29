@@ -27,6 +27,8 @@ import 'widgets/stat_chip_widget.dart';
 import 'widgets/vigilo_date_picker.dart';
 import 'widgets/vigilo_time_picker.dart';
 import 'widgets/vigilo_duration_picker.dart';
+import 'widgets/session_manager_panel.dart';
+import 'widgets/speed_dial_option.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -1291,116 +1293,18 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  if (_showSessionMgr) ...[
-                    Container(
-                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                      decoration: BoxDecoration(
-                        color: VigiloUiColors.panel(dark),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: VigiloUiColors.line(dark)),
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-                            decoration: BoxDecoration(
-                              color: VigiloUiColors.blue(dark).withValues(alpha: 0.1),
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(12),
-                                topRight: Radius.circular(12),
-                              ),
-                              border: Border(
-                                bottom: BorderSide(color: VigiloUiColors.line(dark)),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.tune_rounded,
-                                  color: VigiloUiColors.blueSoft(dark),
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Session Manager',
-                                  style: TextStyle(
-                                    color: VigiloUiColors.blueSoft(dark),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const Spacer(),
-                                if (_statusFilter != 'All' || _dateFilter != 'All')
-                                  GestureDetector(
-                                    onTap: () => setState(() {
-                                      _statusFilter = 'All';
-                                      _dateFilter = 'All';
-                                    }),
-                                    child: Text(
-                                      'Clear',
-                                      style: TextStyle(
-                                        color: VigiloUiColors.amber(dark),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'STATUS',
-                                  style: TextStyle(
-                                    color: VigiloUiColors.blueSoft(dark),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    children: ['All', 'Not Started', 'Running', 'Finished'].map((o) => _chip(
-                                      dark,
-                                      o,
-                                      selected: _statusFilter == o,
-                                      onTap: () => setState(() => _statusFilter = o),
-                                    )).toList(),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'DATE',
-                                  style: TextStyle(
-                                    color: VigiloUiColors.blueSoft(dark),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: ['All', 'Today', 'This Week'].map((o) => _chip(
-                                    dark,
-                                    o,
-                                    selected: _dateFilter == o,
-                                    onTap: () => setState(() => _dateFilter = o),
-                                  )).toList(),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                  if (_showSessionMgr)
+                    SessionManagerPanel(
+                      dark: dark,
+                      statusFilter: _statusFilter,
+                      dateFilter: _dateFilter,
+                      onStatusFilterChanged: (val) => setState(() => _statusFilter = val),
+                      onDateFilterChanged: (val) => setState(() => _dateFilter = val),
+                      onClear: () => setState(() {
+                        _statusFilter = 'All';
+                        _dateFilter = 'All';
+                      }),
                     ),
-                  ],
                   Expanded(
                     child: isArchiveView
                         ? (_archiveCards.isEmpty
@@ -1486,7 +1390,7 @@ class _HomeScreenState extends State<HomeScreen>
                                           padding: const EdgeInsets.only(bottom: 16),
                                           child: _buildExamCard(c, idx),
                                         );
-                                      }).toList(),
+                                      }),
                                     ],
                                   );
                                 },
@@ -1522,7 +1426,7 @@ class _HomeScreenState extends State<HomeScreen>
                       alignment: Alignment.bottomRight,
                       child: FadeTransition(
                         opacity: _fabDialAnim,
-                        child: _SpeedDialOption(
+                        child: SpeedDialOption(
                           icon: Icons.upload_file_rounded,
                           label: 'Import Exam Sessions',
                           dark: dark,
@@ -1558,7 +1462,7 @@ class _HomeScreenState extends State<HomeScreen>
                       alignment: Alignment.bottomRight,
                       child: FadeTransition(
                         opacity: _fabDialAnim,
-                        child: _SpeedDialOption(
+                        child: SpeedDialOption(
                           icon: Icons.edit_outlined,
                           label: 'Create Single Exam',
                           dark: dark,
@@ -1684,32 +1588,6 @@ class _HomeScreenState extends State<HomeScreen>
     } catch (_) {}
     return date;
   }
-
-  Widget _chip(
-    bool dark,
-    String label, {
-    required bool selected,
-    required VoidCallback onTap,
-  }) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: selected ? VigiloUiColors.blue(dark) : VigiloUiColors.panel3(dark),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: selected ? VigiloUiColors.blue(dark) : VigiloUiColors.line(dark)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: selected ? Colors.white : VigiloUiColors.textSoft(dark),
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ),
-  );
 
   Widget _header(bool dark) {
     return Padding(
@@ -2117,73 +1995,3 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-// ── Speed Dial Option ─────────────────────────────────────────────────────────
-// Each option shows a label panel on the left and a mini circular button on
-// the right. All colours use VigiloUiColors tokens only.
-class _SpeedDialOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool dark;
-  final VoidCallback onTap;
-
-  const _SpeedDialOption({
-    required this.icon,
-    required this.label,
-    required this.dark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Label on the left
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: VigiloUiColors.panel(dark),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: VigiloUiColors.line(dark)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: VigiloUiColors.text(dark),
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Mini circular button on the right
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: VigiloUiColors.blue(dark),
-              shape: BoxShape.circle,
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-        ],
-      ),
-    );
-  }
-}
