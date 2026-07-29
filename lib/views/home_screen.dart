@@ -17,6 +17,7 @@ import 'license_activation_screen.dart';
 import '../utils/notifications.dart';
 import 'officer_tools_screen.dart';
 import 'widgets/add_exam_sheet.dart';
+import 'widgets/import_flow_sheet.dart';
 import 'widgets/confirmation_dialog.dart';
 import 'widgets/exam_card_widget.dart';
 import 'widgets/footer_widget.dart';
@@ -1026,12 +1027,12 @@ class _HomeScreenState extends State<HomeScreen>
               icon: AnimatedRotation(
                 turns: _fabOpen ? 0.125 : 0,
                 duration: const Duration(milliseconds: 220),
-                child: const Icon(Icons.add, size: 22),
+                child: const Icon(Icons.add, size: 16),
               ),
               label: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
                 child: Text(
-                  _fabOpen ? 'Close' : '+ Exam',
+                  _fabOpen ? 'Close' : 'Exam',
                   key: ValueKey(_fabOpen),
                   style: const TextStyle(
                     fontSize: 15,
@@ -1627,7 +1628,25 @@ class _HomeScreenState extends State<HomeScreen>
                           dark: dark,
                           onTap: () {
                             _closeFab();
-                            // TODO (Task 3): navigate to import flow
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (ctx) => ImportFlowSheet(
+                                  dark: dark,
+                                  onToggleTheme: widget.onToggleTheme,
+                                  initialCentreNumber: _lastCentre ?? (_cards.isNotEmpty ? _cards.first.centreNumber : ''),
+                                  onImportSessions: (newSessions) async {
+                                    setState(() {
+                                      _cards.insertAll(0, newSessions);
+                                      if (newSessions.isNotEmpty) {
+                                        _lastCentre = newSessions.first.centreNumber;
+                                      }
+                                    });
+                                    await _saveState();
+                                  },
+                                  onClose: () => Navigator.of(context).pop(),
+                                ),
+                              ),
+                            );
                           },
                         ),
                       ),
