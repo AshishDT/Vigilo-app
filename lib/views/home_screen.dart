@@ -101,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen>
       _lastExtra;
 
   late final AnimationController _pulse;
+  Future<void>? _activeSaveFuture;
   Timer? _ticker;
   Timer? _extraPulseTicker;
   Timer? _clickTimer;
@@ -143,52 +144,64 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _saveState() async {
-    final previousCards = List<ExamCardData>.from(_cards);
-    final previousArchiveCards = List<ExamCardData>.from(_archiveCards);
-    final persisted = await _sessionService.persistHomeState(
-      cards: _cards,
-      archiveCards: _archiveCards,
-      lastUsed: {
-        'school': _lastSchool,
-        'centre': _lastCentre,
-        'subject': _lastSubject,
-        'board': _lastBoard,
-        'start': _lastStart,
-        'duration': _lastDuration,
-        'extra': _lastExtra,
-      },
-    );
-    if (!mounted) return;
-    setState(() {
-      _cards
-        ..clear()
-        ..addAll(
-          _preserveTransientCardState(
-            previous: previousCards,
-            incoming: persisted.cards,
-          ),
-        );
-      _archiveCards
-        ..clear()
-        ..addAll(
-          _preserveTransientCardState(
-            previous: previousArchiveCards,
-            incoming: persisted.archiveCards,
-          ),
-        );
-      _lastSchool = persisted.lastUsed['school'];
-      _lastCentre = persisted.lastUsed['centre'];
-      _lastSubject = persisted.lastUsed['subject'];
-      _lastBoard = persisted.lastUsed['board'];
-      _lastStart = persisted.lastUsed['start'];
-      _lastDuration = persisted.lastUsed['duration'];
-      _lastExtra = persisted.lastUsed['extra'];
-    });
+    final completer = Completer<void>();
+    final previousFuture = _activeSaveFuture;
+    _activeSaveFuture = completer.future;
+
+    if (previousFuture != null) {
+      try {
+        await previousFuture;
+      } catch (_) {}
+    }
+
+    try {
+      final previousCards = List<ExamCardData>.from(_cards);
+      final previousArchiveCards = List<ExamCardData>.from(_archiveCards);
+      final persisted = await _sessionService.persistHomeState(
+        cards: _cards,
+        archiveCards: _archiveCards,
+        lastUsed: {
+          'school': _lastSchool,
+          'centre': _lastCentre,
+          'subject': _lastSubject,
+          'board': _lastBoard,
+          'start': _lastStart,
+          'duration': _lastDuration,
+          'extra': _lastExtra,
+        },
+      );
+      if (!mounted) return;
+      setState(() {
+        _cards
+          ..clear()
+          ..addAll(
+            _preserveTransientCardState(
+              previous: previousCards,
+              incoming: persisted.cards,
+            ),
+          );
+        _archiveCards
+          ..clear()
+          ..addAll(
+            _preserveTransientCardState(
+              previous: previousArchiveCards,
+              incoming: persisted.archiveCards,
+            ),
+          );
+        _lastSchool = persisted.lastUsed['school'];
+        _lastCentre = persisted.lastUsed['centre'];
+        _lastSubject = persisted.lastUsed['subject'];
+        _lastBoard = persisted.lastUsed['board'];
+        _lastStart = persisted.lastUsed['start'];
+        _lastDuration = persisted.lastUsed['duration'];
+        _lastExtra = persisted.lastUsed['extra'];
+      });
+    } finally {
+      completer.complete();
+    }
   }
 
   Future<void> _refreshCards() async {
-    final previousCards = List<ExamCardData>.from(_cards);
-    final previousArchiveCards = List<ExamCardData>.from(_archiveCards);
     final state = await _sessionService.loadHomeState();
     final activeIds = state.cards
         .map((card) => card.recordId)
@@ -198,6 +211,8 @@ class _HomeScreenState extends State<HomeScreen>
     _extraTimeWarningVibrationSent.retainAll(activeIds);
     if (!mounted) return;
     setState(() {
+      final previousCards = List<ExamCardData>.from(_cards);
+      final previousArchiveCards = List<ExamCardData>.from(_archiveCards);
       _cards
         ..clear()
         ..addAll(
@@ -232,10 +247,8 @@ class _HomeScreenState extends State<HomeScreen>
       _cards
         ..clear()
         ..addAll(state.cards);
-      if (_cards.length > 5) {
-        for (int i = 0; i < _cards.length; i++) {
-          _cards[i] = _cards[i].copyWith(expanded: false);
-        }
+      for (int i = 0; i < _cards.length; i++) {
+        _cards[i] = _cards[i].copyWith(expanded: false);
       }
       _archiveCards
         ..clear()
@@ -482,10 +495,7 @@ class _HomeScreenState extends State<HomeScreen>
     required List<ExamCardData> incoming,
   }) {
     if (previous.isEmpty || incoming.isEmpty) {
-      if (incoming.length > 5) {
-        return incoming.map((c) => c.copyWith(expanded: false)).toList();
-      }
-      return incoming;
+      return incoming.map((c) => c.copyWith(expanded: false)).toList();
     }
 
     final previousById = <String, ExamCardData>{
@@ -656,20 +666,31 @@ class _HomeScreenState extends State<HomeScreen>
     } catch (_) {}
   }
 
-  void _toggleExpanded(int i) => setState(() {
-    for (int j = 0; j < _cards.length; j++) {
-      if (j == i) {
-        _cards[j] = _cards[j].copyWith(expanded: !_cards[j].expanded);
-      } else {
-        _cards[j] = _cards[j].copyWith(expanded: false);
+  void _toggleExpanded(int i) {
+    if (i < 0 || i >= _cards.length) return;
+    final cardId = _cards[i].recordId;
+    setState(() {
+      for (int j = 0; j < _cards.length; j++) {
+        if (j == i) {
+          _cards[j] = _cards[j].copyWith(expanded: !_cards[j].expanded);
+        } else {
+          _cards[j] = _cards[j].copyWith(expanded: false);
+        }
       }
-    }
-    _cards[i] = _cards[i].copyWith(tapScale: 1.02);
-    Future.delayed(const Duration(milliseconds: 100), () {
-      setState(() => _cards[i] = _cards[i].copyWith(tapScale: 1.0));
+      _cards[i] = _cards[i].copyWith(tapScale: 1.02);
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          setState(() {
+            final idx = _cards.indexWhere((card) => card.recordId == cardId);
+            if (idx != -1) {
+              _cards[idx] = _cards[idx].copyWith(tapScale: 1.0);
+            }
+          });
+        }
+      });
+      _saveState();
     });
-    _saveState();
-  });
+  }
 
   void _toast(String title, [String? subtitle, IconData? icon, NotificationType type = NotificationType.information]) {
     NotificationService.show(
