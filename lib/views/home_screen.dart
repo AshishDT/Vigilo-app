@@ -825,7 +825,12 @@ class _HomeScreenState extends State<HomeScreen>
       _lastDuration = null;
       _lastExtra = null;
     });
-    await _seedOrganizationFromLicenseIfNeeded();
+
+    // Prefill school from license snapshot in-memory (no DB write needed here —
+    // the real _saveState happens when the user actually saves an exam).
+    final snapshot = await LicenseService.getSnapshot();
+    final orgName = _readText(snapshot.organizationName);
+    if (orgName != null) _lastSchool = orgName;
     if (!mounted) return;
 
     final result = await showModalBottomSheet<bool>(
