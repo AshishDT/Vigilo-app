@@ -1944,7 +1944,7 @@ class SessionService {
   }
 
   bool _isArchivableCard(ExamCardData card) {
-    return _statusFromCard(card) == SessionStatus.ended;
+    return _statusFromCard(card) == SessionStatus.ended || card.isDatePassed;
   }
 
   DateTime? _scheduledDateTimeUtc(ExamCardData c) {

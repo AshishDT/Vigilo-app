@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/constants.dart';
@@ -23,11 +24,13 @@ class _PickerColors {
 class VigiloTimePickerSheet extends StatefulWidget {
   final TimeOfDay initialTime;
   final bool showIcons;
+  final bool restrictPastTime;
 
   const VigiloTimePickerSheet({
     super.key,
     required this.initialTime,
     this.showIcons = false,
+    this.restrictPastTime = false,
   });
 
   @override
@@ -36,21 +39,30 @@ class VigiloTimePickerSheet extends StatefulWidget {
 
 class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
   late TimeOfDay _selectedTime;
+  Timer? _rebuildTimer;
 
   bool _showManualEntry = false;
-  late final TextEditingController _manualController;
+  late final _ManualTimeTextController _manualController;
 
   @override
   void initState() {
     super.initState();
     _selectedTime = widget.initialTime;
-    _manualController = TextEditingController(
+    _manualController = _ManualTimeTextController(
       text: _formatTime(_selectedTime),
     );
+    if (widget.restrictPastTime) {
+      _rebuildTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+        if (mounted) {
+          setState(() {});
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _rebuildTimer?.cancel();
     _manualController.dispose();
     super.dispose();
   }
@@ -59,6 +71,32 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
     final hh = t.hour.toString().padLeft(2, '0');
     final mm = t.minute.toString().padLeft(2, '0');
     return '$hh:$mm';
+  }
+
+  bool get _isValid {
+    if (!widget.restrictPastTime) return true;
+    final now = DateTime.now();
+    if (_selectedTime.hour < now.hour) return false;
+    if (_selectedTime.hour == now.hour && _selectedTime.minute < now.minute) {
+      return false;
+    }
+    return true;
+  }
+
+  double get _hourOpacity {
+    if (!widget.restrictPastTime) return 1.0;
+    final now = DateTime.now();
+    return _selectedTime.hour < now.hour ? 0.45 : 1.0;
+  }
+
+  double get _minuteOpacity {
+    if (!widget.restrictPastTime) return 1.0;
+    final now = DateTime.now();
+    if (_selectedTime.hour < now.hour) return 0.45;
+    if (_selectedTime.hour == now.hour && _selectedTime.minute < now.minute) {
+      return 0.45;
+    }
+    return 1.0;
   }
 
   bool get _isChanged {
@@ -89,6 +127,8 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    _manualController.hourOpacity = _hourOpacity;
+    _manualController.minuteOpacity = _minuteOpacity;
     final colors = _PickerColors(context);
     final hourStr = _selectedTime.hour.toString().padLeft(2, '0');
     final minuteStr = _selectedTime.minute.toString().padLeft(2, '0');
@@ -232,39 +272,42 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   // Hours column
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.keyboard_arrow_up_rounded,
-                                          color: colors.textSoft,
-                                          size: 30,
+                                  Opacity(
+                                    opacity: _hourOpacity,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.keyboard_arrow_up_rounded,
+                                            color: colors.textSoft,
+                                            size: 30,
+                                          ),
+                                          onPressed: () => _adjustTime(1, 0),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
                                         ),
-                                        onPressed: () => _adjustTime(1, 0),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                      ),
-                                      Text(
-                                        hourStr,
-                                        style: TextStyle(
-                                          color: colors.text,
-                                          fontSize: 44,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 1.2,
+                                        Text(
+                                          hourStr,
+                                          style: TextStyle(
+                                            color: colors.text,
+                                            fontSize: 44,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 1.2,
+                                          ),
                                         ),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.keyboard_arrow_down_rounded,
-                                          color: colors.textSoft,
-                                          size: 30,
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.keyboard_arrow_down_rounded,
+                                            color: colors.textSoft,
+                                            size: 30,
+                                          ),
+                                          onPressed: () => _adjustTime(-1, 0),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
                                         ),
-                                        onPressed: () => _adjustTime(-1, 0),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                   const SizedBox(width: 14),
                                   Text(
@@ -277,44 +320,58 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                                   ),
                                   const SizedBox(width: 14),
                                   // Minutes column
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.keyboard_arrow_up_rounded,
-                                          color: colors.textSoft,
-                                          size: 30,
+                                  Opacity(
+                                    opacity: _minuteOpacity,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.keyboard_arrow_up_rounded,
+                                            color: colors.textSoft,
+                                            size: 30,
+                                          ),
+                                          onPressed: () => _adjustTime(0, 1),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
                                         ),
-                                        onPressed: () => _adjustTime(0, 1),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                      ),
-                                      Text(
-                                        minuteStr,
-                                        style: TextStyle(
-                                          color: colors.text,
-                                          fontSize: 44,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 1.2,
+                                        Text(
+                                          minuteStr,
+                                          style: TextStyle(
+                                            color: colors.text,
+                                            fontSize: 44,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 1.2,
+                                          ),
                                         ),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.keyboard_arrow_down_rounded,
-                                          color: colors.textSoft,
-                                          size: 30,
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.keyboard_arrow_down_rounded,
+                                            color: colors.textSoft,
+                                            size: 30,
+                                          ),
+                                          onPressed: () => _adjustTime(0, -1),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
                                         ),
-                                        onPressed: () => _adjustTime(0, -1),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                           ),
+                          if (!_isValid) ...[
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Start time must be in the future',
+                              style: TextStyle(
+                                color: Colors.redAccent,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -362,63 +419,63 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                                   borderRadius: BorderRadius.circular(18),
                                   border: Border.all(color: colors.line),
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Manual entry',
-                                      style: TextStyle(
-                                        color: colors.textSoft,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    TextField(
-                                      controller: _manualController,
-                                      keyboardType: TextInputType.number,
-                                      style: TextStyle(
-                                        color: colors.text,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                        _TimeInputFormatter(),
-                                      ],
-                                      decoration: InputDecoration(
-                                        hintText: 'HH:MM',
-                                        hintStyle: TextStyle(
-                                          color: colors.textSoft
-                                              .withValues(alpha: 0.5),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Manual entry',
+                                        style: TextStyle(
+                                          color: colors.textSoft,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
                                         ),
-                                        border: InputBorder.none,
                                       ),
-                                      onChanged: (value) {
-                                        final parts = value.split(':');
-                                        if (parts.length == 2) {
-                                          final hour = int.tryParse(parts[0]);
-                                          final minute = int.tryParse(parts[1]);
-                                          if (hour != null &&
-                                              minute != null &&
-                                              hour >= 0 &&
-                                              hour <= 23 &&
-                                              minute >= 0 &&
-                                              minute <= 59) {
-                                            setState(() {
-                                              _selectedTime = TimeOfDay(
-                                                hour: hour,
-                                                minute: minute,
-                                              );
-                                            });
+                                      const SizedBox(height: 8),
+                                      TextField(
+                                        controller: _manualController,
+                                        keyboardType: TextInputType.number,
+                                        style: TextStyle(
+                                          color: colors.text,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.digitsOnly,
+                                          _TimeInputFormatter(),
+                                        ],
+                                        decoration: InputDecoration(
+                                          hintText: 'HH:MM',
+                                          hintStyle: TextStyle(
+                                            color: colors.textSoft
+                                                .withValues(alpha: 0.5),
+                                          ),
+                                          border: InputBorder.none,
+                                        ),
+                                        onChanged: (value) {
+                                          final parts = value.split(':');
+                                          if (parts.length == 2) {
+                                            final hour = int.tryParse(parts[0]);
+                                            final minute = int.tryParse(parts[1]);
+                                            if (hour != null &&
+                                                minute != null &&
+                                                hour >= 0 &&
+                                                hour <= 23 &&
+                                                minute >= 0 &&
+                                                minute <= 59) {
+                                              setState(() {
+                                                _selectedTime = TimeOfDay(
+                                                  hour: hour,
+                                                  minute: minute,
+                                                );
+                                              });
+                                            }
                                           }
-                                        }
-                                      },
-                                    ),
-                                  ],
+                                        },
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            )
+                              )
                           : const SizedBox.shrink(),
                     ),
                   ],
@@ -469,7 +526,7 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                 const SizedBox(width: 14),
                 Expanded(
                   child: AnimatedScaleOnPress(
-                    isDisabled: !_isChanged,
+                    isDisabled: !_isChanged || !_isValid,
                     child: SizedBox(
                       height: 52,
                       child: FilledButton(
@@ -485,7 +542,7 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                           ),
                           elevation: !_isChanged ? 0 : 2,
                         ),
-                        onPressed: _isChanged
+                        onPressed: (_isChanged && _isValid)
                             ? () {
                                 Navigator.of(context).pop(_selectedTime);
                               }
@@ -630,8 +687,7 @@ class _SheetBorderPainter extends CustomPainter {
   _SheetBorderPainter({
     required this.color,
     required this.radius,
-    this.width = 1.0,
-  });
+  }) : width = 1.0;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -662,5 +718,45 @@ class _SheetBorderPainter extends CustomPainter {
     return oldDelegate.color != color ||
         oldDelegate.radius != radius ||
         oldDelegate.width != width;
+  }
+}
+
+class _ManualTimeTextController extends TextEditingController {
+  double hourOpacity = 1.0;
+  double minuteOpacity = 1.0;
+
+  _ManualTimeTextController({super.text});
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    final baseStyle = style ?? const TextStyle();
+    final parts = text.split(':');
+    if (parts.length == 2) {
+      return TextSpan(
+        children: [
+          TextSpan(
+            text: parts[0],
+            style: baseStyle.copyWith(
+              color: baseStyle.color?.withValues(alpha: hourOpacity),
+            ),
+          ),
+          TextSpan(
+            text: ':',
+            style: baseStyle,
+          ),
+          TextSpan(
+            text: parts[1],
+            style: baseStyle.copyWith(
+              color: baseStyle.color?.withValues(alpha: minuteOpacity),
+            ),
+          ),
+        ],
+      );
+    }
+    return TextSpan(text: text, style: baseStyle);
   }
 }

@@ -54,6 +54,7 @@ class ExamCardData {
     this.autoStart = true,
     this.autoStartUserModified = false,
     this.isPaused = false,
+    this.wasEverStarted = false,
     List<ScheduleData>? scheduleList,
     List<BriefingItem>? briefings,
     List<Message>? messages,
@@ -87,6 +88,10 @@ class ExamCardData {
   final bool running;
   final DateTime? epochStart;
   final int pausedSeconds;
+
+  /// True once the exam has ever been started. Survives a reset so that
+  /// date-passed locking does not apply to exams that have a history.
+  final bool wasEverStarted;
 
   final bool vibrateOn;
   final bool autoStart;
@@ -129,6 +134,101 @@ class ExamCardData {
   int get extraSeconds => _hhmmToMin(extraTime) * 60;
 
   int get totalSeconds => normalSeconds + extraSeconds;
+
+  bool get isDatePassed {
+    // An exam has a history if it is currently running/paused/finished OR
+    // if it was ever started (even after a reset — wasEverStarted survives resets).
+    // Imported idle sessions have epochStart pre-set by session_service so
+    // we cannot rely on epochStart alone.
+    final hasActuallyStarted =
+        running || isPaused || phase == ExamPhase.finished || wasEverStarted;
+    if (hasActuallyStarted) return false;
+
+    try {
+      String? cleanDate;
+      final clean = date.trim().replaceAll(RegExp(r'\s+'), ' ');
+
+      // 1. Try DD/MM/YYYY or DD-MM-YYYY
+      final dmyRegex = RegExp(r'^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$');
+      var match = dmyRegex.firstMatch(clean);
+      if (match != null) {
+        final day = int.parse(match.group(1)!);
+        final month = int.parse(match.group(2)!);
+        var year = int.parse(match.group(3)!);
+        if (year < 100) year += 2000;
+        cleanDate = '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
+      } else {
+        // 2. Try D MMM YYYY (e.g. 12 May 2026)
+        final parts = clean.split(' ');
+        if (parts.length >= 3) {
+          final day = int.tryParse(parts[0]);
+          final monthStr = parts[1].toLowerCase();
+          var year = int.tryParse(parts[2]);
+
+          const months = {
+            'jan': 1, 'january': 1,
+            'feb': 2, 'february': 2,
+            'mar': 3, 'march': 3,
+            'apr': 4, 'april': 4,
+            'may': 5,
+            'jun': 6, 'june': 6,
+            'jul': 7, 'july': 7,
+            'aug': 8, 'august': 8,
+            'sep': 9, 'september': 9,
+            'oct': 10, 'october': 10,
+            'nov': 11, 'november': 11,
+            'dec': 12, 'december': 12,
+          };
+          final month = months[monthStr];
+          if (day != null && month != null && year != null) {
+            if (year < 100) year += 2000;
+            cleanDate = '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
+          }
+        }
+      }
+
+      // 3. Try YYYY-MM-DD
+      if (cleanDate == null) {
+        final ymdRegex = RegExp(r'^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$');
+        var ymdMatch = ymdRegex.firstMatch(clean);
+        if (ymdMatch != null) {
+          final year = int.parse(ymdMatch.group(1)!);
+          final month = int.parse(ymdMatch.group(2)!);
+          final day = int.parse(ymdMatch.group(3)!);
+          cleanDate = '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
+        }
+      }
+
+      if (cleanDate != null) {
+        final dp = cleanDate.split('/');
+        final tp = normalStart.split(':');
+        if (dp.length == 3 && tp.length >= 2) {
+          final d = int.parse(dp[0]);
+          final m = int.parse(dp[1]);
+          final y = int.parse(dp[2]);
+          final hh = int.parse(tp[0]);
+          final mm = int.parse(tp[1]);
+          final scheduled = DateTime(y, m, d, hh, mm);
+          return scheduled.isBefore(DateTime.now());
+        }
+      }
+    } catch (_) {}
+
+    try {
+      final parsed = DateTime.tryParse(date);
+      if (parsed != null) {
+        final tp = normalStart.split(':');
+        if (tp.length >= 2) {
+          final hh = int.parse(tp[0]);
+          final mm = int.parse(tp[1]);
+          final scheduled = DateTime(parsed.year, parsed.month, parsed.day, hh, mm);
+          return scheduled.isBefore(DateTime.now());
+        }
+      }
+    } catch (_) {}
+
+    return false;
+  }
 
   (String, String) _splitTrailingMetadata(String value) {
     final trimmed = value.trim();
@@ -174,6 +274,7 @@ class ExamCardData {
     'autoStart': autoStart,
     'autoStartUserModified': autoStartUserModified,
     'isPaused': isPaused,
+    'wasEverStarted': wasEverStarted,
     'scheduleList': scheduleList?.map((item) => item.toJson()).toList(),
     'briefings': briefings?.map((item) => item.toJson()).toList(),
     'messages': messages?.map((item) => item.toJson()).toList(),
@@ -213,6 +314,7 @@ class ExamCardData {
     autoStart: (m['autoStart'] ?? true) as bool,
     autoStartUserModified: (m['autoStartUserModified'] ?? false) as bool,
     isPaused: (m['isPaused'] ?? false) as bool,
+    wasEverStarted: (m['wasEverStarted'] ?? false) as bool,
     scheduleList: m['scheduleList'] != null
         ? (m['scheduleList'] as List)
               .map(
@@ -273,6 +375,7 @@ class ExamCardData {
     bool? autoStart,
     bool? autoStartUserModified,
     bool? isPaused,
+    bool? wasEverStarted,
     bool? isSelected,
     bool? isImage,
     String? fileName,
@@ -316,6 +419,7 @@ class ExamCardData {
       autoStartUserModified:
           autoStartUserModified ?? this.autoStartUserModified,
       isPaused: isPaused ?? this.isPaused,
+      wasEverStarted: wasEverStarted ?? this.wasEverStarted,
       isSelected: isSelected ?? this.isSelected,
       scheduleList: scheduleList ?? this.scheduleList,
       briefings: briefings ?? this.briefings,

@@ -487,6 +487,7 @@ class _HomeScreenState extends State<HomeScreen>
       isSelected: current.isSelected,
       tapScale: current.tapScale,
       isActiveTime: current.isActiveTime,
+      wasEverStarted: current.wasEverStarted,
     );
   }
 
@@ -668,7 +669,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _toggleExpanded(int i) {
     if (i < 0 || i >= _cards.length) return;
-    final cardId = _cards[i].recordId;
     setState(() {
       for (int j = 0; j < _cards.length; j++) {
         if (j == i) {
@@ -677,17 +677,6 @@ class _HomeScreenState extends State<HomeScreen>
           _cards[j] = _cards[j].copyWith(expanded: false);
         }
       }
-      _cards[i] = _cards[i].copyWith(tapScale: 1.02);
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) {
-          setState(() {
-            final idx = _cards.indexWhere((card) => card.recordId == cardId);
-            if (idx != -1) {
-              _cards[idx] = _cards[idx].copyWith(tapScale: 1.0);
-            }
-          });
-        }
-      });
       _saveState();
     });
   }
@@ -960,7 +949,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   bool _isArchivableExam(ExamCardData card) {
     final isFinished = card.phase == ExamPhase.finished || card.progress >= 1.0;
-    return !card.running && !card.isPaused && isFinished;
+    // Also allow archiving date-passed exams (never started, date elapsed).
+    return (!card.running && !card.isPaused && isFinished) || card.isDatePassed;
   }
 
   int get _archivableExamCount => _cards.where(_isArchivableExam).length;
@@ -1797,7 +1787,7 @@ class _HomeScreenState extends State<HomeScreen>
       key: key,
       data: c,
       pulse: _pulse,
-      isExamCompleted: c.phase == ExamPhase.finished,
+      isExamCompleted: c.phase == ExamPhase.finished || isArchiveView,
       isArchiveMode: isArchiveMode,
       extraPulse: extraPulse,
       tapScale: isArchiveView ? 1.0 : _cards[idx].tapScale,
@@ -1880,6 +1870,69 @@ class _HomeScreenState extends State<HomeScreen>
         if (_cards[idx].phase == ExamPhase.finished) {
           return;
         }
+
+        DateTime? cardDate;
+        try {
+          final clean = c.date.trim().replaceAll(RegExp(r'\s+'), ' ');
+          final dmyRegex = RegExp(r'^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$');
+          var match = dmyRegex.firstMatch(clean);
+          if (match != null) {
+            final day = int.parse(match.group(1)!);
+            final month = int.parse(match.group(2)!);
+            var year = int.parse(match.group(3)!);
+            if (year < 100) year += 2000;
+            cardDate = DateTime(year, month, day);
+          } else {
+            final parts = clean.split(' ');
+            if (parts.length >= 3) {
+              final day = int.tryParse(parts[0]);
+              final monthStr = parts[1].toLowerCase();
+              var year = int.tryParse(parts[2]);
+
+              const months = {
+                'jan': 1, 'january': 1,
+                'feb': 2, 'february': 2,
+                'mar': 3, 'march': 3,
+                'apr': 4, 'april': 4,
+                'may': 5,
+                'jun': 6, 'june': 6,
+                'jul': 7, 'july': 7,
+                'aug': 8, 'august': 8,
+                'sep': 9, 'september': 9,
+                'oct': 10, 'october': 10,
+                'nov': 11, 'november': 11,
+                'dec': 12, 'december': 12,
+              };
+              final month = months[monthStr];
+              if (day != null && month != null && year != null) {
+                if (year < 100) year += 2000;
+                cardDate = DateTime(year, month, day);
+              }
+            }
+          }
+
+          if (cardDate == null) {
+            final ymdRegex = RegExp(r'^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$');
+            var ymdMatch = ymdRegex.firstMatch(clean);
+            if (ymdMatch != null) {
+              final year = int.parse(ymdMatch.group(1)!);
+              final month = int.parse(ymdMatch.group(2)!);
+              final day = int.parse(ymdMatch.group(3)!);
+              cardDate = DateTime(year, month, day);
+            }
+          }
+
+          if (cardDate == null) {
+            cardDate = DateTime.tryParse(c.date);
+          }
+        } catch (_) {}
+
+        final now = DateTime.now();
+        final isToday = cardDate != null &&
+            cardDate.year == now.year &&
+            cardDate.month == now.month &&
+            cardDate.day == now.day;
+
         final t = _parseHHMM(c.normalStart);
         final picked = await showModalBottomSheet<TimeOfDay>(
           context: context,
@@ -1890,6 +1943,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           builder: (_) => VigiloTimePickerSheet(
             initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
+            restrictPastTime: isToday,
           ),
         );
         if (picked != null) {

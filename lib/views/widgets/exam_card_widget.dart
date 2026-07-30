@@ -75,6 +75,7 @@ class ExamCard extends StatefulWidget {
 class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin {
   late AnimationController _expandController;
   late Animation<double> _expandAnimation;
+  double _localScale = 1.0;
 
   @override
   void initState() {
@@ -199,17 +200,31 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     final showRunning = data.running || data.progress > 0.0;
 
     return AnimatedScale(
-      scale: tapScale,
+      scale: isArchiveMode ? widget.tapScale : _localScale,
       duration: const Duration(milliseconds: 120),
       curve: Curves.easeOut,
       child: GestureDetector(
-        onTap: () {
-          if (isArchiveMode) {
-            onSelect();
-          } else {
-            onChevronTap();
-          }
-        },
+        onTap: (data.isDatePassed && !isExamCompleted && !isArchiveMode)
+            ? null
+            : () {
+                if (!isArchiveMode) {
+                  setState(() {
+                    _localScale = 1.02;
+                  });
+                  Future.delayed(const Duration(milliseconds: 100), () {
+                    if (mounted) {
+                      setState(() {
+                        _localScale = 1.0;
+                      });
+                    }
+                  });
+                }
+                if (isArchiveMode) {
+                  onSelect();
+                } else {
+                  onChevronTap();
+                }
+              },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 350),
           curve: Curves.easeInOut,
@@ -305,43 +320,76 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                           ],
                         ),
                       ),
+                      const SizedBox(width: 10),
                       Row(
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (isArchiveMode)
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: Icon(
-                                data.isSelected
-                                    ? Icons.check_circle_rounded
-                                    : Icons.radio_button_unchecked,
-                                color: data.isSelected
-                                    ? vColors.green
-                                    : vColors.textSoft,
+                          if (data.isDatePassed || (data.phase == ExamPhase.finished && !data.expanded)) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: (data.isDatePassed ? vColors.textFaint : vColors.green).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: data.isDatePassed ? vColors.textFaint : vColors.green),
+                              ),
+                              child: Text(
+                                data.isDatePassed ? 'DATE PASSED' : 'FINISHED',
+                                style: TextStyle(
+                                  color: data.isDatePassed ? vColors.textFaint : vColors.green,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
-                          InkWell(
-                            onTap: () {
-                              if (!isArchiveMode) {
-                                onChevronTap();
-                              }
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: AnimatedRotation(
-                              duration: const Duration(milliseconds: 200),
-                              turns: data.expanded ? 0.5 : 0.0,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
+                          ],
+                          if (isArchiveMode && (isExamCompleted || data.isDatePassed))...[
+                            const SizedBox(width: 10,),
+                            Icon(
+                            data.isSelected
+                                ? Icons.check_circle_rounded
+                                : Icons.radio_button_unchecked,
+                            color: data.isSelected
+                                ? vColors.green
+                                : vColors.textSoft,
+                          ),
+                          ],
+                          if (!data.isDatePassed)...[
+                            SizedBox(width: 10,),
+                            InkWell(
+                              onTap: () {
+                                if (!isArchiveMode) {
+                                  setState(() {
+                                    _localScale = 1.02;
+                                  });
+                                  Future.delayed(const Duration(milliseconds: 100), () {
+                                    if (mounted) {
+                                      setState(() {
+                                        _localScale = 1.0;
+                                      });
+                                    }
+                                  });
+                                  onChevronTap();
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(6),
+                              child: AnimatedRotation(
+                                duration: const Duration(milliseconds: 200),
+                                turns: data.expanded ? 0.5 : 0.0,
                                 child: Icon(Icons.expand_more, color: vColors.textSoft),
                               ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _compactTimingBox(isDark, vColors),
+                  Opacity(
+                    opacity: data.isDatePassed ? 0.4 : 1.0,
+                    child: _compactTimingBox(isDark, vColors),
+                  ),
                   SizeTransition(
                     sizeFactor: _expandAnimation,
                     axisAlignment: -1.0,
@@ -587,6 +635,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                             running: true,
                             epochStart: DateTime.now(),
                             pausedSeconds: 0,
+                            wasEverStarted: true,
                           ),
                         );
                       }),

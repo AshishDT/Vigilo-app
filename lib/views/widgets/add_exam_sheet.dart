@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
 
@@ -6,6 +7,7 @@ import 'vigilo_time_picker.dart';
 import 'vigilo_duration_picker.dart';
 import 'animated_scale_on_press.dart';
 import '../../utils/screen_util.dart';
+import '../../utils/notifications.dart';
 
 class _SheetColors {
   final BuildContext context;
@@ -84,6 +86,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
   late String _startHHMM;
   late String _durationHHMM;
   late String _extraHHMM;
+  Timer? _rebuildTimer;
 
   @override
   void initState() {
@@ -123,13 +126,24 @@ class _AddExamSheetState extends State<AddExamSheet> {
     _boardFocus.addListener(_onFocusChanged);
     
     _selectedDate = DateTime.now();
-    _startHHMM = _normalizeHHMM(widget.lastStart, fallback: "09:00");
+    _startHHMM = _normalizeHHMM(widget.lastStart, fallback: _getDefaultFutureHour());
     _durationHHMM = _normalizeHHMM(
       widget.lastDuration,
       fallback: "01:30",
       allowZero: false,
     );
     _extraHHMM = _normalizeHHMM(widget.lastExtra, fallback: "00:15");
+    _rebuildTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  String _getDefaultFutureHour() {
+    final now = DateTime.now();
+    final nextHour = (now.hour + 1) % 24;
+    return '${nextHour.toString().padLeft(2, '0')}:00';
   }
 
   String _previousSchoolText = "";
@@ -169,6 +183,19 @@ class _AddExamSheetState extends State<AddExamSheet> {
     }
   }
 
+  bool _isPastTimeSelected() {
+    final now = DateTime.now();
+    final isToday = _selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day;
+    if (!isToday) return false;
+
+    final t = _parseHHMM(_startHHMM);
+    if (t.$1 < now.hour) return true;
+    if (t.$1 == now.hour && t.$2 < now.minute) return true;
+    return false;
+  }
+
   bool _isValidToSave() {
     return _schoolCtl.text.trim().isNotEmpty &&
         _centreCtl.text.trim().isNotEmpty &&
@@ -198,6 +225,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
     _centreCtl.dispose();
     _subjectCtl.dispose();
     _boardCtl.dispose();
+    _rebuildTimer?.cancel();
     super.dispose();
   }
 
@@ -235,6 +263,11 @@ class _AddExamSheetState extends State<AddExamSheet> {
 
   Future<void> _pickStart() async {
     final t = _parseHHMM(_startHHMM);
+    final now = DateTime.now();
+    final isToday = _selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day;
+
     final picked = await showModalBottomSheet<TimeOfDay>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -245,6 +278,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
       builder: (_) => VigiloTimePickerSheet(
         initialTime: TimeOfDay(hour: t.$1, minute: t.$2),
         showIcons: false,
+        restrictPastTime: isToday,
       ),
     );
     if (picked != null) {
@@ -478,58 +512,62 @@ class _AddExamSheetState extends State<AddExamSheet> {
     required String value,
     required IconData icon,
     required VoidCallback onTap,
+    bool isFaded = false,
   }) {
     final colors = _SheetColors(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          color: colors.inputBg,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: colors.line),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: colors.blackWhite, size: 20.r),
-            SizedBox(width: 8.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: TextStyle(
-                      color: colors.textSoft,
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w700,
+    return Opacity(
+      opacity: isFaded ? 0.45 : 1.0,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            color: colors.inputBg,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: colors.line),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: colors.blackWhite, size: 20.r),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(
+                        color: colors.textSoft,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    value,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: TextStyle(
-                      color: colors.text,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w800,
+                    SizedBox(height: 4.h),
+                    Text(
+                      value,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(
+                        color: colors.text,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            SizedBox(width: 6.w),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: colors.textSoft,
-              size: 20.r,
-            ),
-          ],
+              SizedBox(width: 6.w),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: colors.textSoft,
+                size: 20.r,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -539,42 +577,46 @@ class _AddExamSheetState extends State<AddExamSheet> {
     required String label,
     IconData? icon,
     required VoidCallback? onTap,
+    bool isFaded = false,
   }) {
     final colors = _SheetColors(context);
     return AnimatedScaleOnPress(
       isDisabled: onTap == null,
-      child: SizedBox(
-        height: 52,
-        child: FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: colors.blue,
-            disabledBackgroundColor: colors.blue.withValues(alpha: 0.45),
-            foregroundColor: Colors.white,
-            disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(26),
+      child: Opacity(
+        opacity: isFaded ? 0.45 : 1.0,
+        child: SizedBox(
+          height: 52,
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: colors.blue,
+              disabledBackgroundColor: colors.blue.withValues(alpha: 0.45),
+              foregroundColor: Colors.white,
+              disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(26),
+              ),
+              elevation: onTap == null ? 0 : 2,
             ),
-            elevation: onTap == null ? 0 : 2,
-          ),
-          onPressed: onTap,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 20, color: Colors.white),
-                const SizedBox(width: 10),
-              ],
-              Flexible(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
+            onPressed: onTap,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 20, color: Colors.white),
+                  const SizedBox(width: 10),
+                ],
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -638,8 +680,11 @@ class _AddExamSheetState extends State<AddExamSheet> {
         minChildSize: 0.4,
         maxChildSize: 0.95,
         expand: false,
-        builder: (context, scrollController) {
-          return Container(
+        builder: (sheetContext, scrollController) {
+          return Scaffold(
+            backgroundColor: Colors.transparent,
+            resizeToAvoidBottomInset: false,
+            body: Container(
             decoration: BoxDecoration(
               color: colors.panel.withValues(alpha: 0.985),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -864,13 +909,24 @@ class _AddExamSheetState extends State<AddExamSheet> {
                       Expanded(
                         child: _primaryButton(
                           label: 'Save',
+                          isFaded: _isPastTimeSelected(),
                           onTap: _isValidToSave()
                               ? () async {
+                                  if (_isPastTimeSelected()) {
+                                    NotificationService.show(
+                                      sheetContext,
+                                      title: "Start time must be in the future",
+                                      subtitle: "Please select a future start time.",
+                                      type: NotificationType.error,
+                                      icon: Icons.error_outline_rounded,
+                                    );
+                                    return;
+                                  }
                                   final school = _schoolCtl.text.trim();
                                   final centre = _centreCtl.text.trim();
                                   final subj = _subjectCtl.text.trim();
                                   final board = _boardCtl.text.trim();
- 
+
                                   await widget.onSave(
                                     school: school,
                                     centre: centre,
@@ -892,6 +948,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
               ],
             ),
           ),
+         ),
         );
       },
       ),
@@ -907,8 +964,7 @@ class _SheetBorderPainter extends CustomPainter {
   _SheetBorderPainter({
     required this.color,
     required this.radius,
-    this.width = 1.0,
-  });
+  }) : width = 1.0;
 
   @override
   void paint(Canvas canvas, Size size) {
