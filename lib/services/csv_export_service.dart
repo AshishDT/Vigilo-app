@@ -204,7 +204,7 @@ class CsvExportService {
     buffer.writeln('Organisation');
     buffer.writeln();
     buffer.writeln('Organisation Name: ${_noneIfBlank(organization.name)}');
-    buffer.writeln('Organisation Number: ${_noneIfBlank(organization.code)}');
+    buffer.writeln('Centre Number: ${_noneIfBlank(organization.code)}');
     buffer.writeln();
     buffer.writeln('Exam Session');
     buffer.writeln();
@@ -218,6 +218,7 @@ class CsvExportService {
     buffer.writeln();
     buffer.writeln('Room(s): ${_noneIfBlank(_rooms(card))}');
     buffer.writeln('Invigilator(s): ${_noneIfBlank(_invigilators(card))}');
+    buffer.writeln('Notes & Instructions: ${_noneIfBlank((card?.notes ?? '').trim())}');
     buffer.writeln();
     buffer.writeln('Set Up By: ${_noneIfBlank((card?.setUpBy ?? '').trim())}');
     buffer.writeln(
