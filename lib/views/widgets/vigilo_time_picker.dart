@@ -361,17 +361,39 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                               ),
                             ),
                           ),
-                          if (!_isValid) ...[
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Start time must be in the future',
-                              style: TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            child: AnimatedOpacity(
+                              opacity: _isValid ? 0.0 : 1.0,
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOut,
+                              child: _isValid
+                                  ? const SizedBox.shrink()
+                                  : const Padding(
+                                      padding: EdgeInsets.only(top: 12),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.access_time_rounded,
+                                            color: Colors.redAccent,
+                                            size: 14,
+                                          ),
+                                          SizedBox(width: 5),
+                                          Text(
+                                            'Start time must be in the future',
+                                            style: TextStyle(
+                                              color: Colors.redAccent,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                             ),
-                          ],
+                          ),
                         ],
                       ),
                     ),
