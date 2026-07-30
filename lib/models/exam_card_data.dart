@@ -144,6 +144,16 @@ class ExamCardData {
         running || isPaused || phase == ExamPhase.finished || wasEverStarted;
     if (hasActuallyStarted) return false;
 
+    // If autoStart is enabled, the 1-second tick will start this exam as soon
+    // as its scheduled time arrives. There is a race window of up to ~1 second
+    // between the moment isDatePassed first becomes true (at render time) and
+    // the moment the tick fires startSession() and sets running=true. During
+    // that window, a Flutter rebuild (from animation controllers etc.) would
+    // show "DATE PASSED" for a split second. Guard against that by never
+    // reporting date-passed for an auto-start exam — it will transition to
+    // running on the next tick automatically.
+    if (autoStart && progress == 0.0) return false;
+
     try {
       String? cleanDate;
       final clean = date.trim().replaceAll(RegExp(r'\s+'), ' ');
