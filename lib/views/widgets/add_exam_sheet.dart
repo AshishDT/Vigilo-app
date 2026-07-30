@@ -480,28 +480,34 @@ class _AddExamSheetState extends State<AddExamSheet> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: value != null ? colors.blue : colors.line, width: value != null ? 1.4 : 1.0),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          dropdownColor: colors.inputBg,
-          icon: Icon(Icons.keyboard_arrow_down_rounded, color: colors.textSoft),
-          hint: Text(
-            'Select exam level (optional)',
-            style: TextStyle(color: colors.textFaint, fontSize: 15, fontWeight: FontWeight.w600),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          focusColor: colors.inputBg,
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            isExpanded: true,
+            dropdownColor: colors.panel2,
+            borderRadius: BorderRadius.circular(14),
+            icon: Icon(Icons.keyboard_arrow_down_rounded, color: colors.textSoft),
+            hint: Text(
+              'Select exam level (optional)',
+              style: TextStyle(color: colors.textFaint, fontSize: 15, fontWeight: FontWeight.w600),
+            ),
+            style: TextStyle(color: colors.text, fontSize: 16, fontWeight: FontWeight.w700),
+            items: [
+              // Blank option to clear the selection
+              DropdownMenuItem<String>(
+                value: null,
+                child: Text('None', style: TextStyle(color: colors.textFaint, fontSize: 16, fontWeight: FontWeight.w700)),
+              ),
+              ..._examLevelOptions.map(
+                (o) => DropdownMenuItem<String>(value: o, child: Text(o)),
+              ),
+            ],
+            onChanged: onChanged,
           ),
-          style: TextStyle(color: colors.text, fontSize: 16, fontWeight: FontWeight.w700),
-          items: [
-            // Blank option to clear the selection
-            DropdownMenuItem<String>(
-              value: null,
-              child: Text('None', style: TextStyle(color: colors.textFaint, fontSize: 16, fontWeight: FontWeight.w700)),
-            ),
-            ..._examLevelOptions.map(
-              (o) => DropdownMenuItem<String>(value: o, child: Text(o)),
-            ),
-          ],
-          onChanged: onChanged,
         ),
       ),
     );
