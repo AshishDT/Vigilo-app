@@ -4,31 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../enums/exam_phase.dart';
 import '../../models/exam_card_data.dart';
+import '../../utils/constants.dart';
 import 'animated_scale_on_press.dart';
 import 'elapsed_remaining_line.dart';
 import 'ring_painter_widget.dart';
-
-class VigiloColors {
-  final bool isDark;
-  const VigiloColors(this.isDark);
-
-  Color get bg => isDark ? const Color(0xFF071A2B) : const Color(0xFFEAF1F8);
-  Color get bg2 => isDark ? const Color(0xFF0C2238) : const Color(0xFFF7FAFD);
-  Color get panel => isDark ? const Color(0xFF10263D) : const Color(0xFFFFFFFF);
-  Color get panel3 => isDark ? const Color(0xFF0F2236) : const Color(0xFFF1F6FB);
-  Color get line => isDark ? const Color(0xFF294867) : const Color(0xFFC9D8E8);
-  Color get lineSoft => isDark ? const Color(0xFF395B7D) : const Color(0xFFAFC3D8);
-
-  Color get text => isDark ? const Color(0xFFF3F7FC) : const Color(0xFF10263D);
-  Color get textSoft => isDark ? const Color(0xFFB6C7D8) : const Color(0xFF50677F);
-  Color get textFaint => isDark ? const Color(0xFF7E98B2) : const Color(0xFF8297AC);
-
-  Color get blue => isDark ? const Color(0xFF4B86F8) : const Color(0xFF256BDB);
-  Color get blueSoft => isDark ? const Color(0xFF8FD4FF) : const Color(0xFF3F86F5);
-  Color get amber => isDark ? const Color(0xFFFFB64D) : const Color(0xFFE59422);
-  Color get finished => isDark ? const Color(0xFF8FA6BE) : const Color(0xFF7C91A8);
-  Color get green => isDark ? const Color(0xFF5ED68A) : const Color(0xFF249B62);
-}
 
 class ExamCard extends StatefulWidget {
   const ExamCard({
@@ -173,7 +152,6 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final vColors = VigiloColors(isDark);
 
     final subjectLine = data.subjectName.isEmpty ? data.subject : data.subjectName;
     final organizationLine = data.resolvedCentreNumber.isEmpty
@@ -183,13 +161,13 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     late Color phaseColor;
     switch (data.phase) {
       case ExamPhase.normal:
-        phaseColor = vColors.blue;
+        phaseColor = VigiloUiColors.blue(isDark);
         break;
       case ExamPhase.extra:
-        phaseColor = vColors.amber;
+        phaseColor = VigiloUiColors.amber(isDark);
         break;
       case ExamPhase.finished:
-        phaseColor = vColors.finished;
+        phaseColor = VigiloUiColors.finished(isDark);
         break;
     }
 
@@ -233,12 +211,12 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             border: collapsedExtra
                 ? Border.all(
                     width: 1.4,
-                    color: vColors.amber.withOpacity(isDark ? 0.76 : 0.70),
+                    color: VigiloUiColors.amber(isDark).withOpacity(isDark ? 0.76 : 0.70),
                   )
                 : !data.expanded
                     ? Border.all(
                         width: 1,
-                        color: vColors.lineSoft.withOpacity(isDark ? 0.42 : 0.54),
+                        color: VigiloUiColors.lineSoft(isDark).withOpacity(isDark ? 0.42 : 0.54),
                       )
                     : Border.all(width: 1, color: phaseColor.withOpacity(isDark ? 0.26 : 0.34)),
             boxShadow: [
@@ -256,7 +234,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             ],
           ),
           child: Card(
-            color: isDark ? vColors.panel.withOpacity(0.96) : vColors.panel,
+            color: isDark ? VigiloUiColors.panel(isDark).withOpacity(0.96) : VigiloUiColors.panel(isDark),
             margin: EdgeInsets.zero,
             clipBehavior: Clip.antiAlias,
             shape: RoundedRectangleBorder(
@@ -277,7 +255,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                             Text(
                               subjectLine,
                               style: TextStyle(
-                                color: vColors.text,
+                                color: VigiloUiColors.text(isDark),
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: -0.15,
@@ -290,7 +268,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                                 child: Text(
                                   data.examLevel!,
                                   style: TextStyle(
-                                    color: vColors.textSoft,
+                                    color: VigiloUiColors.textSoft(isDark),
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     height: 1.2,
@@ -301,7 +279,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                             Text(
                               data.date,
                               style: TextStyle(
-                                color: vColors.textSoft,
+                                color: VigiloUiColors.textSoft(isDark),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 height: 1.2,
@@ -311,7 +289,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                             Text(
                               organizationLine,
                               style: TextStyle(
-                                color: vColors.textSoft,
+                                color: VigiloUiColors.textSoft(isDark),
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
                                 height: 1.2,
@@ -329,14 +307,14 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: (data.isDatePassed ? vColors.textFaint : vColors.green).withOpacity(0.15),
+                                color: (data.isDatePassed ? VigiloUiColors.textFaint(isDark) : VigiloUiColors.green(isDark)).withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: data.isDatePassed ? vColors.textFaint : vColors.green),
+                                border: Border.all(color: data.isDatePassed ? VigiloUiColors.textFaint(isDark) : VigiloUiColors.green(isDark)),
                               ),
                               child: Text(
                                 data.isDatePassed ? 'DATE PASSED' : 'FINISHED',
                                 style: TextStyle(
-                                  color: data.isDatePassed ? vColors.textFaint : vColors.green,
+                                  color: data.isDatePassed ? VigiloUiColors.textFaint(isDark) : VigiloUiColors.green(isDark),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 10,
                                   letterSpacing: 0.5,
@@ -351,8 +329,8 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                                 ? Icons.check_circle_rounded
                                 : Icons.radio_button_unchecked,
                             color: data.isSelected
-                                ? vColors.green
-                                : vColors.textSoft,
+                                ? VigiloUiColors.green(isDark)
+                                : VigiloUiColors.textSoft(isDark),
                           ),
                           ],
                           if (!data.isDatePassed)...[
@@ -377,7 +355,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                               child: AnimatedRotation(
                                 duration: const Duration(milliseconds: 200),
                                 turns: data.expanded ? 0.5 : 0.0,
-                                child: Icon(Icons.expand_more, color: vColors.textSoft),
+                                child: Icon(Icons.expand_more, color: VigiloUiColors.textSoft(isDark)),
                               ),
                             ),
                           ],
@@ -388,7 +366,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                   const SizedBox(height: 16),
                   Opacity(
                     opacity: data.isDatePassed ? 0.4 : 1.0,
-                    child: _compactTimingBox(isDark, vColors),
+                    child: _compactTimingBox(isDark),
                   ),
                   SizeTransition(
                     sizeFactor: _expandAnimation,
@@ -400,13 +378,13 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 16),
-                            _timerRing(isDark, vColors, phaseColor, phaseRemaining, phaseElapsed, usedPercent),
+                            _timerRing(isDark, phaseColor, phaseRemaining, phaseElapsed, usedPercent),
                             const SizedBox(height: 8),
-                            _elapsedRemainingRow(context, isDark, vColors),
+                            _elapsedRemainingRow(context, isDark),
                             const SizedBox(height: 24),
-                            _editButtonRows(context, isDark, vColors, showRunning: showRunning),
+                            _editButtonRows(context, isDark, showRunning: showRunning),
                             const SizedBox(height: 14),
-                            _fullTimingSummaryBox(isDark, vColors),
+                            _fullTimingSummaryBox(isDark),
                           ],
                         ),
                       ),
@@ -421,40 +399,40 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _compactTimingBox(bool isDark, VigiloColors vColors) {
+  Widget _compactTimingBox(bool isDark) {
     final color = data.phase == ExamPhase.finished
-        ? vColors.finished
-        : vColors.blue;
+        ? VigiloUiColors.finished(isDark)
+        : VigiloUiColors.blue(isDark);
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 13),
       decoration: BoxDecoration(
-        color: vColors.panel3.withOpacity(isDark ? 0.58 : 1.0),
+        color: VigiloUiColors.panel3(isDark).withOpacity(isDark ? 0.58 : 1.0),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: vColors.blue.withOpacity(isDark ? 0.44 : 0.30),
+          color: VigiloUiColors.blue(isDark).withOpacity(isDark ? 0.44 : 0.30),
           width: 1,
         ),
       ),
       child: Row(
         children: [
-          Expanded(child: _compactTimeValue(vColors, 'ST', _formatHeaderHm(data.start), color)),
-          _verticalDivider(vColors, height: 30),
-          Expanded(child: _compactTimeValue(vColors, 'D', data.duration, color)),
-          _verticalDivider(vColors, height: 30),
-          Expanded(child: _compactTimeValue(vColors, 'ET', _formatHeaderHm(data.end), color)),
+          Expanded(child: _compactTimeValue(isDark, 'ST', _formatHeaderHm(data.start), color)),
+          _verticalDivider(isDark, height: 30),
+          Expanded(child: _compactTimeValue(isDark, 'D', data.duration, color)),
+          _verticalDivider(isDark, height: 30),
+          Expanded(child: _compactTimeValue(isDark, 'ET', _formatHeaderHm(data.end), color)),
         ],
       ),
     );
   }
 
-  Widget _compactTimeValue(VigiloColors vColors, String label, String value, Color color) {
+  Widget _compactTimeValue(bool isDark, String label, String value, Color color) {
     return Column(
       children: [
         Text(
           label,
           style: TextStyle(
-            color: vColors.textFaint,
+            color: VigiloUiColors.textFaint(isDark),
             fontSize: 10.5,
             fontWeight: FontWeight.w900,
             letterSpacing: 0.55,
@@ -476,7 +454,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _timerRing(bool isDark, VigiloColors vColors, Color phaseColor, int phaseRemaining, int phaseElapsed, int usedPercent) {
+  Widget _timerRing(bool isDark, Color phaseColor, int phaseRemaining, int phaseElapsed, int usedPercent) {
     late String phaseLabel;
     switch (data.phase) {
       case ExamPhase.normal:
@@ -514,7 +492,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                   size: const Size.square(228),
                   painter: RingPainter(
                     progress: v,
-                    trackColor: isDark ? vColors.line.withOpacity(0.42) : vColors.line.withOpacity(0.62),
+                    trackColor: isDark ? VigiloUiColors.line(isDark).withOpacity(0.42) : VigiloUiColors.line(isDark).withOpacity(0.62),
                     progressColor: phaseColor,
                     strokeWidth: 12,
                     isRunning: data.running,
@@ -532,7 +510,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                           roundUp: data.isActiveTime,
                         ),
                         style: TextStyle(
-                          color: vColors.text,
+                          color: VigiloUiColors.text(isDark),
                           fontSize: 36,
                           fontWeight: FontWeight.w900,
                         ),
@@ -545,7 +523,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                         vertical: 9,
                       ),
                       decoration: BoxDecoration(
-                        color: (data.phase == ExamPhase.finished ? vColors.green : phaseColor).withOpacity(0.88),
+                        color: (data.phase == ExamPhase.finished ? VigiloUiColors.green(isDark) : phaseColor).withOpacity(0.88),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(
@@ -577,34 +555,34 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _elapsedRemainingRow(BuildContext context, bool isDark, VigiloColors vColors) {
+  Widget _elapsedRemainingRow(BuildContext context, bool isDark) {
     return ElapsedRemainingLine(
       elapsedStr: _fmtHhMm(_elapsedSecond()),
       remainingStr: _fmtHhMm(_phaseRemainingSeconds(), roundUp: data.isActiveTime),
-      vColors: vColors,
+      isDark: isDark,
     );
   }
 
-  Widget _editButtonRows(BuildContext context, bool isDark, VigiloColors vColors, {required bool showRunning}) {
+  Widget _editButtonRows(BuildContext context, bool isDark, {required bool showRunning}) {
     return Column(
       children: [
         Row(
           children: [
             Expanded(
               child: AnimatedScaleOnPress(
-                child: _editButton(isDark, vColors, 'Date', Icons.event, onEditDate),
+                child: _editButton(isDark, 'Date', Icons.event, onEditDate),
               ),
             ),
             const SizedBox(width: 6),
             Expanded(
               child: AnimatedScaleOnPress(
-                child: _editButton(isDark, vColors, 'Start Time', Icons.schedule, onEditStartTime),
+                child: _editButton(isDark, 'Start Time', Icons.schedule, onEditStartTime),
               ),
             ),
             const SizedBox(width: 6),
             Expanded(
               child: AnimatedScaleOnPress(
-                child: _editButton(isDark, vColors, 'Duration', Icons.timer, onEditDuration),
+                child: _editButton(isDark, 'Duration', Icons.timer, onEditDuration),
               ),
             ),
           ],
@@ -616,11 +594,10 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
               child: AnimatedScaleOnPress(
                 child: _editButton(
                   isDark,
-                  vColors,
                   'Extra Time',
                   Icons.more_time,
                   onEditExtra,
-                  accent: vColors.amber,
+                  accent: VigiloUiColors.amber(isDark),
                 ),
               ),
             ),
@@ -628,8 +605,8 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             Expanded(
               child: AnimatedScaleOnPress(
                 child: showRunning
-                    ? _runningButton(isDark, vColors)
-                    : _startNowButton(vColors, () {
+                    ? _runningButton(isDark)
+                    : _startNowButton(isDark, () {
                         onUpdate(
                           data.copyWith(
                             running: true,
@@ -649,20 +626,19 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
 
   Widget _editButton(
     bool isDark,
-    VigiloColors vColors,
     String label,
     IconData icon,
     VoidCallback onPressed, {
     Color? accent,
   }) {
-    final activeAccent = accent ?? vColors.blueSoft;
+    final activeAccent = accent ?? VigiloUiColors.blueSoft(isDark);
 
     return SizedBox(
       height: 42,
       child: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDark ? vColors.panel3.withOpacity(0.86) : vColors.panel3,
-          foregroundColor: vColors.text,
+          backgroundColor: isDark ? VigiloUiColors.panel3(isDark).withOpacity(0.86) : VigiloUiColors.panel3(isDark),
+          foregroundColor: VigiloUiColors.text(isDark),
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 6),
           shape: RoundedRectangleBorder(
@@ -687,12 +663,12 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _startNowButton(VigiloColors vColors, VoidCallback onTap) {
+  Widget _startNowButton(bool isDark, VoidCallback onTap) {
     return SizedBox(
       height: 42,
       child: FilledButton.icon(
         style: FilledButton.styleFrom(
-          backgroundColor: vColors.blue,
+          backgroundColor: VigiloUiColors.blue(isDark),
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -714,7 +690,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _runningButton(bool isDark, VigiloColors vColors) {
+  Widget _runningButton(bool isDark) {
     final bool completed = isExamCompleted || data.phase == ExamPhase.finished;
     final String labelText = completed ? 'Finished' : 'Running';
     final IconData iconData = completed ? Icons.check_circle_outline_rounded : Icons.lock_rounded;
@@ -725,18 +701,18 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
         height: 42,
         child: FilledButton.icon(
           style: FilledButton.styleFrom(
-            disabledBackgroundColor: completed 
-                ? vColors.finished.withOpacity(isDark ? 0.27 : 0.16)
-                : vColors.blue.withOpacity(isDark ? 0.27 : 0.16),
-            disabledForegroundColor: vColors.textSoft,
+            disabledBackgroundColor: completed
+                ? VigiloUiColors.finished(isDark).withOpacity(isDark ? 0.27 : 0.16)
+                : VigiloUiColors.blue(isDark).withOpacity(isDark ? 0.27 : 0.16),
+            disabledForegroundColor: VigiloUiColors.textSoft(isDark),
             elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
               side: BorderSide(
-                color: completed 
-                    ? vColors.finished.withOpacity(isDark ? 0.36 : 0.30)
-                    : vColors.blue.withOpacity(isDark ? 0.36 : 0.30),
+                color: completed
+                    ? VigiloUiColors.finished(isDark).withOpacity(isDark ? 0.36 : 0.30)
+                    : VigiloUiColors.blue(isDark).withOpacity(isDark ? 0.36 : 0.30),
                 width: 1,
               ),
             ),
@@ -756,7 +732,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _fullTimingSummaryBox(bool isDark, VigiloColors vColors) {
+  Widget _fullTimingSummaryBox(bool isDark) {
     final normalActive = data.phase == ExamPhase.normal;
     final extraActive = data.phase == ExamPhase.extra;
     final finished = data.phase == ExamPhase.finished;
@@ -764,12 +740,12 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: isDark ? vColors.panel3.withOpacity(0.58) : vColors.panel3,
+        color: isDark ? VigiloUiColors.panel3(isDark).withOpacity(0.58) : VigiloUiColors.panel3(isDark),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: finished
-              ? vColors.finished.withOpacity(isDark ? 0.32 : 0.34)
-              : vColors.line.withOpacity(isDark ? 0.58 : 0.76),
+              ? VigiloUiColors.finished(isDark).withOpacity(isDark ? 0.32 : 0.34)
+              : VigiloUiColors.line(isDark).withOpacity(isDark ? 0.58 : 0.76),
           width: 1,
         ),
       ),
@@ -778,32 +754,32 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
           _summaryRowBox(
             isDark,
             active: normalActive,
-            borderColor: finished ? vColors.finished : vColors.blue,
+            borderColor: finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.blue(isDark),
             children: [
               Expanded(
                 child: _summaryTimeValue(
-                  vColors,
+                  isDark,
                   'Start Time',
                   _formatHeaderHm(data.normalStart),
-                  finished ? vColors.finished : vColors.blue,
+                  finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.blue(isDark),
                 ),
               ),
-              _verticalDivider(vColors, height: 30),
+              _verticalDivider(isDark, height: 30),
               Expanded(
                 child: _summaryTimeValue(
-                  vColors,
+                  isDark,
                   'Duration',
                   data.normalDuration,
-                  finished ? vColors.finished : vColors.blue,
+                  finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.blue(isDark),
                 ),
               ),
-              _verticalDivider(vColors, height: 30),
+              _verticalDivider(isDark, height: 30),
               Expanded(
                 child: _summaryTimeValue(
-                  vColors,
+                  isDark,
                   'End Time',
                   _formatHeaderHm(data.normalEnd),
-                  finished ? vColors.finished : vColors.blue,
+                  finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.blue(isDark),
                 ),
               ),
             ],
@@ -812,32 +788,32 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
           _summaryRowBox(
             isDark,
             active: extraActive,
-            borderColor: finished ? vColors.finished : vColors.amber,
+            borderColor: finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.amber(isDark),
             children: [
               Expanded(
                 child: _summaryTimeValue(
-                  vColors,
+                  isDark,
                   'Extra Time',
                   data.extraTime,
-                  finished ? vColors.finished : vColors.amber,
+                  finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.amber(isDark),
                 ),
               ),
-              _verticalDivider(vColors, height: 30),
+              _verticalDivider(isDark, height: 30),
               Expanded(
                 child: _summaryTimeValue(
-                  vColors,
+                  isDark,
                   'Duration',
                   data.totalDuration,
-                  finished ? vColors.finished : vColors.amber,
+                  finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.amber(isDark),
                 ),
               ),
-              _verticalDivider(vColors, height: 30),
+              _verticalDivider(isDark, height: 30),
               Expanded(
                 child: _summaryTimeValue(
-                  vColors,
+                  isDark,
                   'Extra End',
                   _formatHeaderHm(data.extraEnd),
-                  finished ? vColors.finished : vColors.amber,
+                  finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.amber(isDark),
                 ),
               ),
             ],
@@ -868,14 +844,14 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _summaryTimeValue(VigiloColors vColors, String label, String value, Color color) {
+  Widget _summaryTimeValue(bool isDark, String label, String value, Color color) {
     return Column(
       children: [
         Text(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: vColors.textSoft,
+            color: VigiloUiColors.textSoft(isDark),
             fontSize: 11.7,
             fontWeight: FontWeight.w700,
             height: 1,
@@ -897,11 +873,11 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _verticalDivider(VigiloColors vColors, {double height = 34}) {
+  Widget _verticalDivider(bool isDark, {double height = 34}) {
     return Container(
       width: 1,
       height: height,
-      color: vColors.line.withOpacity(vColors.isDark ? 0.50 : 0.74),
+      color: VigiloUiColors.line(isDark).withOpacity(isDark ? 0.50 : 0.74),
     );
   }
 }

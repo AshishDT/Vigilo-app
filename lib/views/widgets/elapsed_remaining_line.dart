@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'exam_card_widget.dart';
+import '../../utils/constants.dart';
 
 class ElapsedRemainingLine extends StatelessWidget {
   const ElapsedRemainingLine({
     super.key,
     required this.elapsedStr,
     required this.remainingStr,
-    required this.vColors,
+    required this.isDark,
   });
 
   final String elapsedStr;
   final String remainingStr;
-  final VigiloColors vColors;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,7 @@ class ElapsedRemainingLine extends StatelessWidget {
         Text(
           'Elapsed',
           style: TextStyle(
-            color: vColors.textSoft,
+            color: VigiloUiColors.textSoft(isDark),
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
@@ -30,7 +30,7 @@ class ElapsedRemainingLine extends StatelessWidget {
         Text(
           elapsedStr,
           style: TextStyle(
-            color: vColors.text,
+            color: VigiloUiColors.text(isDark),
             fontSize: 22,
             fontWeight: FontWeight.w900,
           ),
@@ -40,7 +40,7 @@ class ElapsedRemainingLine extends StatelessWidget {
           child: Text(
             '|',
             style: TextStyle(
-              color: vColors.textSoft,
+              color: VigiloUiColors.textSoft(isDark),
               fontSize: 22,
               fontWeight: FontWeight.w700,
             ),
@@ -49,7 +49,7 @@ class ElapsedRemainingLine extends StatelessWidget {
         Text(
           'Remaining',
           style: TextStyle(
-            color: vColors.textSoft,
+            color: VigiloUiColors.textSoft(isDark),
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
@@ -58,7 +58,7 @@ class ElapsedRemainingLine extends StatelessWidget {
         Text(
           remainingStr,
           style: TextStyle(
-            color: vColors.text,
+            color: VigiloUiColors.text(isDark),
             fontSize: 22,
             fontWeight: FontWeight.w900,
           ),
