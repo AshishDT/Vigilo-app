@@ -286,8 +286,18 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   }
 
   void loadList() {
-    if (widget.data.scheduleList != null) {
+    if (widget.data.scheduleList != null && widget.data.scheduleList!.isNotEmpty) {
       scheduleList = List<ScheduleData>.from(widget.data.scheduleList!);
+    } else {
+      final timeRange = "${_setupDisplayTime(widget.data.start)} - ${_setupDisplayTime(widget.data.end)}";
+      scheduleList = [
+        ScheduleData(
+          time: timeRange,
+          room: widget.data.roomsSnapshot,
+          invigilators: _parseInvigilatorsInput(widget.data.invigilatorsSnapshot),
+          notes: widget.data.notes,
+        )
+      ];
     }
     if (widget.data.messages != null) {
       messageLog = List<Message>.from(widget.data.messages!);
@@ -343,6 +353,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         invigilatorsSnapshot: invigilators.join(', '),
         setUpBy: _setUpByController.text.trim(),
         setUpRole: _setUpRole,
+        notes: _setupNotesController.text.trim(),
         scheduleList: scheduleList,
       ),
     );
