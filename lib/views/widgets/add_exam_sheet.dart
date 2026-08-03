@@ -73,6 +73,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
   late final TextEditingController _centreCtl;
   late final TextEditingController _subjectCtl;
   late final TextEditingController _boardCtl;
+  late final TextEditingController _otherLevelCtl;
 
   String? _examLevel;
 
@@ -81,6 +82,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
   late final FocusNode _centreFocus;
   late final FocusNode _subjectFocus;
   late final FocusNode _boardFocus;
+  late final FocusNode _otherLevelFocus;
 
   late DateTime _selectedDate;
   late String _startHHMM;
@@ -95,7 +97,21 @@ class _AddExamSheetState extends State<AddExamSheet> {
     _centreCtl = TextEditingController(text: widget.lastCentre ?? "");
     _subjectCtl = TextEditingController(text: widget.lastSubject ?? "");
     _boardCtl = TextEditingController(text: widget.lastBoard ?? "");
-    _examLevel = widget.lastLevel;
+    
+    final rawLevel = widget.lastLevel;
+    if (rawLevel != null && rawLevel.trim().isNotEmpty) {
+      if (_examLevelOptions.contains(rawLevel.trim())) {
+        _examLevel = rawLevel.trim();
+        _otherLevelCtl = TextEditingController(text: '');
+      } else {
+        _examLevel = 'Other';
+        _otherLevelCtl = TextEditingController(text: rawLevel.trim());
+      }
+    } else {
+      _examLevel = null;
+      _otherLevelCtl = TextEditingController(text: '');
+    }
+
     _previousSchoolText = _schoolCtl.text.trim();
 
     if (_centreCtl.text.trim().isEmpty && _previousSchoolText.isNotEmpty) {
@@ -113,17 +129,20 @@ class _AddExamSheetState extends State<AddExamSheet> {
     _centreCtl.addListener(_onTextChanged);
     _subjectCtl.addListener(_onTextChanged);
     _boardCtl.addListener(_onTextChanged);
+    _otherLevelCtl.addListener(_onTextChanged);
 
     _dragController = DraggableScrollableController();
     _schoolFocus = FocusNode();
     _centreFocus = FocusNode();
     _subjectFocus = FocusNode();
     _boardFocus = FocusNode();
+    _otherLevelFocus = FocusNode();
 
     _schoolFocus.addListener(_onFocusChanged);
     _centreFocus.addListener(_onFocusChanged);
     _subjectFocus.addListener(_onFocusChanged);
     _boardFocus.addListener(_onFocusChanged);
+    _otherLevelFocus.addListener(_onFocusChanged);
     
     _selectedDate = DateTime.now();
     _startHHMM = _normalizeHHMM(widget.lastStart, fallback: _getDefaultFutureHour());
@@ -172,7 +191,8 @@ class _AddExamSheetState extends State<AddExamSheet> {
     if (_schoolFocus.hasFocus ||
         _centreFocus.hasFocus ||
         _subjectFocus.hasFocus ||
-        _boardFocus.hasFocus) {
+        _boardFocus.hasFocus ||
+        _otherLevelFocus.hasFocus) {
       if (_dragController.isAttached) {
         _dragController.animateTo(
           0.95,
@@ -209,22 +229,26 @@ class _AddExamSheetState extends State<AddExamSheet> {
     _centreCtl.removeListener(_onTextChanged);
     _subjectCtl.removeListener(_onTextChanged);
     _boardCtl.removeListener(_onTextChanged);
+    _otherLevelCtl.removeListener(_onTextChanged);
 
     _schoolFocus.removeListener(_onFocusChanged);
     _centreFocus.removeListener(_onFocusChanged);
     _subjectFocus.removeListener(_onFocusChanged);
     _boardFocus.removeListener(_onFocusChanged);
+    _otherLevelFocus.removeListener(_onFocusChanged);
 
     _schoolFocus.dispose();
     _centreFocus.dispose();
     _subjectFocus.dispose();
     _boardFocus.dispose();
+    _otherLevelFocus.dispose();
     _dragController.dispose();
 
     _schoolCtl.dispose();
     _centreCtl.dispose();
     _subjectCtl.dispose();
     _boardCtl.dispose();
+    _otherLevelCtl.dispose();
     _rebuildTimer?.cancel();
     super.dispose();
   }
@@ -808,8 +832,25 @@ class _AddExamSheetState extends State<AddExamSheet> {
                               _formLabel('Exam Level'),
                               _dropdownField(
                                 value: _examLevel,
-                                onChanged: (v) => setState(() => _examLevel = v),
+                                onChanged: (v) {
+                                  setState(() {
+                                    _examLevel = v;
+                                    if (v != 'Other') {
+                                      _otherLevelCtl.clear();
+                                    }
+                                  });
+                                },
                               ),
+                              if (_examLevel == 'Other') ...[
+                                const SizedBox(height: 14),
+                                _formLabel('Specify Exam Level'),
+                                _textField(
+                                  controller: _otherLevelCtl,
+                                  hint: 'Enter custom exam level',
+                                  focusNode: _otherLevelFocus,
+                                  nextFocusNode: _boardFocus,
+                                ),
+                              ],
                               const SizedBox(height: 14),
                               _formLabel('Exam Board'),
                               _textField(
@@ -933,12 +974,18 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                   final subj = _subjectCtl.text.trim();
                                   final board = _boardCtl.text.trim();
 
+                                  String? levelToSave = _examLevel;
+                                  if (_examLevel == 'Other') {
+                                    final custom = _otherLevelCtl.text.trim();
+                                    levelToSave = custom.isNotEmpty ? custom : null;
+                                  }
+
                                   await widget.onSave(
                                     school: school,
                                     centre: centre,
                                     subject: subj,
                                     board: board,
-                                    level: _examLevel,
+                                    level: levelToSave,
                                     date: _selectedDate,
                                     startTime: _startHHMM,
                                     duration: _durationHHMM,

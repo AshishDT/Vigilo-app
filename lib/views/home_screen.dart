@@ -1626,6 +1626,12 @@ class _HomeScreenState extends State<HomeScreen>
       final cmpTime = sa.compareTo(sb);
       if (cmpTime != 0) return cmpTime;
 
+      // Subject alphabetically
+      final subA = a.subject;
+      final subB = b.subject;
+      final cmpSub = subA.toLowerCase().compareTo(subB.toLowerCase());
+      if (cmpSub != 0) return cmpSub;
+
       // Room alphabetically
       final ra = a.roomsSnapshot;
       final rb = b.roomsSnapshot;
