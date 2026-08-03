@@ -1662,7 +1662,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
               fontSize: 14,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 2),
           if (locked) ...[
             Icon(Icons.lock_outline, color: colors.textFaint, size: 14),
             const SizedBox(width: 6),
