@@ -844,7 +844,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
             decoration: BoxDecoration(
               color: colors.panel,
               borderRadius: BorderRadius.circular(12),
@@ -902,25 +902,13 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                           decoration: InputDecoration(
                             isDense: true,
                             contentPadding: EdgeInsets.zero,
-                            border: _centreHasError
-                                ? UnderlineInputBorder(
-                                    borderSide: BorderSide(color: colors.red, width: 1.5),
-                                  )
-                                : InputBorder.none,
-                            enabledBorder: _centreHasError
-                                ? UnderlineInputBorder(
-                                    borderSide: BorderSide(color: colors.red, width: 1.5),
-                                  )
-                                : InputBorder.none,
-                            focusedBorder: _centreHasError
-                                ? UnderlineInputBorder(
-                                    borderSide: BorderSide(color: colors.red, width: 1.5),
-                                  )
-                                : InputBorder.none,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
                             hintText: 'e.g. 10987',
                             hintStyle: TextStyle(
                               color: colors.textFaint,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                               fontSize: 14,
                             ),
                           ),
