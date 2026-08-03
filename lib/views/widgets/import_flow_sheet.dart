@@ -919,23 +919,6 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                     ],
                   ),
                 ),
-                Divider(height: 16, color: colors.lineSoft),
-                Row(
-                  children: [
-                    Icon(Icons.lock_outline, color: colors.textFaint, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Taken from your Vigilo licence — not required in your timetable file.',
-                        style: TextStyle(
-                          color: colors.textFaint,
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
@@ -1083,15 +1066,6 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                       locked: true,
                     ),
                   ],
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Taken from your Vigilo licence — not required in your timetable file.',
-                style: TextStyle(
-                  color: colors.textFaint,
-                  fontSize: 11,
-                  fontStyle: FontStyle.italic,
                 ),
               ),
               const SizedBox(height: 20),
