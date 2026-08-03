@@ -453,12 +453,22 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Map column for "$field"',
-                          style: TextStyle(
-                            color: colors.text,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        child: Text.rich(
+                          TextSpan(
+                            style: TextStyle(
+                              color: colors.text,
+                              fontSize: 20,
+                            ),
+                            children: [
+                              const TextSpan(
+                                text: 'Map column for ',
+                                style: TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                              TextSpan(
+                                text: field,
+                                style: const TextStyle(fontWeight: FontWeight.w900),
+                              ),
+                            ],
                           ),
                         ),
                       ),
