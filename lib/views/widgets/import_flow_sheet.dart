@@ -665,10 +665,11 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
+        leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: Center(
-            child: GestureDetector(
+            child: InkWell(
               onTap: _step > 0 && _step < 3
                   ? () {
                       setState(() {
@@ -676,22 +677,33 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                       });
                     }
                   : widget.onClose,
+              borderRadius: BorderRadius.circular(14),
               child: Container(
-                width: 36,
-                height: 36,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: colors.panel2,
-                  borderRadius: BorderRadius.circular(10),
+                  color: VigiloUiColors.panel(colors.isDark).withValues(alpha: colors.isDark ? 0.72 : 0.92),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: colors.lineSoft,
+                    color: colors.isDark
+                        ? VigiloUiColors.line(colors.isDark).withValues(alpha: 0.70)
+                        : VigiloUiColors.line(colors.isDark),
+                    width: 1.0,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: colors.isDark ? 0.16 : 0.07),
+                      blurRadius: colors.isDark ? 8 : 10,
+                      offset: Offset(0, colors.isDark ? 3 : 4),
+                    ),
+                  ],
                 ),
                 child: Icon(
                   _step > 0 && _step < 3
                       ? Icons.arrow_back_rounded
                       : Icons.close_rounded,
-                  size: 20,
-                  color: colors.textSoft,
+                  size: 23,
+                  color: VigiloUiColors.textSoft(colors.isDark),
                 ),
               ),
             ),
@@ -726,13 +738,13 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
             child: Center(
               child: InkWell(
                 onTap: widget.onToggleTheme,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(14),
                 child: Container(
-                  width: 36,
-                  height: 36,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: VigiloUiColors.panel(colors.isDark).withValues(alpha: colors.isDark ? 0.72 : 0.92),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: colors.isDark
                           ? VigiloUiColors.line(colors.isDark).withValues(alpha: 0.70)
@@ -750,7 +762,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                   child: Icon(
                     colors.isDark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
                     color: VigiloUiColors.textSoft(colors.isDark),
-                    size: 20,
+                    size: 23,
                   ),
                 ),
               ),
@@ -1010,6 +1022,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
   Widget _buildStep2MapColumns(_FlowColors colors) {
     return Column(
       children: [
+        const SizedBox(height: 6),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -1226,6 +1239,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
 
     return Column(
       children: [
+        const SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           color: colors.panel,

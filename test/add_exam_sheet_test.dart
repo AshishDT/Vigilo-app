@@ -61,10 +61,10 @@ void main() {
 
       // Verify custom level text field is now displayed
       expect(find.text('Specify Exam Level'), findsOneWidget);
-      expect(find.text('Enter custom exam level (e.g. BTEC, IGCSE)'), findsOneWidget);
+      expect(find.text('Enter custom exam level'), findsOneWidget);
 
       // Enter a custom level
-      final customFieldFinder = find.widgetWithText(TextField, 'Enter custom exam level (e.g. BTEC, IGCSE)');
+      final customFieldFinder = find.widgetWithText(TextField, 'Enter custom exam level');
       await tester.ensureVisible(customFieldFinder);
       await tester.enterText(customFieldFinder, 'BTEC Higher');
       await tester.pumpAndSettle();
@@ -158,7 +158,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Type custom level
-      final customFieldFinder = find.widgetWithText(TextField, 'Enter custom exam level (e.g. BTEC, IGCSE)');
+      final customFieldFinder = find.widgetWithText(TextField, 'Enter custom exam level');
       await tester.ensureVisible(customFieldFinder);
       await tester.enterText(customFieldFinder, 'BTEC');
       await tester.pumpAndSettle();
@@ -185,7 +185,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Custom input field should be empty (cleared)
-      final textField = tester.widget<TextField>(find.widgetWithText(TextField, 'Enter custom exam level (e.g. BTEC, IGCSE)'));
+      final textField = tester.widget<TextField>(find.widgetWithText(TextField, 'Enter custom exam level'));
       expect(textField.controller?.text, isEmpty);
     });
 
