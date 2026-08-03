@@ -709,28 +709,13 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
             ),
           ),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              currentTitle,
-              style: TextStyle(
-                color: colors.text,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            if (_step < 3)
-              Text(
-                'Step ${_step + 1} of 4',
-                style: TextStyle(
-                  color: colors.blueSoft,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-          ],
+        title: Text(
+          currentTitle,
+          style: TextStyle(
+            color: colors.text,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         actions: [
           Padding(
