@@ -1174,8 +1174,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             spacing: 12,
             children: [
               Container(
-                width: 50,
-                height: 50,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.72),
                   borderRadius: BorderRadius.circular(14),
@@ -1186,39 +1186,23 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 child: Icon(
                   Icons.library_books_rounded,
                   color: VigiloUiColors.blueSoft(_isDark),
-                  size: 24,
+                  size: 22,
                 ),
               ),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      data.subject,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        height: 1.08,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      'SESSION OVERVIEW',
-                      style: TextStyle(
-                        color: VigiloUiColors.blueSoft(_isDark),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.3,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'SESSION OVERVIEW',
+                  style: TextStyle(
+                    color: VigiloUiColors.blueSoft(_isDark),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
@@ -2934,7 +2918,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: VigiloUiColors.text(_isDark),
-                            fontSize: 23,
+                            fontSize: 22,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
