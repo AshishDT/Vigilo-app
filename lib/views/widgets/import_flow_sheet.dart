@@ -1078,7 +1078,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Match each Vigilo field to the corresponding column in your file.',
+                'Match each field to the corresponding column in your file.',
                 style: TextStyle(color: colors.textFaint, fontSize: 12),
               ),
               const SizedBox(height: 10),
@@ -1604,7 +1604,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Sessions are on your Home Screen, sorted by date and time.',
+            'Sessions are on your Home Screen, sorted by date, time, and subject.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.textFaint,

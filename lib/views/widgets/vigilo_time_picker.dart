@@ -11,14 +11,15 @@ class _PickerColors {
   bool get isDark => Theme.of(context).brightness == Brightness.dark;
 
   Color get panel => VigiloUiColors.panel(isDark);
-  Color get panel2 => isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
+  Color get panel2 => VigiloUiColors.panel2(isDark);
   Color get line => VigiloUiColors.line(isDark);
   Color get lineSoft => VigiloUiColors.lineSoft(isDark);
   Color get text => VigiloUiColors.text(isDark);
   Color get textSoft => VigiloUiColors.textSoft(isDark);
   Color get blue => VigiloUiColors.blue(isDark);
-  Color get blackWhite => isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
-  Color get timeCardBg => isDark ? const Color(0xFF0F2236) : const Color(0xFFF8FAFC);
+  Color get amber => VigiloUiColors.amber(isDark);
+  Color get blackWhite => VigiloUiColors.blackWhite(isDark);
+  Color get timeCardBg => VigiloUiColors.timeCardBg(isDark);
 }
 
 class VigiloTimePickerSheet extends StatefulWidget {
@@ -40,6 +41,9 @@ class VigiloTimePickerSheet extends StatefulWidget {
 class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
   late TimeOfDay _selectedTime;
   Timer? _rebuildTimer;
+  Timer? _settleTimer;
+  bool _isAdjusting = false;
+  bool _wasPastWarningVisible = false;
 
   bool _showManualEntry = false;
   late final _ManualTimeTextController _manualController;
@@ -51,10 +55,13 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
     _manualController = _ManualTimeTextController(
       text: _formatTime(_selectedTime),
     );
+    _wasPastWarningVisible = !_isValid;
     if (widget.restrictPastTime) {
       _rebuildTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
         if (mounted) {
-          setState(() {});
+          setState(() {
+            _updateWarningState();
+          });
         }
       });
     }
@@ -63,8 +70,35 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
   @override
   void dispose() {
     _rebuildTimer?.cancel();
+    _settleTimer?.cancel();
     _manualController.dispose();
     super.dispose();
+  }
+
+  void _updateWarningState() {
+    if (_isValid) {
+      _wasPastWarningVisible = false;
+    } else if (!_isAdjusting) {
+      _wasPastWarningVisible = true;
+    }
+  }
+
+  void _onTimeInteracted() {
+    _settleTimer?.cancel();
+    if (!_isAdjusting) {
+      setState(() {
+        _isAdjusting = true;
+        _updateWarningState();
+      });
+    }
+    _settleTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _isAdjusting = false;
+          _updateWarningState();
+        });
+      }
+    });
   }
 
   String _formatTime(TimeOfDay t) {
@@ -105,6 +139,7 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
   }
 
   void _adjustTime(int hoursDelta, int minutesDelta) {
+    _onTimeInteracted();
     int totalMinutes = _selectedTime.hour * 60 + _selectedTime.minute;
     totalMinutes += hoursDelta * 60 + minutesDelta;
 
@@ -122,6 +157,7 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
     setState(() {
       _selectedTime = newTime;
       _manualController.text = _formatTime(newTime);
+      _updateWarningState();
     });
   }
 
@@ -361,39 +397,43 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                               ),
                             ),
                           ),
-                          AnimatedSize(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                            child: AnimatedOpacity(
-                              opacity: _isValid ? 0.0 : 1.0,
-                              duration: const Duration(milliseconds: 250),
+                          Builder(builder: (context) {
+                            final showPastWarning =
+                                !_isValid && (_wasPastWarningVisible || !_isAdjusting);
+                            return AnimatedSize(
+                              duration: const Duration(milliseconds: 300),
                               curve: Curves.easeInOut,
-                              child: _isValid
-                                  ? const SizedBox.shrink()
-                                  : const Padding(
-                                      padding: EdgeInsets.only(top: 12),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.access_time_rounded,
-                                            color: Colors.redAccent,
-                                            size: 14,
-                                          ),
-                                          SizedBox(width: 5),
-                                          Text(
-                                            'Start time must be in the future',
-                                            style: TextStyle(
-                                              color: Colors.redAccent,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
+                              child: AnimatedOpacity(
+                                opacity: showPastWarning ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeInOut,
+                                child: !showPastWarning
+                                    ? const SizedBox.shrink()
+                                    : Padding(
+                                        padding: const EdgeInsets.only(top: 12),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.warning_amber_rounded,
+                                              color: colors.amber,
+                                              size: 16,
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              "That time's in the past",
+                                              style: TextStyle(
+                                                color: colors.amber,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                            ),
-                          ),
+                              ),
+                            );
+                          }),
                         ],
                       ),
                     ),
@@ -474,6 +514,7 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                                           border: InputBorder.none,
                                         ),
                                         onChanged: (value) {
+                                          _onTimeInteracted();
                                           final parts = value.split(':');
                                           if (parts.length == 2) {
                                             final hour = int.tryParse(parts[0]);

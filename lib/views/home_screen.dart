@@ -83,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen>
   int get allInvigilators {
     int total = 0;
     for (final s in _cards) {
-      if (s.running) {
+      if ((s.running || s.isPaused) && s.phase != ExamPhase.finished) {
         total += _getUniqueInvigilators(s).length;
       }
     }

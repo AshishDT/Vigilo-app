@@ -962,10 +962,10 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                   if (_isPastTimeSelected()) {
                                     NotificationService.show(
                                       sheetContext,
-                                      title: "Start time must be in the future",
+                                      title: "That time's in the past",
                                       subtitle: "Please select a future start time.",
-                                      type: NotificationType.error,
-                                      icon: Icons.error_outline_rounded,
+                                      type: NotificationType.warning,
+                                      icon: Icons.warning_amber_rounded,
                                     );
                                     return;
                                   }

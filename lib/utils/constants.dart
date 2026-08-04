@@ -25,5 +25,6 @@ class VigiloUiColors {
   static Color red(bool dark) => dark ? const Color(0xFFE05D74) : const Color(0xFFDC2626);
   static Color purple(bool dark) => const Color(0xFF7C5CFA);
   static Color blackWhite(bool dark) => dark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
+  static Color timeCardBg(bool dark) => dark ? const Color(0xFF0F2236) : const Color(0xFFF8FAFC);
 }
 

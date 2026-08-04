@@ -92,7 +92,7 @@ void main() {
     int countAllInvigilators(List<ExamCardData> cards) {
       int total = 0;
       for (final s in cards) {
-        if (s.phase != ExamPhase.finished) {
+        if ((s.running || s.isPaused) && s.phase != ExamPhase.finished) {
           total += getUniqueInvigilators(s).length;
         }
       }
@@ -115,6 +115,7 @@ void main() {
         extraTime: '00:15',
         totalDuration: '02:15',
         extraEnd: '11:15',
+        running: true,
         phase: ExamPhase.normal,
         scheduleList: [
           ScheduleData(
@@ -145,6 +146,7 @@ void main() {
         extraTime: '00:15',
         totalDuration: '02:15',
         extraEnd: '11:15',
+        running: true,
         phase: ExamPhase.normal,
         scheduleList: [
           ScheduleData(
@@ -171,6 +173,7 @@ void main() {
         extraTime: '00:15',
         totalDuration: '02:45',
         extraEnd: '11:45',
+        running: true,
         phase: ExamPhase.normal,
         scheduleList: [
           ScheduleData(
@@ -204,6 +207,7 @@ void main() {
         extraTime: '00:15',
         totalDuration: '02:15',
         extraEnd: '11:15',
+        running: true,
         phase: ExamPhase.normal,
         scheduleList: [
           ScheduleData(
@@ -230,6 +234,7 @@ void main() {
         extraTime: '00:15',
         totalDuration: '02:45',
         extraEnd: '11:45',
+        running: false,
         phase: ExamPhase.finished,
         scheduleList: [
           ScheduleData(
@@ -242,6 +247,38 @@ void main() {
       );
 
       expect(countAllInvigilators([activeExam, finishedExam]), equals(3));
+    });
+
+    test('Should count invigilators on a paused exam', () {
+      final pausedExam = ExamCardData(
+        recordId: '1',
+        school: 'School A',
+        centreNumber: '12345',
+        date: '03/07/2026',
+        subject: 'Maths',
+        start: '09:00',
+        duration: '02:00',
+        end: '11:00',
+        normalStart: '09:00',
+        normalDuration: '02:00',
+        normalEnd: '11:00',
+        extraTime: '00:15',
+        totalDuration: '02:15',
+        extraEnd: '11:15',
+        running: false,
+        isPaused: true,
+        phase: ExamPhase.normal,
+        scheduleList: [
+          ScheduleData(
+            time: '09:00 - 11:00',
+            room: 'Gym',
+            invigilators: ['Allan', 'Basil', 'Steve'],
+            notes: '',
+          )
+        ],
+      );
+
+      expect(countAllInvigilators([pausedExam]), equals(3));
     });
   });
 }

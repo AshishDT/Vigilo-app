@@ -245,26 +245,89 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
+                  Builder(builder: (context) {
+                    final hasExamLevel = (data.examLevel ?? '').trim().isNotEmpty;
+                    final hasStatusPill = data.isDatePassed ||
+                        data.phase == ExamPhase.finished ||
+                        data.isPaused ||
+                        data.running;
+                    final showArchiveCheck = isArchiveMode && (isExamCompleted || data.isDatePassed);
+                    final hideChevronInArchive = isArchiveMode && isExamCompleted;
+                    final showChevron = !data.isDatePassed && !hideChevronInArchive;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Row 1: Subject Line + Top Controls (Chevron & Selection Checkbox)
+                        Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              subjectLine,
-                              style: TextStyle(
-                                color: VigiloUiColors.text(isDark),
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.15,
-                                height: 1.15,
+                            Expanded(
+                              child: Text(
+                                subjectLine,
+                                style: TextStyle(
+                                  color: VigiloUiColors.text(isDark),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.15,
+                                  height: 1.15,
+                                ),
                               ),
                             ),
-                            if ((data.examLevel ?? '').isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 3),
+                            const SizedBox(width: 10),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (showArchiveCheck) ...[
+                                  Icon(
+                                    data.isSelected
+                                        ? Icons.check_circle_rounded
+                                        : Icons.radio_button_unchecked,
+                                    color: data.isSelected
+                                        ? VigiloUiColors.green(isDark)
+                                        : VigiloUiColors.textSoft(isDark),
+                                  ),
+                                ],
+                                if (showChevron) ...[
+                                  if (showArchiveCheck)
+                                    const SizedBox(width: 10),
+                                  InkWell(
+                                    onTap: () {
+                                      if (!isArchiveMode) {
+                                        setState(() {
+                                          _localScale = 1.02;
+                                        });
+                                        Future.delayed(const Duration(milliseconds: 100), () {
+                                          if (mounted) {
+                                            setState(() {
+                                              _localScale = 1.0;
+                                            });
+                                          }
+                                        });
+                                        onChevronTap();
+                                      }
+                                    },
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: AnimatedRotation(
+                                      duration: const Duration(milliseconds: 200),
+                                      turns: data.expanded ? 0.5 : 0.0,
+                                      child: Icon(Icons.expand_more, color: VigiloUiColors.textSoft(isDark)),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+
+                        // Row 2 (Level Line - rendered ONLY if level is present)
+                        if (hasExamLevel) ...[
+                          const SizedBox(height: 5),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
                                 child: Text(
                                   data.examLevel!,
                                   style: TextStyle(
@@ -275,94 +338,51 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                                   ),
                                 ),
                               ),
-                            const SizedBox(height: 7),
-                            Text(
-                              data.date,
-                              style: TextStyle(
-                                color: VigiloUiColors.textSoft(isDark),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                height: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              organizationLine,
-                              style: TextStyle(
-                                color: VigiloUiColors.textSoft(isDark),
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                height: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (data.isDatePassed || (data.phase == ExamPhase.finished && !data.expanded)) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: (data.isDatePassed ? VigiloUiColors.textFaint(isDark) : VigiloUiColors.green(isDark)).withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: data.isDatePassed ? VigiloUiColors.textFaint(isDark) : VigiloUiColors.green(isDark)),
-                              ),
+                              if (hasStatusPill) ...[
+                                const SizedBox(width: 10),
+                                _buildClosedCardStatusPill(data, isDark),
+                              ],
+                            ],
+                          ),
+                        ],
+
+                        // Date Row
+                        const SizedBox(height: 5),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
                               child: Text(
-                                data.isDatePassed ? 'DATE PASSED' : 'FINISHED',
+                                data.date,
                                 style: TextStyle(
-                                  color: data.isDatePassed ? VigiloUiColors.textFaint(isDark) : VigiloUiColors.green(isDark),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10,
-                                  letterSpacing: 0.5,
+                                  color: VigiloUiColors.textSoft(isDark),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.2,
                                 ),
                               ),
                             ),
+                            if (!hasExamLevel && hasStatusPill) ...[
+                              const SizedBox(width: 10),
+                              _buildClosedCardStatusPill(data, isDark),
+                            ],
                           ],
-                          if (isArchiveMode && (isExamCompleted || data.isDatePassed))...[
-                            const SizedBox(width: 10,),
-                            Icon(
-                            data.isSelected
-                                ? Icons.check_circle_rounded
-                                : Icons.radio_button_unchecked,
-                            color: data.isSelected
-                                ? VigiloUiColors.green(isDark)
-                                : VigiloUiColors.textSoft(isDark),
+                        ),
+
+                        // Organization Line
+                        const SizedBox(height: 5),
+                        Text(
+                          organizationLine,
+                          style: TextStyle(
+                            color: VigiloUiColors.textSoft(isDark),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2,
                           ),
-                          ],
-                          if (!data.isDatePassed)...[
-                            SizedBox(width: 10,),
-                            InkWell(
-                              onTap: () {
-                                if (!isArchiveMode) {
-                                  setState(() {
-                                    _localScale = 1.02;
-                                  });
-                                  Future.delayed(const Duration(milliseconds: 100), () {
-                                    if (mounted) {
-                                      setState(() {
-                                        _localScale = 1.0;
-                                      });
-                                    }
-                                  });
-                                  onChevronTap();
-                                }
-                              },
-                              borderRadius: BorderRadius.circular(6),
-                              child: AnimatedRotation(
-                                duration: const Duration(milliseconds: 200),
-                                turns: data.expanded ? 0.5 : 0.0,
-                                child: Icon(Icons.expand_more, color: VigiloUiColors.textSoft(isDark)),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    );
+                  }),
                   const SizedBox(height: 16),
                   Opacity(
                     opacity: data.isDatePassed ? 0.4 : 1.0,
@@ -621,6 +641,42 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildClosedCardStatusPill(ExamCardData data, bool isDark) {
+    if (data.isDatePassed) {
+      return _pill('DATE PASSED', VigiloUiColors.textFaint(isDark));
+    }
+    if (data.phase == ExamPhase.finished) {
+      return _pill('FINISHED', VigiloUiColors.green(isDark));
+    }
+    if (data.isPaused) {
+      return _pill('PAUSED', VigiloUiColors.amber(isDark));
+    }
+    if (data.running) {
+      return _pill('RUNNING', VigiloUiColors.blue(isDark));
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _pill(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 9.5,
+          letterSpacing: 0.4,
+        ),
+      ),
     );
   }
 
