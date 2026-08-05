@@ -44,6 +44,7 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
   Timer? _settleTimer;
   bool _isAdjusting = false;
   bool _wasPastWarningVisible = false;
+  bool _isSubmitting = false;
 
   bool _showManualEntry = false;
   late final _ManualTimeTextController _manualController;
@@ -564,6 +565,8 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                           ),
                         ),
                         onPressed: () {
+                          if (_isSubmitting) return;
+                          _isSubmitting = true;
                           Navigator.of(context).pop();
                         },
                         child: FittedBox(
@@ -589,7 +592,7 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                 const SizedBox(width: 14),
                 Expanded(
                   child: AnimatedScaleOnPress(
-                    isDisabled: !_isChanged || !_isValid,
+                    isDisabled: !_isChanged || !_isValid || _isSubmitting,
                     child: SizedBox(
                       height: 52,
                       child: FilledButton(
@@ -605,8 +608,11 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                           ),
                           elevation: !_isChanged ? 0 : 2,
                         ),
-                        onPressed: (_isChanged && _isValid)
+                        onPressed: (_isChanged && _isValid && !_isSubmitting)
                             ? () {
+                                setState(() {
+                                  _isSubmitting = true;
+                                });
                                 Navigator.of(context).pop(_selectedTime);
                               }
                             : null,

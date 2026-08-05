@@ -12,7 +12,7 @@ class _PickerColors {
 
   Color get panel => VigiloUiColors.panel(isDark);
 
-  Color get panel2 => isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
+  Color get panel2 => VigiloUiColors.panel2(isDark);
 
   Color get line => VigiloUiColors.line(isDark);
 
@@ -24,9 +24,11 @@ class _PickerColors {
 
   Color get blue => VigiloUiColors.blue(isDark);
 
-  Color get blackWhite => isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
+  Color get amber => VigiloUiColors.amber(isDark);
 
-  Color get timeCardBg => isDark ? const Color(0xFF0F2236) : const Color(0xFFF8FAFC);
+  Color get blackWhite => VigiloUiColors.blackWhite(isDark);
+
+  Color get timeCardBg => VigiloUiColors.timeCardBg(isDark);
 }
 
 class VigiloDurationPickerSheet extends StatefulWidget {
@@ -53,6 +55,7 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
   late int _initialMinutes;
 
   bool _showManualEntry = false;
+  bool _isSubmitting = false;
   late final TextEditingController _manualController;
 
   @override
@@ -331,6 +334,8 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
                           ),
                         ),
                         onPressed: () {
+                          if (_isSubmitting) return;
+                          _isSubmitting = true;
                           Navigator.of(context).pop();
                         },
                         child: FittedBox(
@@ -356,7 +361,7 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
                 const SizedBox(width: 14),
                 Expanded(
                   child: AnimatedScaleOnPress(
-                    isDisabled: !_isChanged,
+                    isDisabled: !_isChanged || _isSubmitting,
                     child: SizedBox(
                       height: 52,
                       child: FilledButton(
@@ -374,8 +379,11 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
                           ),
                           elevation: !_isChanged ? 0 : 2,
                         ),
-                        onPressed: _isChanged
+                        onPressed: (_isChanged && !_isSubmitting)
                             ? () {
+                                setState(() {
+                                  _isSubmitting = true;
+                                });
                                 final result =
                                     "${_hours.toString().padLeft(2, '0')}:${_minutes.toString().padLeft(2, '0')}";
                                 Navigator.of(context).pop(result);
@@ -669,8 +677,7 @@ class _SheetBorderPainter extends CustomPainter {
   _SheetBorderPainter({
     required this.color,
     required this.radius,
-    this.width = 1.0,
-  });
+  }) : width = 1.0;
 
   @override
   void paint(Canvas canvas, Size size) {
