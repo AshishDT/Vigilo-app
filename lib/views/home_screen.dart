@@ -708,45 +708,53 @@ class _HomeScreenState extends State<HomeScreen>
     await _loadLicenseStatus();
   }
 
-  Future<void> _onReStart(int i) async {
-    final c = _cards[i];
-    final recordId = c.recordId;
-    if (recordId == null) {
-      _toast("Not Ready", "Complete exam setup before starting", Icons.warning_amber_rounded, NotificationType.warning);
-      return;
-    }
-    if (c.totalSeconds <= 0) {
-      _toast("Missing Information", "Set the exam duration before starting", Icons.warning_amber_rounded, NotificationType.warning);
-      return;
-    }
+  bool _isProcessingRestart = false;
 
-    final now = DateTime.now();
-    final hh = now.hour.toString().padLeft(2, '0');
-    final mm = now.minute.toString().padLeft(2, '0');
-    _cards[i] = _recompute(
-      c.copyWith(
-        normalStart: "$hh:$mm",
-        progress: 0.0,
-        phase: ExamPhase.normal,
-        running: false,
-        isPaused: false,
-        epochStart: null,
-        pausedSeconds: 0,
-      ),
-    );
-    await _saveState();
-    await _sessionService.startSession(
-      examRecordId: recordId,
-      startedAt: now,
-      restart: true,
-      normalDurationMs: _cards[i].normalSeconds * 1000,
-      extraTimeMs: _cards[i].extraSeconds * 1000,
-    );
-    _normalTimeWarningVibrationSent.remove(recordId);
-    _extraTimeWarningVibrationSent.remove(recordId);
-    await _refreshCards();
-    _toast("Exam Restarted", "The exam timer has been reset", Icons.restart_alt_rounded, NotificationType.information);
-    if (mounted) context.safePop();
+  Future<void> _onReStart(int i) async {
+    if (_isProcessingRestart) return;
+    _isProcessingRestart = true;
+    try {
+      final c = _cards[i];
+      final recordId = c.recordId;
+      if (recordId == null) {
+        _toast("Not Ready", "Complete exam setup before starting", Icons.warning_amber_rounded, NotificationType.warning);
+        return;
+      }
+      if (c.totalSeconds <= 0) {
+        _toast("Missing Information", "Set the exam duration before starting", Icons.warning_amber_rounded, NotificationType.warning);
+        return;
+      }
+
+      final now = DateTime.now();
+      final hh = now.hour.toString().padLeft(2, '0');
+      final mm = now.minute.toString().padLeft(2, '0');
+      _cards[i] = _recompute(
+        c.copyWith(
+          normalStart: "$hh:$mm",
+          progress: 0.0,
+          phase: ExamPhase.normal,
+          running: false,
+          isPaused: false,
+          epochStart: null,
+          pausedSeconds: 0,
+        ),
+      );
+      await _saveState();
+      await _sessionService.startSession(
+        examRecordId: recordId,
+        startedAt: now,
+        restart: true,
+        normalDurationMs: _cards[i].normalSeconds * 1000,
+        extraTimeMs: _cards[i].extraSeconds * 1000,
+      );
+      _normalTimeWarningVibrationSent.remove(recordId);
+      _extraTimeWarningVibrationSent.remove(recordId);
+      await _refreshCards();
+      _toast("Exam Restarted", "The exam timer has been reset", Icons.restart_alt_rounded, NotificationType.information);
+      if (mounted) context.safePop();
+    } finally {
+      _isProcessingRestart = false;
+    }
   }
 
   bool _isProcessingPause = false;
@@ -774,18 +782,26 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  bool _isProcessingEnd = false;
+
   Future<void> _onEnd(int i) async {
-    final c = _cards[i];
-    final recordId = c.recordId;
-    if (recordId == null) return;
-    await _sessionService.endSession(
-      recordId,
-      manual: true,
-      reason: 'manual_end',
-    );
-    await _refreshCards();
-    _toast("Exam ended", "The exam has been marked as finished", Icons.stop_circle_rounded, NotificationType.success);
-    if (mounted) context.safePop();
+    if (_isProcessingEnd) return;
+    _isProcessingEnd = true;
+    try {
+      final c = _cards[i];
+      final recordId = c.recordId;
+      if (recordId == null) return;
+      await _sessionService.endSession(
+        recordId,
+        manual: true,
+        reason: 'manual_end',
+      );
+      await _refreshCards();
+      _toast("Exam ended", "The exam has been marked as finished", Icons.stop_circle_rounded, NotificationType.success);
+      if (mounted) context.safePop();
+    } finally {
+      _isProcessingEnd = false;
+    }
   }
 
   // ------------------ Quick Add Wizard ------------------
@@ -1227,7 +1243,7 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                           );
                           if (ok == true) {
-                            _onReStart(i);
+                            await _onReStart(i);
                           }
                         },
                         onPause: () {
@@ -1247,7 +1263,7 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                           );
                           if (ok == true) {
-                            _onEnd(i);
+                            await _onEnd(i);
                           }
                         },
                         onExportCopy: () => exportCopy(_cards[i], context),

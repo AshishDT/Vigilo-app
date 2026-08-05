@@ -43,9 +43,9 @@ class OfficerToolsSheet extends StatefulWidget {
 
   final ExamCardData data;
   final void Function(Incident) onLog;
-  final VoidCallback onReStart;
+  final Future<void> Function() onReStart;
   final VoidCallback onPause;
-  final VoidCallback onEnd;
+  final Future<void> Function() onEnd;
   final VoidCallback onExportCopy;
   final VoidCallback onExportCsvDownload;
   final VoidCallback onExportCsvShare;
@@ -91,6 +91,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   int _activeTabIndex = 0;
   bool _hasExported = false;
   bool _isPausingLoading = false;
+  bool _isRestartingLoading = false;
+  bool _isEndingLoading = false;
 
   late ExamCardData _currentData;
   Timer? _updateTimer;
@@ -3000,7 +3002,24 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                             'Extra Time'
                                         ? VigiloUiColors.amber(_isDark)
                                         : VigiloUiColors.textSoft(_isDark),
-                                    onTap: widget.onReStart,
+                                    isLoading: _isRestartingLoading,
+                                    onTap: () async {
+                                      if (_isRestartingLoading) return;
+                                      try {
+                                        final res = widget.onReStart();
+                                        // Show loading indicator only after confirmation dialog is confirmed
+                                        setState(() {
+                                          _isRestartingLoading = true;
+                                        });
+                                        await res;
+                                      } finally {
+                                        if (mounted) {
+                                          setState(() {
+                                            _isRestartingLoading = false;
+                                          });
+                                        }
+                                      }
+                                    },
                                     disabled: _isExamCompleted || data.isPaused,
                                   ),
                                   _otControlItem(
@@ -3009,7 +3028,24 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                         "End the exam and close active timing",
                                     icon: Icons.stop_rounded,
                                     color: VigiloUiColors.red(_isDark),
-                                    onTap: widget.onEnd,
+                                    isLoading: _isEndingLoading,
+                                    onTap: () async {
+                                      if (_isEndingLoading) return;
+                                      try {
+                                        final res = widget.onEnd();
+                                        // Show loading indicator only after confirmation dialog is confirmed
+                                        setState(() {
+                                          _isEndingLoading = true;
+                                        });
+                                        await res;
+                                      } finally {
+                                        if (mounted) {
+                                          setState(() {
+                                            _isEndingLoading = false;
+                                          });
+                                        }
+                                      }
+                                    },
                                     disabled: _isExamCompleted || data.isPaused,
                                   ),
                                 ],
