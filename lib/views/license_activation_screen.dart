@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/constants.dart';
+import '../utils/safe_navigator.dart';
 import '../utils/app_config.dart';
 import '../utils/notifications.dart';
 import '../services/license_key_codec.dart';
@@ -450,7 +451,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                 message: 'Close',
                                 child: InkWell(
                                   onTap: () =>
-                                      Navigator.of(dialogContext).pop(),
+                                      dialogContext.safePop(),
                                   borderRadius: BorderRadius.circular(14),
                                   child: Container(
                                     width: 44,

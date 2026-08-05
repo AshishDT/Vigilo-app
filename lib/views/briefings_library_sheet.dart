@@ -13,6 +13,7 @@ import '../models/briefing_model.dart';
 import '../services/briefings_storage_service.dart';
 import '../services/session_service.dart';
 import '../utils/notifications.dart';
+import '../utils/safe_navigator.dart';
 import 'file_view_screen.dart';
 
 enum BriefingsLibraryInitialAction { none, uploadPdf, capturePhoto }
@@ -383,7 +384,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx, false),
+                        onPressed: () => ctx.safePop(false),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(58),
                           side: BorderSide(
@@ -407,7 +408,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => Navigator.pop(ctx, true),
+                        onPressed: () => ctx.safePop(true),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: dangerColor,
                           foregroundColor: Colors.white,
@@ -546,7 +547,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
       return;
     }
     widget.onSelectionApplied?.call(selected);
-    Navigator.pop(context);
+    context.safePop();
   }
 
   // Widget _buildGridItem(BriefingItem item) {
@@ -1001,7 +1002,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => Navigator.pop(context),
+                        onTap: () => context.safePop(),
                         child: Container(
                           width: 45,
                           height: 45,
@@ -1190,7 +1191,7 @@ class _BriefingsLibrarySheetState extends State<BriefingsLibrarySheet> {
                           Expanded(
                             child: _utilityButton(
                               'Cancel',
-                              onTap: () => Navigator.pop(context),
+                              onTap: () => context.safePop(),
                             ),
                           ),
                           const SizedBox(width: 8),

@@ -19,6 +19,7 @@ import '../models/schedule.dart';
 import '../services/session_service.dart';
 import '../utils/notifications.dart';
 import '../utils/constants.dart';
+import '../utils/safe_navigator.dart';
 
 class OfficerToolsSheet extends StatefulWidget {
   const OfficerToolsSheet({
@@ -498,7 +499,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             Icons.local_hospital_rounded,
             NotificationType.success,
           );
-          Navigator.pop(context);
+          context.safePop();
         },
       ),
     );
@@ -529,7 +530,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             Icons.gavel_rounded,
             NotificationType.success,
           );
-          Navigator.pop(context);
+          context.safePop();
         },
       ),
     );
@@ -560,7 +561,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             Icons.wc_rounded,
             NotificationType.success,
           );
-          Navigator.pop(context);
+          context.safePop();
         },
       ),
     );
@@ -653,7 +654,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           final roomText = room.trim().isEmpty ? '' : 'Room: ${room.trim()}. ';
           final message = '$roomText${need.trim()} (${priority.trim()})';
           if (_send(message)) {
-            Navigator.pop(context);
+            context.safePop();
           }
         },
       ),
@@ -2931,7 +2932,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                       _otIconChipButton(
                         Icons.close_rounded,
                         tooltip: 'Close',
-                        onTap: () => Navigator.pop(context),
+                        onTap: () => context.safePop(),
                         size: 45,
                         borderRadius: 14,
                         iconSize: 24,
@@ -3944,7 +3945,7 @@ class _InvigilatorSelectorDialogState
         if (_selection.contains(name)) name,
     ];
     widget.onSave(orderedSelection);
-    Navigator.pop(context);
+    context.safePop();
   }
 
   Widget _selectionRow({
@@ -4131,7 +4132,7 @@ class _InvigilatorSelectorDialogState
                       Tooltip(
                         message: 'Close',
                         child: InkWell(
-                          onTap: () => Navigator.pop(context),
+                          onTap: () => context.safePop(),
                           borderRadius: BorderRadius.circular(14),
                           child: Container(
                             width: 44,
@@ -4218,7 +4219,7 @@ class _InvigilatorSelectorDialogState
                       Expanded(
                         child: _otUtilityButton(
                           'Cancel',
-                          onTap: () => Navigator.pop(context),
+                          onTap: () => context.safePop(),
                         ),
                       ),
                       Expanded(
@@ -4641,7 +4642,7 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                               child: SizedBox(
                                 height: 44,
                                 child: OutlinedButton(
-                                  onPressed: () => Navigator.pop(context),
+                                  onPressed: () => context.safePop(),
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(
                                       color: VigiloUiColors.lineSoft(_isDark),
@@ -4945,7 +4946,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                           Tooltip(
                             message: 'Close',
                             child: InkWell(
-                              onTap: () => Navigator.pop(context),
+                              onTap: () => context.safePop(),
                               borderRadius: BorderRadius.circular(14),
                               child: Container(
                                 width: 44,
@@ -5230,7 +5231,7 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                           Expanded(
                             child: _otUtilityButton(
                               'Cancel',
-                              onTap: () => Navigator.pop(context),
+                              onTap: () => context.safePop(),
                             ),
                           ),
                           Expanded(
@@ -5488,7 +5489,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                           Tooltip(
                             message: 'Close',
                             child: InkWell(
-                              onTap: () => Navigator.pop(context),
+                              onTap: () => context.safePop(),
                               borderRadius: BorderRadius.circular(14),
                               child: Container(
                                 width: 44,
@@ -5678,7 +5679,7 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                           Expanded(
                             child: _otUtilityButton(
                               'Cancel',
-                              onTap: () => Navigator.pop(context),
+                              onTap: () => context.safePop(),
                             ),
                           ),
                           Expanded(
@@ -5938,7 +5939,7 @@ class _MalpracticeIncidentDialogState
                           Tooltip(
                             message: 'Close',
                             child: InkWell(
-                              onTap: () => Navigator.pop(context),
+                              onTap: () => context.safePop(),
                               borderRadius: BorderRadius.circular(14),
                               child: Container(
                                 width: 44,
@@ -6158,7 +6159,7 @@ class _MalpracticeIncidentDialogState
                           Expanded(
                             child: _otUtilityButton(
                               'Cancel',
-                              onTap: () => Navigator.pop(context),
+                              onTap: () => context.safePop(),
                             ),
                           ),
                           Expanded(
@@ -6460,7 +6461,7 @@ class _ToiletVisitIncidentDialogState
                           Tooltip(
                             message: 'Close',
                             child: InkWell(
-                              onTap: () => Navigator.pop(context),
+                              onTap: () => context.safePop(),
                               borderRadius: BorderRadius.circular(14),
                               child: Container(
                                 width: 44,
@@ -6658,7 +6659,7 @@ class _ToiletVisitIncidentDialogState
                           Expanded(
                             child: _otUtilityButton(
                               'Cancel',
-                              onTap: () => Navigator.pop(context),
+                              onTap: () => context.safePop(),
                             ),
                           ),
                           Expanded(
@@ -6701,7 +6702,7 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
 
   void _save(String role) {
     widget.onSave(role);
-    Navigator.pop(context);
+    context.safePop();
   }
 
   Widget _selectionRow({
@@ -6838,7 +6839,7 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
                       Tooltip(
                         message: 'Close',
                         child: InkWell(
-                          onTap: () => Navigator.pop(context),
+                          onTap: () => context.safePop(),
                           borderRadius: BorderRadius.circular(14),
                           child: Container(
                             width: 44,

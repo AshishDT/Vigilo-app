@@ -11,6 +11,7 @@ import '../models/home_list_item.dart';
 import '../services/license_service.dart';
 import '../services/session_service.dart';
 import '../utils/constants.dart';
+import '../utils/safe_navigator.dart';
 import '../utils/export_logs.dart';
 import '../utils/id_generator.dart';
 import 'briefings_library_sheet.dart';
@@ -745,7 +746,7 @@ class _HomeScreenState extends State<HomeScreen>
     _extraTimeWarningVibrationSent.remove(recordId);
     await _refreshCards();
     _toast("Exam Restarted", "The exam timer has been reset", Icons.restart_alt_rounded, NotificationType.information);
-    if (mounted) Navigator.pop(context);
+    if (mounted) context.safePop();
   }
 
   bool _isProcessingPause = false;
@@ -767,7 +768,7 @@ class _HomeScreenState extends State<HomeScreen>
       }
 
       await _refreshCards();
-      if (mounted) Navigator.pop(context);
+      if (mounted) context.safePop();
     } finally {
       _isProcessingPause = false;
     }
@@ -784,7 +785,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
     await _refreshCards();
     _toast("Exam ended", "The exam has been marked as finished", Icons.stop_circle_rounded, NotificationType.success);
-    if (mounted) Navigator.pop(context);
+    if (mounted) context.safePop();
   }
 
   // ------------------ Quick Add Wizard ------------------
@@ -926,7 +927,7 @@ class _HomeScreenState extends State<HomeScreen>
           });
           await _saveState();
           if (!mounted) return;
-          Navigator.of(context).pop(true);
+          context.safePop(true);
         },
       ),
     );
@@ -1218,8 +1219,8 @@ class _HomeScreenState extends State<HomeScreen>
                                   ? 'This exam has already been completed. Restarting or modifying it is not allowed'
                                   : "This will restart the exam from the beginning",
                               okTitle: "Restart",
-                              onCancel: () => Navigator.pop(ctx, false),
-                              onConfirm: () => Navigator.pop(ctx, true),
+                              onCancel: () => ctx.safePop(false),
+                              onConfirm: () => ctx.safePop(true),
                               shouldNotRestart:
                                   _cards[i].progress == 0.0 ||
                                   _cards[i].phase == ExamPhase.finished,
@@ -1241,8 +1242,8 @@ class _HomeScreenState extends State<HomeScreen>
                               message:
                                   "This action will end the exam session and record the final finish time",
                               okTitle: "End Exam",
-                              onCancel: () => Navigator.pop(ctx, false),
-                              onConfirm: () => Navigator.pop(ctx, true),
+                              onCancel: () => ctx.safePop(false),
+                              onConfirm: () => ctx.safePop(true),
                             ),
                           );
                           if (ok == true) {
@@ -1290,8 +1291,8 @@ class _HomeScreenState extends State<HomeScreen>
                               message:
                                   "This action will permanently remove data for this exam only",
                               okTitle: "Delete",
-                              onCancel: () => Navigator.pop(ctx, false),
-                              onConfirm: () => Navigator.pop(ctx, true),
+                              onCancel: () => ctx.safePop(false),
+                              onConfirm: () => ctx.safePop(true),
                             ),
                           );
                           if (!context.mounted) return;
@@ -1304,7 +1305,7 @@ class _HomeScreenState extends State<HomeScreen>
                             } else if (i >= 0 && i < _cards.length) {
                               _cards.removeAt(i);
                             }
-                            Navigator.of(context).pop();
+                            context.safePop();
                             _saveState();
                             setState(() {});
                           }
@@ -1505,7 +1506,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     });
                                     await _saveState();
                                   },
-                                  onClose: () => Navigator.of(context).pop(),
+                                  onClose: () => context.safePop(),
                                 ),
                                 transitionsBuilder: (context, animation, secondaryAnimation, child) {
                                   final tween = Tween(begin: const Offset(0.0, 1.0), end: Offset.zero)

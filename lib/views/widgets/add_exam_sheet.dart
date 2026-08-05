@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
+import '../../utils/safe_navigator.dart';
 
 import 'vigilo_date_picker.dart';
 import 'vigilo_time_picker.dart';
@@ -16,7 +18,7 @@ class _SheetColors {
   bool get isDark => Theme.of(context).brightness == Brightness.dark;
 
   Color get panel => VigiloUiColors.panel(isDark);
-  Color get panel2 => isDark ? const Color(0xFF16314D) : const Color(0xFFF1F5F9);
+  Color get panel2 => VigiloUiColors.panel2(isDark);
   Color get line => VigiloUiColors.line(isDark);
   Color get lineSoft => VigiloUiColors.lineSoft(isDark);
   Color get text => VigiloUiColors.text(isDark);
@@ -24,8 +26,8 @@ class _SheetColors {
   Color get textFaint => VigiloUiColors.textFaint(isDark);
   Color get blue => VigiloUiColors.blue(isDark);
   Color get blueSoft => VigiloUiColors.blueSoft(isDark);
-  Color get blackWhite => isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
-  Color get inputBg => isDark ? const Color(0xFF0F2236) : const Color(0xFFF8FAFC);
+  Color get blackWhite => VigiloUiColors.blackWhite(isDark);
+  Color get inputBg => VigiloUiColors.timeCardBg(isDark);
 }
 
 class AddExamSheet extends StatefulWidget {
@@ -609,10 +611,11 @@ class _AddExamSheetState extends State<AddExamSheet> {
     IconData? icon,
     required VoidCallback? onTap,
     bool isFaded = false,
+    bool isLoading = false,
   }) {
     final colors = _SheetColors(context);
     return AnimatedScaleOnPress(
-      isDisabled: onTap == null,
+      isDisabled: onTap == null || isLoading,
       child: Opacity(
         opacity: isFaded ? 0.45 : 1.0,
         child: SizedBox(
@@ -626,28 +629,33 @@ class _AddExamSheetState extends State<AddExamSheet> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(26),
               ),
-              elevation: onTap == null ? 0 : 2,
+              elevation: (onTap == null || isLoading) ? 0 : 2,
             ),
-            onPressed: onTap,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, size: 20, color: Colors.white),
-                  const SizedBox(width: 10),
-                ],
-                Flexible(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
+            onPressed: isLoading ? null : onTap,
+            child: isLoading
+                ? const CupertinoActivityIndicator(
+                    color: Colors.white,
+                    radius: 10,
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (icon != null) ...[
+                        Icon(icon, size: 20, color: Colors.white),
+                        const SizedBox(width: 10),
+                      ],
+                      Flexible(
+                        child: Text(
+                          label,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ),
       ),
@@ -657,15 +665,19 @@ class _AddExamSheetState extends State<AddExamSheet> {
   Widget _secondaryButton({
     required String label,
     IconData? icon,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
   }) {
     final colors = _SheetColors(context);
     return AnimatedScaleOnPress(
+      isDisabled: onTap == null,
       child: SizedBox(
         height: 52,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: colors.blue, width: 1.5),
+            side: BorderSide(
+              color: onTap == null ? colors.blue.withValues(alpha: 0.45) : colors.blue,
+              width: 1.5,
+            ),
             foregroundColor: colors.blue,
             backgroundColor: Colors.transparent,
             shape: RoundedRectangleBorder(
@@ -780,7 +792,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                             Tooltip(
                               message: 'Close',
                               child: InkWell(
-                                onTap: () => Navigator.pop(context, false),
+                                onTap: () => context.safePop(false),
                                 borderRadius: BorderRadius.circular(14),
                                 child: Container(
                                   width: 44,
@@ -950,16 +962,18 @@ class _AddExamSheetState extends State<AddExamSheet> {
                       Expanded(
                         child: _secondaryButton(
                           label: 'Cancel',
-                          onTap: () => Navigator.pop(context, false),
+                          onTap: _isSaving ? null : () => context.safePop(false),
                         ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: _primaryButton(
                           label: 'Save',
+                          isLoading: _isSaving,
                           isFaded: _isPastTimeSelected(),
                           onTap: (_isValidToSave() && !_isSaving)
                               ? () async {
+                                  if (_isSaving) return;
                                   if (_isPastTimeSelected()) {
                                     NotificationService.show(
                                       sheetContext,

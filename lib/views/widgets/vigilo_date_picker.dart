@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
+import '../../utils/safe_navigator.dart';
 import 'animated_scale_on_press.dart';
 
 class _PickerColors {
@@ -628,7 +629,7 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
                             onPressed: () {
                               if (_isSubmitting) return;
                               _isSubmitting = true;
-                              Navigator.of(context).pop();
+                              context.safePop();
                             },
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
@@ -682,7 +683,7 @@ class _VigiloDatePickerSheetState extends State<VigiloDatePickerSheet> {
                                     setState(() {
                                       _isSubmitting = true;
                                     });
-                                    Navigator.of(context).pop(_selectedDate);
+                                    context.safePop(_selectedDate);
                                   }
                                 : null,
                             child: FittedBox(
@@ -876,7 +877,7 @@ Future<int?> _showYearGridPicker({
                             padding: EdgeInsets.zero,
                           ),
                           onPressed: () {
-                            Navigator.of(context).pop(val);
+                            context.safePop(val);
                           },
                           child: Text(
                             val.toString(),
@@ -903,7 +904,7 @@ Future<int?> _showYearGridPicker({
                     backgroundColor: colors.panel2.withValues(alpha: 0.62),
                     shape: const StadiumBorder(),
                   ),
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => context.safePop(),
                   child: Text(
                     'Close',
                     style: TextStyle(

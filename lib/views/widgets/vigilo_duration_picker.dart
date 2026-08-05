@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/constants.dart';
+import '../../utils/safe_navigator.dart';
 import 'animated_scale_on_press.dart';
 
 class _PickerColors {
@@ -336,7 +337,7 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
                         onPressed: () {
                           if (_isSubmitting) return;
                           _isSubmitting = true;
-                          Navigator.of(context).pop();
+                          context.safePop();
                         },
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
@@ -386,7 +387,7 @@ class _VigiloDurationPickerSheetState extends State<VigiloDurationPickerSheet> {
                                 });
                                 final result =
                                     "${_hours.toString().padLeft(2, '0')}:${_minutes.toString().padLeft(2, '0')}";
-                                Navigator.of(context).pop(result);
+                                context.safePop(result);
                               }
                             : null,
                         child: FittedBox(
@@ -575,7 +576,7 @@ Future<int?> _showGridPicker({
                             padding: EdgeInsets.zero,
                           ),
                           onPressed: () {
-                            Navigator.of(context).pop(val);
+                            context.safePop(val);
                           },
                           child: Text(
                             displayStr,
@@ -602,7 +603,7 @@ Future<int?> _showGridPicker({
                     backgroundColor: colors.panel2.withValues(alpha: 0.62),
                     shape: const StadiumBorder(),
                   ),
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => context.safePop(),
                   child: Text(
                     'Close',
                     style: TextStyle(

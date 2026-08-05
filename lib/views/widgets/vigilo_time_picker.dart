@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/constants.dart';
+import '../../utils/safe_navigator.dart';
 import 'animated_scale_on_press.dart';
 
 class _PickerColors {
@@ -567,7 +568,7 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                         onPressed: () {
                           if (_isSubmitting) return;
                           _isSubmitting = true;
-                          Navigator.of(context).pop();
+                          context.safePop();
                         },
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
@@ -613,7 +614,7 @@ class _VigiloTimePickerSheetState extends State<VigiloTimePickerSheet> {
                                 setState(() {
                                   _isSubmitting = true;
                                 });
-                                Navigator.of(context).pop(_selectedTime);
+                                context.safePop(_selectedTime);
                               }
                             : null,
                         child: FittedBox(

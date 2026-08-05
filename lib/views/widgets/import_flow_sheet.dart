@@ -5,6 +5,7 @@ import '../../models/exam_card_data.dart';
 import '../../services/import_service.dart';
 import '../../services/license_service.dart';
 import '../../utils/constants.dart';
+import '../../utils/safe_navigator.dart';
 import '../../utils/id_generator.dart';
 import '../../utils/notifications.dart';
 
@@ -494,7 +495,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                               setState(() {
                                 _mappings[field] = null;
                               });
-                              Navigator.pop(ctx);
+                              ctx.safePop();
                             },
                           ),
                           ..._detectedHeaders.map((h) {
@@ -517,7 +518,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                                 setState(() {
                                   _mappings[field] = h;
                                 });
-                                Navigator.pop(ctx);
+                                ctx.safePop();
                               },
                             );
                           }),
