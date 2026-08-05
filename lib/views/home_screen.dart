@@ -155,8 +155,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     try {
-      final previousCards = List<ExamCardData>.from(_cards);
-      final previousArchiveCards = List<ExamCardData>.from(_archiveCards);
       final persisted = await _sessionService.persistHomeState(
         cards: _cards,
         archiveCards: _archiveCards,
@@ -172,11 +170,13 @@ class _HomeScreenState extends State<HomeScreen>
       );
       if (!mounted) return;
       setState(() {
+        final currentCards = List<ExamCardData>.from(_cards);
+        final currentArchiveCards = List<ExamCardData>.from(_archiveCards);
         _cards
           ..clear()
           ..addAll(
             _preserveTransientCardState(
-              previous: previousCards,
+              previous: currentCards,
               incoming: persisted.cards,
             ),
           );
@@ -184,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen>
           ..clear()
           ..addAll(
             _preserveTransientCardState(
-              previous: previousArchiveCards,
+              previous: currentArchiveCards,
               incoming: persisted.archiveCards,
             ),
           );
@@ -677,7 +677,7 @@ class _HomeScreenState extends State<HomeScreen>
           _cards[j] = _cards[j].copyWith(expanded: false);
         }
       }
-      _saveState();
+      _updateFilteredAndGroupedCards();
     });
   }
 
@@ -748,21 +748,29 @@ class _HomeScreenState extends State<HomeScreen>
     if (mounted) Navigator.pop(context);
   }
 
+  bool _isProcessingPause = false;
+
   Future<void> _onPause(int i) async {
-    final c = _cards[i];
-    final recordId = c.recordId;
-    if (recordId == null) return;
+    if (_isProcessingPause) return;
+    _isProcessingPause = true;
+    try {
+      final c = _cards[i];
+      final recordId = c.recordId;
+      if (recordId == null) return;
 
-    if (c.isPaused) {
-      await _sessionService.resumeSession(recordId);
-      _toast("Exam Resumed", "The exam timer has resumed", Icons.play_circle_fill_rounded, NotificationType.success);
-    } else {
-      await _sessionService.pauseSession(recordId);
-      _toast("Exam Paused", "The exam timer has been paused", Icons.pause_circle_filled_rounded, NotificationType.information);
+      if (c.isPaused) {
+        await _sessionService.resumeSession(recordId);
+        _toast("Exam Resumed", "The exam timer has resumed", Icons.play_circle_fill_rounded, NotificationType.success);
+      } else {
+        await _sessionService.pauseSession(recordId);
+        _toast("Exam Paused", "The exam timer has been paused", Icons.pause_circle_filled_rounded, NotificationType.information);
+      }
+
+      await _refreshCards();
+      if (mounted) Navigator.pop(context);
+    } finally {
+      _isProcessingPause = false;
     }
-
-    await _refreshCards();
-    if (mounted) Navigator.pop(context);
   }
 
   Future<void> _onEnd(int i) async {

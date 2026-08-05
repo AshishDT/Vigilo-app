@@ -89,6 +89,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
   late String _durationHHMM;
   late String _extraHHMM;
   Timer? _rebuildTimer;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -957,7 +958,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                         child: _primaryButton(
                           label: 'Save',
                           isFaded: _isPastTimeSelected(),
-                          onTap: _isValidToSave()
+                          onTap: (_isValidToSave() && !_isSaving)
                               ? () async {
                                   if (_isPastTimeSelected()) {
                                     NotificationService.show(
@@ -969,28 +970,39 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                     );
                                     return;
                                   }
-                                  final school = _schoolCtl.text.trim();
-                                  final centre = _centreCtl.text.trim();
-                                  final subj = _subjectCtl.text.trim();
-                                  final board = _boardCtl.text.trim();
+                                  setState(() {
+                                    _isSaving = true;
+                                  });
+                                  try {
+                                    final school = _schoolCtl.text.trim();
+                                    final centre = _centreCtl.text.trim();
+                                    final subj = _subjectCtl.text.trim();
+                                    final board = _boardCtl.text.trim();
 
-                                  String? levelToSave = _examLevel;
-                                  if (_examLevel == 'Other') {
-                                    final custom = _otherLevelCtl.text.trim();
-                                    levelToSave = custom.isNotEmpty ? custom : null;
+                                    String? levelToSave = _examLevel;
+                                    if (_examLevel == 'Other') {
+                                      final custom = _otherLevelCtl.text.trim();
+                                      levelToSave = custom.isNotEmpty ? custom : null;
+                                    }
+
+                                    await widget.onSave(
+                                      school: school,
+                                      centre: centre,
+                                      subject: subj,
+                                      board: board,
+                                      level: levelToSave,
+                                      date: _selectedDate,
+                                      startTime: _startHHMM,
+                                      duration: _durationHHMM,
+                                      extraTime: _extraHHMM,
+                                    );
+                                  } finally {
+                                    if (mounted) {
+                                      setState(() {
+                                        _isSaving = false;
+                                      });
+                                    }
                                   }
-
-                                  await widget.onSave(
-                                    school: school,
-                                    centre: centre,
-                                    subject: subj,
-                                    board: board,
-                                    level: levelToSave,
-                                    date: _selectedDate,
-                                    startTime: _startHHMM,
-                                    duration: _durationHHMM,
-                                    extraTime: _extraHHMM,
-                                  );
                                 }
                               : null,
                         ),

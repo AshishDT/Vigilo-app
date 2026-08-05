@@ -185,18 +185,16 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
         onTap: (data.isDatePassed && !isExamCompleted && !isArchiveMode)
             ? null
             : () {
-                if (!isArchiveMode) {
-                  setState(() {
-                    _localScale = 1.02;
-                  });
-                  Future.delayed(const Duration(milliseconds: 100), () {
-                    if (mounted) {
-                      setState(() {
-                        _localScale = 1.0;
-                      });
-                    }
-                  });
-                }
+                setState(() {
+                  _localScale = 1.02;
+                });
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  if (mounted) {
+                    setState(() {
+                      _localScale = 1.0;
+                    });
+                  }
+                });
                 if (isArchiveMode) {
                   onSelect();
                 } else {
@@ -204,7 +202,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                 }
               },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 350),
+          duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),

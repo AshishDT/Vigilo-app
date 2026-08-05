@@ -89,6 +89,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   String _setUpRole = '';
   int _activeTabIndex = 0;
   bool _hasExported = false;
+  bool _isPausingLoading = false;
 
   late ExamCardData _currentData;
   Timer? _updateTimer;
@@ -854,38 +855,37 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       ),
       child: child,
     );
-  }
-
-  Widget _otControlItem({
+  }  Widget _otControlItem({
     required String title,
     required String subtitle,
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
     required bool disabled,
+    bool isLoading = false,
   }) {
-    final Color borderColor = disabled
+    final Color borderColor = (disabled || isLoading)
         ? VigiloUiColors.line(_isDark).withValues(alpha: 0.4)
         : (color == VigiloUiColors.red(_isDark)
               ? VigiloUiColors.red(_isDark).withValues(alpha: 0.7)
               : color.withValues(alpha: 0.7));
-    final Color iconColor = disabled
+    final Color iconColor = (disabled || isLoading)
         ? VigiloUiColors.textFaint(_isDark).withValues(alpha: 0.4)
         : color;
-    final Color titleColor = disabled
+    final Color titleColor = (disabled || isLoading)
         ? VigiloUiColors.textFaint(_isDark).withValues(alpha: 0.58)
         : VigiloUiColors.text(_isDark);
-    final Color subtitleColor = disabled
+    final Color subtitleColor = (disabled || isLoading)
         ? VigiloUiColors.textFaint(_isDark).withValues(alpha: 0.4)
         : VigiloUiColors.textSoft(_isDark);
-    final Color backgroundColor = disabled
+    final Color backgroundColor = (disabled || isLoading)
         ? VigiloUiColors.panel2(_isDark).withValues(alpha: 0.4)
         : (color == VigiloUiColors.red(_isDark)
               ? VigiloUiColors.red(_isDark).withValues(alpha: 0.03)
               : color.withValues(alpha: 0.04));
 
     return IgnorePointer(
-      ignoring: disabled,
+      ignoring: disabled || isLoading,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
@@ -908,7 +908,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   shape: BoxShape.circle,
                   border: Border.all(color: iconColor),
                 ),
-                child: Icon(icon, color: iconColor, size: 24),
+                child: Icon(icon, color: iconColor, size: 22),
               ),
               Expanded(
                 child: Column(
@@ -935,6 +935,11 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   ],
                 ),
               ),
+              if (isLoading)
+                CupertinoActivityIndicator(
+                  color: iconColor,
+                  radius: 10,
+                ),
             ],
           ),
         ),
@@ -2971,12 +2976,18 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     icon: data.isPaused
                                         ? Icons.play_arrow_rounded
                                         : Icons.pause_rounded,
-                                    color:
-                                        _setupPhaseLabel(data.phase) ==
+                                    color: _setupPhaseLabel(data.phase) ==
                                             'Extra Time'
                                         ? VigiloUiColors.amber(_isDark)
                                         : VigiloUiColors.blue(_isDark),
-                                    onTap: widget.onPause,
+                                    isLoading: _isPausingLoading,
+                                    onTap: () {
+                                      if (_isPausingLoading) return;
+                                      setState(() {
+                                        _isPausingLoading = true;
+                                      });
+                                      widget.onPause();
+                                    },
                                     disabled: _isExamCompleted,
                                   ),
                                   _otControlItem(
