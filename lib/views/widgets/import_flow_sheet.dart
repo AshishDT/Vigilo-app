@@ -93,7 +93,9 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
 
 
   bool _centreHasError = false;
+  bool _orgNameHasError = false;
   late final TextEditingController _centreController;
+  late final TextEditingController _orgNameController;
 
   // Final parsed sessions for preview
   List<_PreviewSession> _previewSessions = [];
@@ -103,7 +105,9 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
   void initState() {
     super.initState();
     _centreController = TextEditingController(text: widget.initialCentreNumber);
+    _orgNameController = TextEditingController();
     _centreController.addListener(_onCentreChanged);
+    _orgNameController.addListener(_onOrgNameChanged);
     _loadLicenceAndMappings();
   }
 
@@ -115,10 +119,20 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
     }
   }
 
+  void _onOrgNameChanged() {
+    if (_orgNameHasError) {
+      setState(() {
+        _orgNameHasError = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _centreController.removeListener(_onCentreChanged);
+    _orgNameController.removeListener(_onOrgNameChanged);
     _centreController.dispose();
+    _orgNameController.dispose();
     super.dispose();
   }
 
@@ -128,6 +142,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
 
     setState(() {
       _orgName = snapshot.organizationName ?? 'Harris Clapham Sixth Form';
+      _orgNameController.text = _orgName;
       _orgCode = snapshot.organizationCode ?? 'AA';
 
       // Load saved mappings from SharedPreferences
@@ -145,6 +160,17 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
 
   Future<void> _saveMappings() async {
     final prefs = await SharedPreferences.getInstance();
+
+    final newOrgName = _orgNameController.text.trim();
+    if (newOrgName.isNotEmpty) {
+      await prefs.setString('vigilo_licence_school_name', newOrgName);
+    }
+
+    final newCentreNum = _centreController.text.trim();
+    if (newCentreNum.isNotEmpty) {
+      await prefs.setString('vigilo_import_centre_number', newCentreNum);
+    }
+
     await prefs.setString(
       'vigilo_import_map_subject',
       _mappings['Exam Subject'] ?? '',
@@ -175,6 +201,20 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
   }
 
   Future<void> _pickFile() async {
+    if (_orgNameController.text.trim().isEmpty) {
+      setState(() {
+        _orgNameHasError = true;
+      });
+      NotificationService.show(
+        context,
+        title: 'Missing Organisation Name',
+        subtitle: 'Please enter your Organisation Name before selecting a file.',
+        type: NotificationType.warning,
+        icon: Icons.warning_amber_rounded,
+      );
+      return;
+    }
+
     if (_centreController.text.trim().isEmpty) {
       setState(() {
         _centreHasError = true;
@@ -594,9 +634,13 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           }
         } catch (_) {}
 
+        final effectiveOrgName = _orgNameController.text.trim().isNotEmpty
+            ? _orgNameController.text.trim()
+            : _orgName;
+
         var card = ExamCardData(
           recordId: generateId(),
-          school: _orgName,
+          school: effectiveOrgName,
           centreNumber: _centreController.text.trim(),
           date: s.date,
           subject: s.level != null && s.level!.isNotEmpty
@@ -853,12 +897,50 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
             ),
             child: Column(
               children: [
-                _buildOtRow(
-                  colors,
-                  Icons.apartment_rounded,
-                  'Organisation Name',
-                  _orgName,
-                  locked: true,
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.apartment_rounded,
+                        color: colors.blueSoft,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Organisation Name',
+                        style: TextStyle(
+                          color: colors.textSoft,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: _orgNameController,
+                          textAlign: TextAlign.end,
+                          style: TextStyle(
+                            color: colors.text,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            hintText: 'Enter organisation name',
+                            hintStyle: TextStyle(
+                              color: colors.textFaint,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 Divider(height: 16, color: colors.lineSoft),
                 _buildOtRow(
@@ -932,7 +1014,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            'One session per room will be created. You will review everything before confirming.',
+            'One session per room will be created — you\'ll have a chance to review everything before confirming.',
             style: TextStyle(color: colors.textSoft, fontSize: 14, height: 1.5),
           ),
           const SizedBox(height: 24),
@@ -972,7 +1054,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Export your timetable from Arbor, SIMS, Bromcom, or your own spreadsheet as CSV or Excel. Vigilo remembers your column mapping after the first import.',
+            'Export your timetable as CSV or Excel from your MIS or spreadsheet. Vigilo remembers your column mapping after the first import.',
             style: TextStyle(
               color: colors.textFaint,
               fontSize: 12,
@@ -1045,7 +1127,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                       colors,
                       Icons.apartment_rounded,
                       'Organisation Name',
-                      _orgName,
+                      _orgNameController.text.trim().isEmpty ? _orgName : _orgNameController.text,
                       locked: true,
                     ),
                     Divider(height: 1, color: colors.lineSoft),
@@ -1289,7 +1371,6 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
           child: Text(
             'Check subjects, boards, timings, and rooms. Tap Cancel to adjust column mapping.',
-            textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.textFaint,
               fontSize: 12,
@@ -1375,7 +1456,8 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                         fontSize: 14,
                       ),
                     ),
-                    Row(
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         if (s.level != null) ...[
                           Text(
@@ -1573,7 +1655,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                   colors,
                   Icons.apartment_rounded,
                   'Organisation Name',
-                  _orgName,
+                  _orgNameController.text.trim().isEmpty ? _orgName : _orgNameController.text,
                   locked: false,
                 ),
                 Divider(height: 1, color: colors.lineSoft),
@@ -1605,7 +1687,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Sessions are on your Home Screen, sorted by date, time, and subject.',
+            'Sorted by date, time, and subject.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.textFaint,
