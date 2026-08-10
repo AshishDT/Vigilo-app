@@ -1245,14 +1245,13 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                                           fontSize: 14,
                                         ),
                                       ),
-                                      if (!isRequired)
-                                        Text(
-                                          'optional',
-                                          style: TextStyle(
-                                            color: colors.textFaint,
-                                            fontSize: 11,
-                                          ),
+                                      Text(
+                                        isRequired ? 'required' : 'optional',
+                                        style: TextStyle(
+                                          color: colors.textFaint,
+                                          fontSize: 11,
                                         ),
+                                      ),
                                     ],
                                   ),
                                 ),
