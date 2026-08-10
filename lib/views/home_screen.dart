@@ -1513,13 +1513,13 @@ class _HomeScreenState extends State<HomeScreen>
                                   onToggleTheme: widget.onToggleTheme,
                                   initialCentreNumber: _lastCentre ?? (_cards.isNotEmpty ? _cards.first.centreNumber : ''),
                                   onImportSessions: (newSessions) async {
-                                    setState(() {
-                                      _cards.insertAll(0, newSessions);
-                                      if (newSessions.isNotEmpty) {
+                                    await _sessionService.importSessions(newSessions);
+                                    if (newSessions.isNotEmpty) {
+                                      setState(() {
                                         _lastCentre = newSessions.first.centreNumber;
-                                      }
-                                      _updateFilteredAndGroupedCards();
-                                    });
+                                      });
+                                    }
+                                    await _refreshCards();
                                     await _saveState();
                                   },
                                   onClose: () => context.safePop(),

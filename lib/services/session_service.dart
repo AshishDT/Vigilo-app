@@ -139,6 +139,21 @@ class SessionService {
     return await loadHomeState();
   }
 
+  Future<void> importSessions(List<ExamCardData> newSessions) async {
+    final db = await _db.database;
+    await db.transaction((txn) async {
+      for (final card in newSessions) {
+        await _upsertCard(
+          txn,
+          card: card,
+          archived: false,
+          fromMigration: false,
+        );
+      }
+    });
+  }
+
+
   Future<Map<String, String?>> loadLastUsed() async {
     final raw = await _db.getAppState(_lastUsedStateKey);
     if (raw == null || raw.trim().isEmpty) {
