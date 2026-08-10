@@ -400,18 +400,46 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
         errors.add('Invalid or missing Start Time ("$rawStartTime")');
       }
 
-      final duration = rawDuration != null
-          ? ImportService.normalizeDuration(rawDuration)
-          : null;
-      if (duration == null) {
-        errors.add('Invalid or missing Duration ("$rawDuration")');
+      String? duration;
+      if (rawDuration == null || rawDuration.toString().trim().isEmpty) {
+        errors.add('Missing Duration');
+      } else {
+        final normDuration = ImportService.normalizeDuration(rawDuration);
+        if (normDuration == null) {
+          errors.add('Invalid Duration ("$rawDuration")');
+        } else {
+          final minutes = ImportService.durationToMinutes(normDuration);
+          if (minutes == null) {
+            errors.add('Invalid Duration ("$rawDuration")');
+          } else if (minutes < 0) {
+            errors.add('Duration cannot be negative ("$rawDuration")');
+          } else if (minutes == 0) {
+            errors.add('Duration cannot be zero ("$rawDuration")');
+          } else {
+            duration = normDuration;
+          }
+        }
       }
 
-      // Optional fields normalization
+      // Optional fields normalization and validation
       final level = rawLevel?.isNotEmpty == true ? rawLevel : null;
-      final extraTime = rawExtraTime != null
-          ? (ImportService.normalizeDuration(rawExtraTime) ?? '00:00')
-          : '00:00';
+      
+      String extraTime = '00:00';
+      if (rawExtraTime != null && rawExtraTime.toString().trim().isNotEmpty) {
+        final normExtra = ImportService.normalizeDuration(rawExtraTime);
+        if (normExtra == null) {
+          errors.add('Invalid Extra Time ("$rawExtraTime")');
+        } else {
+          final minutes = ImportService.durationToMinutes(normExtra);
+          if (minutes == null) {
+            errors.add('Invalid Extra Time ("$rawExtraTime")');
+          } else if (minutes < 0) {
+            errors.add('Extra Time cannot be negative ("$rawExtraTime")');
+          } else {
+            extraTime = normExtra;
+          }
+        }
+      }
       final notes = rawNotes ?? '';
 
       // Split rooms

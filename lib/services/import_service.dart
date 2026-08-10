@@ -54,11 +54,11 @@ class ImportService {
     return null;
   }
 
-  /// Parses duration/extra time formats (HH:MM or decimal/integer minutes) and returns "HH:MM"
+  /// Parses duration/extra time formats (HH:MM or decimal/integer minutes) and returns "HH:MM" or "-HH:MM"
   static String? normalizeDuration(dynamic input) {
     if (input == null) return null;
     final str = input.toString().trim();
-    if (str.isEmpty) return '00:00';
+    if (str.isEmpty) return null;
 
     // Try HH:MM
     if (str.contains(':')) {
@@ -67,7 +67,11 @@ class ImportService {
         final hh = int.tryParse(parts[0]);
         final mm = int.tryParse(parts[1]);
         if (hh != null && mm != null) {
-          return '${hh.toString().padLeft(2, '0')}:${mm.toString().padLeft(2, '0')}';
+          final isNegative = str.contains('-') || hh < 0 || mm < 0;
+          final absHh = hh.abs();
+          final absMm = mm.abs();
+          final prefix = isNegative ? '-' : '';
+          return '$prefix${absHh.toString().padLeft(2, '0')}:${absMm.toString().padLeft(2, '0')}';
         }
       }
     }
@@ -76,13 +80,33 @@ class ImportService {
     final mins = double.tryParse(str);
     if (mins != null) {
       final totalMins = mins.round();
-      final hh = totalMins ~/ 60;
-      final mm = totalMins % 60;
-      return '${hh.toString().padLeft(2, '0')}:${mm.toString().padLeft(2, '0')}';
+      final isNegative = totalMins < 0;
+      final absMins = totalMins.abs();
+      final hh = absMins ~/ 60;
+      final mm = absMins % 60;
+      final prefix = isNegative ? '-' : '';
+      return '$prefix${hh.toString().padLeft(2, '0')}:${mm.toString().padLeft(2, '0')}';
     }
 
     return null;
   }
+
+  /// Converts a normalized duration string ("HH:MM" or "-HH:MM") to total minutes.
+  /// Returns null if format is invalid or cannot be parsed.
+  static int? durationToMinutes(String durationStr) {
+    final parts = durationStr.split(':');
+    if (parts.length >= 2) {
+      final hh = int.tryParse(parts[0]);
+      final mm = int.tryParse(parts[1]);
+      if (hh != null && mm != null) {
+        final total = hh.abs() * 60 + mm.abs();
+        final isNegative = durationStr.contains('-') || hh < 0 || mm < 0;
+        return isNegative ? -total : total;
+      }
+    }
+    return null;
+  }
+
 
   /// Normalizes start time (HH:MM)
   static String? normalizeStartTime(String input) {
