@@ -51,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   final List<ExamCardData> _cards = [];
   final List<ExamCardData> _archiveCards = [];
+  List<String> _lastImportedSessionIds = [];
   final SessionService _sessionService = SessionService();
   final Set<String> _normalTimeWarningVibrationSent = <String>{};
   final Set<String> _extraTimeWarningVibrationSent = <String>{};
@@ -205,6 +206,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _refreshCards() async {
     final state = await _sessionService.loadHomeState();
+    final lastImportIds = await _sessionService.getLastImportedSessionIds();
     final activeIds = state.cards
         .map((card) => card.recordId)
         .whereType<String>()
@@ -213,6 +215,7 @@ class _HomeScreenState extends State<HomeScreen>
     _extraTimeWarningVibrationSent.retainAll(activeIds);
     if (!mounted) return;
     setState(() {
+      _lastImportedSessionIds = lastImportIds;
       final previousCards = List<ExamCardData>.from(_cards);
       final previousArchiveCards = List<ExamCardData>.from(_archiveCards);
       _cards
@@ -244,8 +247,10 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _loadState() async {
     final state = await _sessionService.loadHomeState();
+    final lastImportIds = await _sessionService.getLastImportedSessionIds();
     if (!mounted) return;
     setState(() {
+      _lastImportedSessionIds = lastImportIds;
       _cards
         ..clear()
         ..addAll(state.cards);
@@ -1496,20 +1501,77 @@ class _HomeScreenState extends State<HomeScreen>
                               _updateFilteredAndGroupedCards();
                             }),
                             onJumpToDateTap: _openDatePicker,
+                            lastImportSessions: [
+                              ..._cards.where(
+                                (c) => _lastImportedSessionIds.contains(
+                                  c.recordId,
+                                ),
+                              ),
+                              ..._archiveCards
+                                  .where(
+                                    (c) => _lastImportedSessionIds.contains(
+                                      c.recordId,
+                                    ),
+                                  )
+                                  .map((c) => c.copyWith(wasEverStarted: true)),
+                            ],
+                            onUndoLastImport: () async {
+                              final lastImportSessions = _cards
+                                  .where(
+                                    (c) => _lastImportedSessionIds.contains(
+                                      c.recordId,
+                                    ),
+                                  )
+                                  .toList();
+                              final protected = lastImportSessions
+                                  .where(
+                                    (s) =>
+                                        s.running ||
+                                        s.isPaused ||
+                                        s.wasEverStarted ||
+                                        s.phase == ExamPhase.finished ||
+                                        s.logs.isNotEmpty,
+                                  )
+                                  .toList();
+                              final undoable = lastImportSessions
+                                  .where((s) => !protected.contains(s))
+                                  .toList();
+                              final undoableIds = undoable
+                                  .map((c) => c.recordId)
+                                  .whereType<String>()
+                                  .toList();
+                               if (undoableIds.isNotEmpty) {
+                                await _sessionService.undoLastImport(
+                                  undoableIds,
+                                );
+                                if (mounted) {
+                                  _toast(
+                                    'Import Reverted',
+                                    'Reverted ${undoableIds.length} session${undoableIds.length == 1 ? '' : 's'} from the last import.',
+                                    Icons.undo_rounded,
+                                    NotificationType.success,
+                                  );
+                                }
+                                await _refreshCards();
+                              }
+                            },
                           )
                         : const SizedBox(width: double.infinity, height: 0),
                   ),
                   Expanded(
                     child: isArchiveView
                         ? (_archiveCards.isEmpty
-                              ? const Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Spacer(),
-                                    HomeEmptyStateWidget(),
-                                    Spacer(),
-                                    SizedBox(height: 100),
-                                  ],
+                              ? const SingleChildScrollView(
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(height: 20),
+                                        HomeEmptyStateWidget(),
+                                        SizedBox(height: 120),
+                                      ],
+                                    ),
+                                  ),
                                 )
                               : ListView.separated(
                                   padding: const EdgeInsets.fromLTRB(
@@ -1525,20 +1587,22 @@ class _HomeScreenState extends State<HomeScreen>
                                     final c = _archiveCards[idx];
                                     return _buildExamCard(
                                       c,
-                                      idx,
                                       key: ValueKey('archive_${c.recordId}'),
                                     );
                                   },
                                 ))
                         : (_filteredCardsCached.isEmpty
-                              ? const Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Spacer(),
-                                    HomeEmptyStateWidget(),
-                                    Spacer(),
-                                    SizedBox(height: 100),
-                                  ],
+                              ? const SingleChildScrollView(
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(height: 20),
+                                        HomeEmptyStateWidget(),
+                                        SizedBox(height: 120),
+                                      ],
+                                    ),
+                                  ),
                                 )
                               : SingleChildScrollView(
                                   padding: const EdgeInsets.fromLTRB(
@@ -1636,7 +1700,6 @@ class _HomeScreenState extends State<HomeScreen>
                                             ),
                                             child: Column(
                                               children: sessions.map((c) {
-                                                final idx = _cards.indexOf(c);
                                                 final isLast =
                                                     c == sessions.last;
                                                 return Padding(
@@ -1646,7 +1709,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                   padding: EdgeInsets.only(
                                                     bottom: isLast ? 8 : 16,
                                                   ),
-                                                  child: _buildExamCard(c, idx),
+                                                  child: _buildExamCard(c),
                                                 );
                                               }).toList(),
                                             ),
@@ -1788,7 +1851,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   List<ExamCardData> _filteredCardsCached = [];
   Map<String, List<ExamCardData>> _groupedCardsCached = {};
-  List<HomeListItem> _flattenedItems = [];
   String? _lastCardsSignature;
 
   String _computeCardsSignature() {
@@ -1803,6 +1865,11 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _updateFilteredAndGroupedCards() {
+    if (_cards.length <= 5) {
+      _showSessionMgr = false;
+      _statusFilter = 'All';
+      _dateFilter = 'All';
+    }
     var list = List<ExamCardData>.from(_cards);
 
     if (_statusFilter != 'All') {
@@ -1910,7 +1977,6 @@ class _HomeScreenState extends State<HomeScreen>
         }
       }
     }
-    _flattenedItems = flattened;
   }
 
   String _fd(String date) {
@@ -2138,7 +2204,13 @@ class _HomeScreenState extends State<HomeScreen>
     return _cards.indexWhere((card) => card.expanded);
   }
 
-  Widget _buildExamCard(ExamCardData c, int idx, {Key? key}) {
+  Widget _buildExamCard(ExamCardData c, {Key? key}) {
+    final listToUse = isArchiveView ? _archiveCards : _cards;
+    final idx = listToUse.indexWhere((card) => card.recordId == c.recordId);
+    if (idx == -1) {
+      return const SizedBox.shrink();
+    }
+
     return ExamCard(
       key: key,
       data: c,
@@ -2151,10 +2223,11 @@ class _HomeScreenState extends State<HomeScreen>
         _isAdjustingProgress = dragging;
       },
       onProgressChangeEnd: (v) async {
-        if (!mounted || idx < 0 || idx >= _cards.length) return;
+        final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+        if (!mounted || currentIdx == -1) return;
         _isAdjustingProgress = true;
         setState(() {
-          _cards[idx] = _applyManualProgress(_cards[idx], v);
+          _cards[currentIdx] = _applyManualProgress(_cards[currentIdx], v);
         });
         try {
           await _saveState();
@@ -2165,6 +2238,8 @@ class _HomeScreenState extends State<HomeScreen>
       },
       onSelect: () {
         if (!isArchiveView) {
+          final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          if (currentIdx == -1) return;
           if (!_isArchivableExam(c)) {
             _toast(
               "Action Restricted",
@@ -2175,18 +2250,23 @@ class _HomeScreenState extends State<HomeScreen>
             return;
           }
           setState(() {
-            _cards[idx] = _cards[idx].copyWith(
-              isSelected: !_cards[idx].isSelected,
+            _cards[currentIdx] = _cards[currentIdx].copyWith(
+              isSelected: !_cards[currentIdx].isSelected,
             );
           });
         }
       },
       onChevronTap: () {
         if (!isArchiveView) {
-          _toggleExpanded(idx);
+          final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          if (currentIdx != -1) {
+            _toggleExpanded(currentIdx);
+          }
         } else {
-          _cards.add(_archiveCards[idx]);
-          _archiveCards.removeAt(idx);
+          final currentIdx = _archiveCards.indexWhere((card) => card.recordId == c.recordId);
+          if (currentIdx == -1) return;
+          _cards.add(_archiveCards[currentIdx]);
+          _archiveCards.removeAt(currentIdx);
           if (_archiveCards.isEmpty) {
             isArchiveView = false;
           }
@@ -2203,7 +2283,8 @@ class _HomeScreenState extends State<HomeScreen>
         }
       },
       onEditDate: () async {
-        if (_cards[idx].phase == ExamPhase.finished) {
+        final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+        if (currentIdx == -1 || _cards[currentIdx].phase == ExamPhase.finished) {
           return;
         }
         final now = DateTime.now();
@@ -2228,12 +2309,16 @@ class _HomeScreenState extends State<HomeScreen>
           final dd = picked.day.toString().padLeft(2, '0');
           final mm = picked.month.toString().padLeft(2, '0');
           final yy = picked.year.toString();
-          setState(() => _cards[idx] = c.copyWith(date: "$dd/$mm/$yy"));
-          _saveState();
+          final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          if (saveIdx != -1) {
+            setState(() => _cards[saveIdx] = c.copyWith(date: "$dd/$mm/$yy"));
+            _saveState();
+          }
         }
       },
       onEditStartTime: () async {
-        if (_cards[idx].phase == ExamPhase.finished) {
+        final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+        if (currentIdx == -1 || _cards[currentIdx].phase == ExamPhase.finished) {
           return;
         }
 
@@ -2328,16 +2413,20 @@ class _HomeScreenState extends State<HomeScreen>
           final hh = picked.hour.toString().padLeft(2, '0');
           final mm = picked.minute.toString().padLeft(2, '0');
           final selectedStart = "$hh:$mm";
-          setState(
-            () => _cards[idx] = _recompute(
-              c.copyWith(normalStart: selectedStart),
-            ),
-          );
-          _saveState();
+          final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          if (saveIdx != -1) {
+            setState(
+              () => _cards[saveIdx] = _recompute(
+                c.copyWith(normalStart: selectedStart),
+              ),
+            );
+            _saveState();
+          }
         }
       },
       onEditDuration: () async {
-        if (_cards[idx].phase == ExamPhase.finished) {
+        final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+        if (currentIdx == -1 || _cards[currentIdx].phase == ExamPhase.finished) {
           return;
         }
         String res = await pickDur(c.normalDuration, "Set Duration");
@@ -2390,28 +2479,32 @@ class _HomeScreenState extends State<HomeScreen>
           } else {
             detail = "Adjustment entered after exam finished";
           }
-          setState(
-            () => _cards[idx] = _recompute(c.copyWith(normalDuration: res)),
-          );
-          await _saveState();
-          final recordId = _cards[idx].recordId;
-          if (recordId != null) {
-            await _sessionService.updatePlannedDuration(
-              examRecordId: recordId,
-              normalDurationMs: _cards[idx].normalSeconds * 1000,
-              extraTimeMs: _cards[idx].extraSeconds * 1000,
-              reason: _formatNormalTimeUpdateReason(
-                previousMinutes: _toMin(c.normalDuration),
-                updatedMinutes: _toMin(res),
-              ),
-              detail: detail,
+          final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          if (saveIdx != -1) {
+            setState(
+              () => _cards[saveIdx] = _recompute(c.copyWith(normalDuration: res)),
             );
-            await _refreshCards();
+            await _saveState();
+            final recordId = _cards[saveIdx].recordId;
+            if (recordId != null) {
+              await _sessionService.updatePlannedDuration(
+                examRecordId: recordId,
+                normalDurationMs: _cards[saveIdx].normalSeconds * 1000,
+                extraTimeMs: _cards[saveIdx].extraSeconds * 1000,
+                reason: _formatNormalTimeUpdateReason(
+                  previousMinutes: _toMin(c.normalDuration),
+                  updatedMinutes: _toMin(res),
+                ),
+                detail: detail,
+              );
+              await _refreshCards();
+            }
           }
         }
       },
       onEditExtra: () async {
-        if (_cards[idx].phase == ExamPhase.finished) {
+        final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+        if (currentIdx == -1 || _cards[currentIdx].phase == ExamPhase.finished) {
           return;
         }
         String res = await pickDur(c.extraTime, "Add Extra Time");
@@ -2434,29 +2527,32 @@ class _HomeScreenState extends State<HomeScreen>
           final previousMinutes = _toMin(c.extraTime);
           final updatedMinutes = _toMin(res);
 
-          setState(() => _cards[idx] = _recompute(c.copyWith(extraTime: res)));
-          String detail = "";
-          if (c.phase == ExamPhase.normal) {
-            detail = "Adjustment entered before extra time";
-          } else if (c.phase == ExamPhase.extra) {
-            detail = "Adjustment entered during extra time";
-          } else {
-            detail = "Adjustment entered after exam finished";
-          }
-          await _saveState();
-          final recordId = _cards[idx].recordId;
-          if (recordId != null) {
-            await _sessionService.updatePlannedDuration(
-              examRecordId: recordId,
-              normalDurationMs: _cards[idx].normalSeconds * 1000,
-              extraTimeMs: _cards[idx].extraSeconds * 1000,
-              reason: _formatExtraTimeUpdateReason(
-                previousMinutes: previousMinutes,
-                updatedMinutes: updatedMinutes,
-              ),
-              detail: detail,
-            );
-            await _refreshCards();
+          final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          if (saveIdx != -1) {
+            setState(() => _cards[saveIdx] = _recompute(c.copyWith(extraTime: res)));
+            String detail = "";
+            if (c.phase == ExamPhase.normal) {
+              detail = "Adjustment entered before extra time";
+            } else if (c.phase == ExamPhase.extra) {
+              detail = "Adjustment entered during extra time";
+            } else {
+              detail = "Adjustment entered after exam finished";
+            }
+            await _saveState();
+            final recordId = _cards[saveIdx].recordId;
+            if (recordId != null) {
+              await _sessionService.updatePlannedDuration(
+                examRecordId: recordId,
+                normalDurationMs: _cards[saveIdx].normalSeconds * 1000,
+                extraTimeMs: _cards[saveIdx].extraSeconds * 1000,
+                reason: _formatExtraTimeUpdateReason(
+                  previousMinutes: previousMinutes,
+                  updatedMinutes: updatedMinutes,
+                ),
+                detail: detail,
+              );
+              await _refreshCards();
+            }
           }
         }
       },
@@ -2464,7 +2560,8 @@ class _HomeScreenState extends State<HomeScreen>
         final wasRunning = c.running;
         final becameRunning = u.running && !wasRunning && u.epochStart != null;
         if (becameRunning) {
-          if (!mounted || idx < 0 || idx >= _cards.length) return;
+          final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          if (saveIdx == -1) return;
           final now = u.epochStart!;
           final hh = now.hour.toString().padLeft(2, '0');
           final mm = now.minute.toString().padLeft(2, '0');
@@ -2480,7 +2577,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           );
           setState(() {
-            _cards[idx] = fixed;
+            _cards[saveIdx] = fixed;
           });
           await _saveState();
           final recordId = fixed.recordId;
@@ -2494,22 +2591,27 @@ class _HomeScreenState extends State<HomeScreen>
           }
           await _refreshCards();
         } else {
-          if (!mounted || idx < 0 || idx >= _cards.length) return;
+          final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          if (saveIdx == -1) return;
           setState(() {
-            _cards[idx] = _applyManualProgress(u, u.progress);
+            _cards[saveIdx] = _applyManualProgress(u, u.progress);
           });
         }
       },
       onTimeTap: () {
-        if (_cards[idx].phase == ExamPhase.finished) {
+        final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+        if (currentIdx == -1 || _cards[currentIdx].phase == ExamPhase.finished) {
           return;
         }
-        _cards[idx] = c.copyWith(isActiveTime: !c.isActiveTime);
+        _cards[currentIdx] = c.copyWith(isActiveTime: !c.isActiveTime);
         setState(() {});
         if (c.isActiveTime) {
           _clickTimer = Timer(const Duration(seconds: 7), () {
-            _cards[idx] = c.copyWith(isActiveTime: true);
-            setState(() {});
+            final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+            if (saveIdx != -1) {
+              _cards[saveIdx] = c.copyWith(isActiveTime: true);
+              setState(() {});
+            }
           });
         } else {
           _clickTimer?.cancel();
@@ -2524,4 +2626,13 @@ class _HomeScreenState extends State<HomeScreen>
       _highlightedDate = date;
     });
   }
+
+  @visibleForTesting
+  List<ExamCardData> get cardsForTesting => _cards;
+
+  @visibleForTesting
+  List<String> get lastImportedSessionIdsForTesting => _lastImportedSessionIds;
+
+  @visibleForTesting
+  List<ExamCardData> get archiveCardsForTesting => _archiveCards;
 }

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vigilo/models/exam_card_data.dart';
-import 'package:vigilo/enums/exam_phase.dart';
 import 'package:vigilo/views/widgets/session_manager_panel.dart';
 import 'package:vigilo/views/widgets/speed_dial_option.dart';
 
@@ -23,6 +21,8 @@ void main() {
               onDateFilterChanged: (val) => selectedDate = val,
               onClear: () => clearCalled = true,
               onJumpToDateTap: () {},
+              lastImportSessions: const [],
+              onUndoLastImport: () {},
             ),
           ),
         ),
@@ -65,6 +65,8 @@ void main() {
               onDateFilterChanged: (_) {},
               onClear: () {},
               onJumpToDateTap: () => jumpToDateCalled = true,
+              lastImportSessions: const [],
+              onUndoLastImport: () {},
             ),
           ),
         ),

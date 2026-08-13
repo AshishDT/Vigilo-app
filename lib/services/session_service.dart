@@ -141,17 +141,57 @@ class SessionService {
 
   Future<void> importSessions(List<ExamCardData> newSessions) async {
     final db = await _db.database;
+    final ids = <String>[];
     await db.transaction((txn) async {
       for (final card in newSessions) {
-        await _upsertCard(
+        final id = await _upsertCard(
           txn,
           card: card,
           archived: false,
           fromMigration: false,
         );
+        ids.add(id);
+      }
+      if (ids.isNotEmpty) {
+        await _db.setAppState(
+          txn,
+          key: 'last_imported_session_ids',
+          value: jsonEncode(ids),
+        );
       }
     });
   }
+
+  Future<List<String>> getLastImportedSessionIds() async {
+    final raw = await _db.getAppState('last_imported_session_ids');
+    if (raw == null || raw.trim().isEmpty) return const [];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toList();
+      }
+    } catch (_) {}
+    return const [];
+  }
+
+  Future<void> undoLastImport(List<String> idsToUndo) async {
+    final db = await _db.database;
+    await db.transaction((txn) async {
+      for (final id in idsToUndo) {
+        await txn.delete(
+          'exam_record',
+          where: 'exam_record_id = ?',
+          whereArgs: [id],
+        );
+      }
+      await _db.setAppState(
+        txn,
+        key: 'last_imported_session_ids',
+        value: null,
+      );
+    });
+  }
+
 
 
   Future<Map<String, String?>> loadLastUsed() async {

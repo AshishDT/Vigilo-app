@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../enums/exam_phase.dart';
+import '../../models/exam_card_data.dart';
 import '../../utils/constants.dart';
 
 class SessionManagerPanel extends StatelessWidget {
@@ -9,6 +11,8 @@ class SessionManagerPanel extends StatelessWidget {
   final ValueChanged<String> onDateFilterChanged;
   final VoidCallback onClear;
   final VoidCallback onJumpToDateTap;
+  final List<ExamCardData> lastImportSessions;
+  final VoidCallback onUndoLastImport;
 
   const SessionManagerPanel({
     super.key,
@@ -19,10 +23,25 @@ class SessionManagerPanel extends StatelessWidget {
     required this.onDateFilterChanged,
     required this.onClear,
     required this.onJumpToDateTap,
+    required this.lastImportSessions,
+    required this.onUndoLastImport,
   });
 
   @override
   Widget build(BuildContext context) {
+    final protected = lastImportSessions
+        .where(
+          (s) =>
+              s.running ||
+              s.isPaused ||
+              s.wasEverStarted ||
+              s.phase == ExamPhase.finished ||
+              s.logs.isNotEmpty,
+        )
+        .toList();
+    final undoable =
+        lastImportSessions.where((s) => !protected.contains(s)).toList();
+
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
       decoration: BoxDecoration(
@@ -95,11 +114,18 @@ class SessionManagerPanel extends StatelessWidget {
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: ['All', 'Not Started', 'Running', 'Finished'].map((o) => _buildChip(
-                      o,
-                      selected: statusFilter == o,
-                      onTap: () => onStatusFilterChanged(o),
-                    )).toList(),
+                    children: [
+                      'All',
+                      'Not Started',
+                      'Running',
+                      'Finished',
+                    ].map(
+                      (o) => _buildChip(
+                        o,
+                        selected: statusFilter == o,
+                        onTap: () => onStatusFilterChanged(o),
+                      ),
+                    ).toList(),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -117,21 +143,30 @@ class SessionManagerPanel extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      ...['All', 'Today', 'This Week'].map((o) => _buildChip(
-                        o,
-                        selected: dateFilter == o,
-                        onTap: () => onDateFilterChanged(o),
-                      )),
+                      ...['All', 'Today', 'This Week'].map(
+                        (o) => _buildChip(
+                          o,
+                          selected: dateFilter == o,
+                          onTap: () => onDateFilterChanged(o),
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       GestureDetector(
                         onTap: onJumpToDateTap,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
-                            color: VigiloUiColors.blue(dark).withValues(alpha: 0.12),
+                            color: VigiloUiColors.blue(dark).withValues(
+                              alpha: 0.12,
+                            ),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: VigiloUiColors.blue(dark).withValues(alpha: 0.4),
+                              color: VigiloUiColors.blue(dark).withValues(
+                                alpha: 0.4,
+                              ),
                             ),
                           ),
                           child: Row(
@@ -158,6 +193,103 @@ class SessionManagerPanel extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (lastImportSessions.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: VigiloUiColors.amber(dark).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: VigiloUiColors.amber(dark).withValues(
+                          alpha: 0.35,
+                        ),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.history_rounded,
+                              color: VigiloUiColors.amber(dark),
+                              size: 14,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'LAST IMPORT',
+                              style: TextStyle(
+                                color: VigiloUiColors.amber(dark),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${lastImportSessions.length} session${lastImportSessions.length == 1 ? '' : 's'}'
+                          '${protected.isEmpty ? '' : ' · ${protected.length} protected (started, completed, archived, or has an incident)'}',
+                          style: TextStyle(
+                            color: VigiloUiColors.textSoft(dark),
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        GestureDetector(
+                          onTap: undoable.isEmpty ? null : onUndoLastImport,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 9,
+                            ),
+                            decoration: BoxDecoration(
+                              color: undoable.isEmpty
+                                  ? VigiloUiColors.panel3(dark)
+                                  : VigiloUiColors.amber(dark).withValues(
+                                      alpha: 0.15,
+                                    ),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: undoable.isEmpty
+                                    ? VigiloUiColors.line(dark)
+                                    : VigiloUiColors.amber(dark),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.undo_rounded,
+                                  size: 14,
+                                  color: undoable.isEmpty
+                                      ? VigiloUiColors.textFaint(dark)
+                                      : VigiloUiColors.amber(dark),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  undoable.isEmpty
+                                      ? "Can't undo - all sessions protected"
+                                      : 'Undo ${undoable.length} session${undoable.length == 1 ? '' : 's'}',
+                                  style: TextStyle(
+                                    color: undoable.isEmpty
+                                        ? VigiloUiColors.textFaint(dark)
+                                        : VigiloUiColors.amber(dark),
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
