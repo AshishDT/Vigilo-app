@@ -186,7 +186,7 @@ void main() {
           // 4. Verify LAST IMPORT banner is visible
           expect(find.text('LAST IMPORT'), findsOneWidget);
           expect(
-            find.text('8 sessions · 2 protected (started, completed, archived, or has an incident)'),
+            find.text('8 sessions · 2 protected (started, archived, or has an incident)'),
             findsOneWidget,
           );
           expect(find.text('Undo 6 sessions'), findsOneWidget);
@@ -307,7 +307,7 @@ void main() {
           // 4. Verify LAST IMPORT banner counts the 2 archived sessions as protected
           expect(find.text('LAST IMPORT'), findsOneWidget);
           expect(
-            find.text('8 sessions · 2 protected (started, completed, archived, or has an incident)'),
+            find.text('8 sessions · 2 protected (started, archived, or has an incident)'),
             findsOneWidget,
           );
           expect(find.text('Undo 6 sessions'), findsOneWidget);

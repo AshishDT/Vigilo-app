@@ -232,7 +232,7 @@ class SessionManagerPanel extends StatelessWidget {
                         const SizedBox(height: 6),
                         Text(
                           '${lastImportSessions.length} session${lastImportSessions.length == 1 ? '' : 's'}'
-                          '${protected.isEmpty ? '' : ' · ${protected.length} protected (started, completed, archived, or has an incident)'}',
+                          '${protected.isEmpty ? '' : ' · ${protected.length} protected (started, archived, or has an incident)'}',
                           style: TextStyle(
                             color: VigiloUiColors.textSoft(dark),
                             fontSize: 12,
