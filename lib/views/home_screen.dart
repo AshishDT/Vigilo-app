@@ -1541,7 +1541,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   .map((c) => c.recordId)
                                   .whereType<String>()
                                   .toList();
-                               if (undoableIds.isNotEmpty) {
+                              if (undoableIds.isNotEmpty) {
                                 await _sessionService.undoLastImport(
                                   undoableIds,
                                 );
@@ -1565,7 +1565,8 @@ class _HomeScreenState extends State<HomeScreen>
                               ? const SingleChildScrollView(
                                   child: Center(
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         SizedBox(height: 20),
                                         HomeEmptyStateWidget(),
@@ -1593,25 +1594,37 @@ class _HomeScreenState extends State<HomeScreen>
                                   },
                                 ))
                         : (_filteredCardsCached.isEmpty
-                              ? SingleChildScrollView(
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        const SizedBox(height: 20),
-                                        _cards.isEmpty
-                                            ? const HomeEmptyStateWidget()
-                                            : FilteredEmptyStateWidget(
-                                                onClear: () => setState(() {
-                                                  _statusFilter = 'All';
-                                                  _dateFilter = 'All';
-                                                  _updateFilteredAndGroupedCards();
-                                                }),
-                                              ),
-                                        const SizedBox(height: 120),
-                                      ],
-                                    ),
-                                  ),
+                              ? LayoutBuilder(
+                                  builder: (context, constraints) =>
+                                      SingleChildScrollView(
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            minHeight: constraints.maxHeight,
+                                          ),
+                                          child: Center(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                _cards.isEmpty
+                                                    ? const HomeEmptyStateWidget()
+                                                    : FilteredEmptyStateWidget(
+                                                        onClear: () => setState(
+                                                          () {
+                                                            _statusFilter =
+                                                                'All';
+                                                            _dateFilter = 'All';
+                                                            _updateFilteredAndGroupedCards();
+                                                          },
+                                                        ),
+                                                      ),
+
+                                                SizedBox(height: 45),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                 )
                               : SingleChildScrollView(
                                   padding: const EdgeInsets.fromLTRB(
@@ -1621,8 +1634,11 @@ class _HomeScreenState extends State<HomeScreen>
                                     100,
                                   ),
                                   child: Column(
-                                    children: _groupedCardsCached.keys.map((date) {
-                                      final sessions = _groupedCardsCached[date] ?? [];
+                                    children: _groupedCardsCached.keys.map((
+                                      date,
+                                    ) {
+                                      final sessions =
+                                          _groupedCardsCached[date] ?? [];
                                       final sessionsCount = sessions.length;
                                       final headerKey = _dateKeys.putIfAbsent(
                                         date,
@@ -2135,10 +2151,16 @@ class _HomeScreenState extends State<HomeScreen>
             _headerIcon(
               dark,
               Icons.tune_rounded,
-              color: (_showSessionMgr || _statusFilter != 'All' || _dateFilter != 'All')
+              color:
+                  (_showSessionMgr ||
+                      _statusFilter != 'All' ||
+                      _dateFilter != 'All')
                   ? VigiloUiColors.blue(dark)
                   : null,
-              selected: _showSessionMgr || _statusFilter != 'All' || _dateFilter != 'All',
+              selected:
+                  _showSessionMgr ||
+                  _statusFilter != 'All' ||
+                  _dateFilter != 'All',
               onTap: () => setState(() {
                 _showSessionMgr = !_showSessionMgr;
                 if (_showSessionMgr) {
@@ -2234,7 +2256,9 @@ class _HomeScreenState extends State<HomeScreen>
         _isAdjustingProgress = dragging;
       },
       onProgressChangeEnd: (v) async {
-        final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+        final currentIdx = _cards.indexWhere(
+          (card) => card.recordId == c.recordId,
+        );
         if (!mounted || currentIdx == -1) return;
         _isAdjustingProgress = true;
         setState(() {
@@ -2249,7 +2273,9 @@ class _HomeScreenState extends State<HomeScreen>
       },
       onSelect: () {
         if (!isArchiveView) {
-          final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          final currentIdx = _cards.indexWhere(
+            (card) => card.recordId == c.recordId,
+          );
           if (currentIdx == -1) return;
           if (!_isArchivableExam(c)) {
             _toast(
@@ -2269,12 +2295,16 @@ class _HomeScreenState extends State<HomeScreen>
       },
       onChevronTap: () {
         if (!isArchiveView) {
-          final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          final currentIdx = _cards.indexWhere(
+            (card) => card.recordId == c.recordId,
+          );
           if (currentIdx != -1) {
             _toggleExpanded(currentIdx);
           }
         } else {
-          final currentIdx = _archiveCards.indexWhere((card) => card.recordId == c.recordId);
+          final currentIdx = _archiveCards.indexWhere(
+            (card) => card.recordId == c.recordId,
+          );
           if (currentIdx == -1) return;
           _cards.add(_archiveCards[currentIdx]);
           _archiveCards.removeAt(currentIdx);
@@ -2294,8 +2324,11 @@ class _HomeScreenState extends State<HomeScreen>
         }
       },
       onEditDate: () async {
-        final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
-        if (currentIdx == -1 || _cards[currentIdx].phase == ExamPhase.finished) {
+        final currentIdx = _cards.indexWhere(
+          (card) => card.recordId == c.recordId,
+        );
+        if (currentIdx == -1 ||
+            _cards[currentIdx].phase == ExamPhase.finished) {
           return;
         }
         final now = DateTime.now();
@@ -2320,7 +2353,9 @@ class _HomeScreenState extends State<HomeScreen>
           final dd = picked.day.toString().padLeft(2, '0');
           final mm = picked.month.toString().padLeft(2, '0');
           final yy = picked.year.toString();
-          final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          final saveIdx = _cards.indexWhere(
+            (card) => card.recordId == c.recordId,
+          );
           if (saveIdx != -1) {
             setState(() => _cards[saveIdx] = c.copyWith(date: "$dd/$mm/$yy"));
             _saveState();
@@ -2328,8 +2363,11 @@ class _HomeScreenState extends State<HomeScreen>
         }
       },
       onEditStartTime: () async {
-        final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
-        if (currentIdx == -1 || _cards[currentIdx].phase == ExamPhase.finished) {
+        final currentIdx = _cards.indexWhere(
+          (card) => card.recordId == c.recordId,
+        );
+        if (currentIdx == -1 ||
+            _cards[currentIdx].phase == ExamPhase.finished) {
           return;
         }
 
@@ -2424,7 +2462,9 @@ class _HomeScreenState extends State<HomeScreen>
           final hh = picked.hour.toString().padLeft(2, '0');
           final mm = picked.minute.toString().padLeft(2, '0');
           final selectedStart = "$hh:$mm";
-          final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          final saveIdx = _cards.indexWhere(
+            (card) => card.recordId == c.recordId,
+          );
           if (saveIdx != -1) {
             setState(
               () => _cards[saveIdx] = _recompute(
@@ -2436,8 +2476,11 @@ class _HomeScreenState extends State<HomeScreen>
         }
       },
       onEditDuration: () async {
-        final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
-        if (currentIdx == -1 || _cards[currentIdx].phase == ExamPhase.finished) {
+        final currentIdx = _cards.indexWhere(
+          (card) => card.recordId == c.recordId,
+        );
+        if (currentIdx == -1 ||
+            _cards[currentIdx].phase == ExamPhase.finished) {
           return;
         }
         String res = await pickDur(c.normalDuration, "Set Duration");
@@ -2490,10 +2533,13 @@ class _HomeScreenState extends State<HomeScreen>
           } else {
             detail = "Adjustment entered after exam finished";
           }
-          final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          final saveIdx = _cards.indexWhere(
+            (card) => card.recordId == c.recordId,
+          );
           if (saveIdx != -1) {
             setState(
-              () => _cards[saveIdx] = _recompute(c.copyWith(normalDuration: res)),
+              () =>
+                  _cards[saveIdx] = _recompute(c.copyWith(normalDuration: res)),
             );
             await _saveState();
             final recordId = _cards[saveIdx].recordId;
@@ -2514,8 +2560,11 @@ class _HomeScreenState extends State<HomeScreen>
         }
       },
       onEditExtra: () async {
-        final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
-        if (currentIdx == -1 || _cards[currentIdx].phase == ExamPhase.finished) {
+        final currentIdx = _cards.indexWhere(
+          (card) => card.recordId == c.recordId,
+        );
+        if (currentIdx == -1 ||
+            _cards[currentIdx].phase == ExamPhase.finished) {
           return;
         }
         String res = await pickDur(c.extraTime, "Add Extra Time");
@@ -2538,9 +2587,13 @@ class _HomeScreenState extends State<HomeScreen>
           final previousMinutes = _toMin(c.extraTime);
           final updatedMinutes = _toMin(res);
 
-          final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          final saveIdx = _cards.indexWhere(
+            (card) => card.recordId == c.recordId,
+          );
           if (saveIdx != -1) {
-            setState(() => _cards[saveIdx] = _recompute(c.copyWith(extraTime: res)));
+            setState(
+              () => _cards[saveIdx] = _recompute(c.copyWith(extraTime: res)),
+            );
             String detail = "";
             if (c.phase == ExamPhase.normal) {
               detail = "Adjustment entered before extra time";
@@ -2571,7 +2624,9 @@ class _HomeScreenState extends State<HomeScreen>
         final wasRunning = c.running;
         final becameRunning = u.running && !wasRunning && u.epochStart != null;
         if (becameRunning) {
-          final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          final saveIdx = _cards.indexWhere(
+            (card) => card.recordId == c.recordId,
+          );
           if (saveIdx == -1) return;
           final now = u.epochStart!;
           final hh = now.hour.toString().padLeft(2, '0');
@@ -2602,7 +2657,9 @@ class _HomeScreenState extends State<HomeScreen>
           }
           await _refreshCards();
         } else {
-          final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+          final saveIdx = _cards.indexWhere(
+            (card) => card.recordId == c.recordId,
+          );
           if (saveIdx == -1) return;
           setState(() {
             _cards[saveIdx] = _applyManualProgress(u, u.progress);
@@ -2610,15 +2667,20 @@ class _HomeScreenState extends State<HomeScreen>
         }
       },
       onTimeTap: () {
-        final currentIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
-        if (currentIdx == -1 || _cards[currentIdx].phase == ExamPhase.finished) {
+        final currentIdx = _cards.indexWhere(
+          (card) => card.recordId == c.recordId,
+        );
+        if (currentIdx == -1 ||
+            _cards[currentIdx].phase == ExamPhase.finished) {
           return;
         }
         _cards[currentIdx] = c.copyWith(isActiveTime: !c.isActiveTime);
         setState(() {});
         if (c.isActiveTime) {
           _clickTimer = Timer(const Duration(seconds: 7), () {
-            final saveIdx = _cards.indexWhere((card) => card.recordId == c.recordId);
+            final saveIdx = _cards.indexWhere(
+              (card) => card.recordId == c.recordId,
+            );
             if (saveIdx != -1) {
               _cards[saveIdx] = c.copyWith(isActiveTime: true);
               setState(() {});

@@ -111,7 +111,7 @@ void main() {
         extraTime: '00:01',
         totalDuration: '00:03',
         extraEnd: '09:03',
-        autoStart: true,
+        autoStart: false,
       );
     }
 
