@@ -1548,48 +1548,27 @@ class _HomeScreenState extends State<HomeScreen>
                                     100,
                                   ),
                                   child: Column(
-                                    children: _flattenedItems.map((item) {
-                                      if (item.dateHeader != null) {
-                                        final date = item.dateHeader!;
-                                        final sessionsCount =
-                                            _groupedCardsCached[date]?.length ??
-                                            0;
-                                        final headerKey = _dateKeys.putIfAbsent(
-                                          date,
-                                          () => GlobalKey(),
-                                        );
-                                        final isHighlighted =
-                                            _highlightedDate == date;
-                                        return Padding(
-                                          key: headerKey,
-                                          padding: const EdgeInsets.fromLTRB(
-                                            2,
-                                            6,
-                                            2,
-                                            6,
-                                          ),
-                                          child: AnimatedContainer(
-                                            duration: const Duration(
-                                              milliseconds: 300,
-                                            ),
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 8,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: isHighlighted
-                                                  ? VigiloUiColors.amber(
-                                                      dark,
-                                                    ).withValues(alpha: 0.12)
-                                                  : Colors.transparent,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              border: Border.all(
-                                                color: isHighlighted
-                                                    ? VigiloUiColors.amber(dark)
-                                                    : Colors.transparent,
-                                                width: 1.5,
-                                              ),
+                                    children: _groupedCardsCached.keys.map((date) {
+                                      final sessions = _groupedCardsCached[date] ?? [];
+                                      final sessionsCount = sessions.length;
+                                      final headerKey = _dateKeys.putIfAbsent(
+                                        date,
+                                        () => GlobalKey(),
+                                      );
+                                      final isHighlighted =
+                                          _highlightedDate == date;
+                                      return Column(
+                                        key: ValueKey('group_$date'),
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            key: headerKey,
+                                            padding: const EdgeInsets.fromLTRB(
+                                              12,
+                                              14,
+                                              12,
+                                              14,
                                             ),
                                             child: Row(
                                               children: [
@@ -1634,18 +1613,47 @@ class _HomeScreenState extends State<HomeScreen>
                                               ],
                                             ),
                                           ),
-                                        );
-                                      } else {
-                                        final c = item.card!;
-                                        final idx = item.cardIndex!;
-                                        return Padding(
-                                          key: ValueKey('card_${c.recordId}'),
-                                          padding: const EdgeInsets.only(
-                                            bottom: 16,
+                                          AnimatedContainer(
+                                            duration: const Duration(
+                                              milliseconds: 300,
+                                            ),
+                                            curve: Curves.easeInOut,
+                                            padding: const EdgeInsets.fromLTRB(
+                                              8,
+                                              8,
+                                              8,
+                                              0,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(18),
+                                              border: Border.all(
+                                                color: isHighlighted
+                                                    ? VigiloUiColors.amber(dark)
+                                                    : Colors.transparent,
+                                                width: 2.0,
+                                              ),
+                                            ),
+                                            child: Column(
+                                              children: sessions.map((c) {
+                                                final idx = _cards.indexOf(c);
+                                                final isLast =
+                                                    c == sessions.last;
+                                                return Padding(
+                                                  key: ValueKey(
+                                                    'card_${c.recordId}',
+                                                  ),
+                                                  padding: EdgeInsets.only(
+                                                    bottom: isLast ? 8 : 16,
+                                                  ),
+                                                  child: _buildExamCard(c, idx),
+                                                );
+                                              }).toList(),
+                                            ),
                                           ),
-                                          child: _buildExamCard(c, idx),
-                                        );
-                                      }
+                                          const SizedBox(height: 12),
+                                        ],
+                                      );
                                     }).toList(),
                                   ),
                                 )),
@@ -2508,5 +2516,12 @@ class _HomeScreenState extends State<HomeScreen>
         }
       },
     );
+  }
+
+  @visibleForTesting
+  void highlightDateForTest(String date) {
+    setState(() {
+      _highlightedDate = date;
+    });
   }
 }
