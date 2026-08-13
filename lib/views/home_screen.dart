@@ -1654,9 +1654,9 @@ class _HomeScreenState extends State<HomeScreen>
                                           Padding(
                                             key: headerKey,
                                             padding: const EdgeInsets.fromLTRB(
-                                              12,
+                                              0,
                                               14,
-                                              12,
+                                              0,
                                               14,
                                             ),
                                             child: Row(
@@ -1707,12 +1707,14 @@ class _HomeScreenState extends State<HomeScreen>
                                               milliseconds: 300,
                                             ),
                                             curve: Curves.easeInOut,
-                                            padding: const EdgeInsets.fromLTRB(
-                                              8,
-                                              8,
-                                              8,
-                                              0,
-                                            ),
+                                            padding: isHighlighted
+                                                ? const EdgeInsets.fromLTRB(
+                                                    8,
+                                                    8,
+                                                    8,
+                                                    0,
+                                                  )
+                                                : EdgeInsets.zero,
                                             decoration: BoxDecoration(
                                               borderRadius:
                                                   BorderRadius.circular(18),
@@ -1720,7 +1722,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                 color: isHighlighted
                                                     ? VigiloUiColors.amber(dark)
                                                     : Colors.transparent,
-                                                width: 2.0,
+                                                width: isHighlighted ? 2.0 : 0.0,
                                               ),
                                             ),
                                             child: Column(
