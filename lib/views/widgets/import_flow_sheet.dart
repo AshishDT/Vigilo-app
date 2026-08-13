@@ -1390,14 +1390,14 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _PinnedSummaryBarDelegate(
-                  height: 51,
+                  height: 40.0 + MediaQuery.textScalerOf(context).scale(15.0),
                   child: Container(
                     color: colors.bg,
                     child: Container(
                       margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
-                        color: colors.panel3,
+                        color: colors.panel,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: colors.line),
                       ),
@@ -2068,7 +2068,10 @@ class _PinnedSummaryBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return child;
+    return SizedBox(
+      height: height,
+      child: child,
+    );
   }
 
   @override
