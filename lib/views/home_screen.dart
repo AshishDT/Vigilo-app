@@ -1707,14 +1707,7 @@ class _HomeScreenState extends State<HomeScreen>
                                               milliseconds: 300,
                                             ),
                                             curve: Curves.easeInOut,
-                                            padding: isHighlighted
-                                                ? const EdgeInsets.fromLTRB(
-                                                    8,
-                                                    8,
-                                                    8,
-                                                    0,
-                                                  )
-                                                : EdgeInsets.zero,
+                                            padding: EdgeInsets.zero,
                                             decoration: BoxDecoration(
                                               borderRadius:
                                                   BorderRadius.circular(18),
@@ -1722,7 +1715,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                 color: isHighlighted
                                                     ? VigiloUiColors.amber(dark)
                                                     : Colors.transparent,
-                                                width: isHighlighted ? 2.0 : 0.0,
+                                                width: 1.5,
                                               ),
                                             ),
                                             child: Column(
@@ -1734,7 +1727,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                     'card_${c.recordId}',
                                                   ),
                                                   padding: EdgeInsets.only(
-                                                    bottom: isLast ? 8 : 16,
+                                                    bottom: isLast ? 0 : 16,
                                                   ),
                                                   child: _buildExamCard(c),
                                                 );
