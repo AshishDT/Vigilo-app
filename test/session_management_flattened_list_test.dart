@@ -22,6 +22,7 @@ void main() {
               onStatusFilterChanged: (val) => selectedStatus = val,
               onDateFilterChanged: (val) => selectedDate = val,
               onClear: () => clearCalled = true,
+              onJumpToDateTap: () {},
             ),
           ),
         ),
@@ -48,6 +49,34 @@ void main() {
       // Tap on a date chip and verify callback triggers
       await tester.tap(find.text('Today'));
       expect(selectedDate, equals('Today'));
+    });
+
+    testWidgets('Jump to date option is rendered and fires callback', (WidgetTester tester) async {
+      bool jumpToDateCalled = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SessionManagerPanel(
+              dark: false,
+              statusFilter: 'All',
+              dateFilter: 'All',
+              onStatusFilterChanged: (_) {},
+              onDateFilterChanged: (_) {},
+              onClear: () {},
+              onJumpToDateTap: () => jumpToDateCalled = true,
+            ),
+          ),
+        ),
+      );
+
+      // Verify Jump to date button is rendered
+      final jumpButton = find.text('Jump to date');
+      expect(jumpButton, findsOneWidget);
+
+      // Tap on it and verify callback triggers
+      await tester.tap(jumpButton);
+      expect(jumpToDateCalled, isTrue);
     });
   });
 

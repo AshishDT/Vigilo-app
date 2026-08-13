@@ -8,6 +8,7 @@ class SessionManagerPanel extends StatelessWidget {
   final ValueChanged<String> onStatusFilterChanged;
   final ValueChanged<String> onDateFilterChanged;
   final VoidCallback onClear;
+  final VoidCallback onJumpToDateTap;
 
   const SessionManagerPanel({
     super.key,
@@ -17,6 +18,7 @@ class SessionManagerPanel extends StatelessWidget {
     required this.onStatusFilterChanged,
     required this.onDateFilterChanged,
     required this.onClear,
+    required this.onJumpToDateTap,
   });
 
   @override
@@ -111,12 +113,50 @@ class SessionManagerPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Row(
-                  children: ['All', 'Today', 'This Week'].map((o) => _buildChip(
-                    o,
-                    selected: dateFilter == o,
-                    onTap: () => onDateFilterChanged(o),
-                  )).toList(),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      ...['All', 'Today', 'This Week'].map((o) => _buildChip(
+                        o,
+                        selected: dateFilter == o,
+                        onTap: () => onDateFilterChanged(o),
+                      )),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: onJumpToDateTap,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: VigiloUiColors.blue(dark).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: VigiloUiColors.blue(dark).withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.calendar_today_rounded,
+                                color: VigiloUiColors.blue(dark),
+                                size: 13,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Jump to date',
+                                style: TextStyle(
+                                  color: VigiloUiColors.blue(dark),
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

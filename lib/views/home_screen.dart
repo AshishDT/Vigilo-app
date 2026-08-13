@@ -30,6 +30,7 @@ import 'widgets/vigilo_date_picker.dart';
 import 'widgets/vigilo_time_picker.dart';
 import 'widgets/vigilo_duration_picker.dart';
 import 'widgets/session_manager_panel.dart';
+import 'widgets/vigilo_date_jump_sheet.dart';
 import 'widgets/speed_dial_option.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -407,7 +408,6 @@ class _HomeScreenState extends State<HomeScreen>
     return "${h.toString().padLeft(2, '0')}:${mm.toString().padLeft(2, '0')}";
   }
 
-
   String _formatExtraTimeUpdateReason({
     required int previousMinutes,
     required int updatedMinutes,
@@ -443,7 +443,6 @@ class _HomeScreenState extends State<HomeScreen>
       extraEnd: _m2s(extraEndM),
     );
   }
-
 
   ExamPhase _phaseForProgress(ExamCardData c, double progress) {
     final totalSeconds = c.totalSeconds;
@@ -641,7 +640,10 @@ class _HomeScreenState extends State<HomeScreen>
       if (extraSeconds <= 0) continue;
 
       final totalSeconds = current.totalSeconds;
-      final thresholdSeconds = (totalSeconds - 600).clamp(current.normalSeconds, totalSeconds);
+      final thresholdSeconds = (totalSeconds - 600).clamp(
+        current.normalSeconds,
+        totalSeconds,
+      );
       final currentElapsedSeconds = _elapsedSecondsForWarning(current);
       if (currentElapsedSeconds >= totalSeconds) continue;
       if (currentElapsedSeconds < thresholdSeconds) continue;
@@ -682,7 +684,12 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  void _toast(String title, [String? subtitle, IconData? icon, NotificationType type = NotificationType.information]) {
+  void _toast(
+    String title, [
+    String? subtitle,
+    IconData? icon,
+    NotificationType type = NotificationType.information,
+  ]) {
     NotificationService.show(
       context,
       title: title,
@@ -717,11 +724,21 @@ class _HomeScreenState extends State<HomeScreen>
       final c = _cards[i];
       final recordId = c.recordId;
       if (recordId == null) {
-        _toast("Not Ready", "Complete exam setup before starting", Icons.warning_amber_rounded, NotificationType.warning);
+        _toast(
+          "Not Ready",
+          "Complete exam setup before starting",
+          Icons.warning_amber_rounded,
+          NotificationType.warning,
+        );
         return;
       }
       if (c.totalSeconds <= 0) {
-        _toast("Missing Information", "Set the exam duration before starting", Icons.warning_amber_rounded, NotificationType.warning);
+        _toast(
+          "Missing Information",
+          "Set the exam duration before starting",
+          Icons.warning_amber_rounded,
+          NotificationType.warning,
+        );
         return;
       }
 
@@ -750,7 +767,12 @@ class _HomeScreenState extends State<HomeScreen>
       _normalTimeWarningVibrationSent.remove(recordId);
       _extraTimeWarningVibrationSent.remove(recordId);
       await _refreshCards();
-      _toast("Exam Restarted", "The exam timer has been reset", Icons.restart_alt_rounded, NotificationType.information);
+      _toast(
+        "Exam Restarted",
+        "The exam timer has been reset",
+        Icons.restart_alt_rounded,
+        NotificationType.information,
+      );
       if (mounted) context.safePop();
     } finally {
       _isProcessingRestart = false;
@@ -769,10 +791,20 @@ class _HomeScreenState extends State<HomeScreen>
 
       if (c.isPaused) {
         await _sessionService.resumeSession(recordId);
-        _toast("Exam Resumed", "The exam timer has resumed", Icons.play_circle_fill_rounded, NotificationType.success);
+        _toast(
+          "Exam Resumed",
+          "The exam timer has resumed",
+          Icons.play_circle_fill_rounded,
+          NotificationType.success,
+        );
       } else {
         await _sessionService.pauseSession(recordId);
-        _toast("Exam Paused", "The exam timer has been paused", Icons.pause_circle_filled_rounded, NotificationType.information);
+        _toast(
+          "Exam Paused",
+          "The exam timer has been paused",
+          Icons.pause_circle_filled_rounded,
+          NotificationType.information,
+        );
       }
 
       await _refreshCards();
@@ -797,7 +829,12 @@ class _HomeScreenState extends State<HomeScreen>
         reason: 'manual_end',
       );
       await _refreshCards();
-      _toast("Exam ended", "The exam has been marked as finished", Icons.stop_circle_rounded, NotificationType.success);
+      _toast(
+        "Exam ended",
+        "The exam has been marked as finished",
+        Icons.stop_circle_rounded,
+        NotificationType.success,
+      );
       if (mounted) context.safePop();
     } finally {
       _isProcessingEnd = false;
@@ -810,10 +847,11 @@ class _HomeScreenState extends State<HomeScreen>
     return ((int.tryParse(p[0]) ?? 0), (int.tryParse(p[1]) ?? 0));
   }
 
-
   Future<void> _openQuickAddWizard() async {
     final Map<String, String> knownCentres = {};
-    debugPrint("[QuickAdd] Building knownCentres map from ${_archiveCards.length} archive cards and ${_cards.length} active cards...");
+    debugPrint(
+      "[QuickAdd] Building knownCentres map from ${_archiveCards.length} archive cards and ${_cards.length} active cards...",
+    );
     for (final card in [..._archiveCards.reversed, ..._cards.reversed]) {
       final school = card.school.trim();
       final centre = card.resolvedCentreNumber.trim();
@@ -822,10 +860,14 @@ class _HomeScreenState extends State<HomeScreen>
         debugPrint("[QuickAdd] Mapped from card: '$school' -> '$centre'");
       }
     }
-    if (_lastSchool != null && _lastSchool!.trim().isNotEmpty &&
-        _lastCentre != null && _lastCentre!.trim().isNotEmpty) {
+    if (_lastSchool != null &&
+        _lastSchool!.trim().isNotEmpty &&
+        _lastCentre != null &&
+        _lastCentre!.trim().isNotEmpty) {
       knownCentres[_lastSchool!.trim()] = _lastCentre!.trim();
-      debugPrint("[QuickAdd] Mapped from last session variables: '${_lastSchool!.trim()}' -> '${_lastCentre!.trim()}'");
+      debugPrint(
+        "[QuickAdd] Mapped from last session variables: '${_lastSchool!.trim()}' -> '${_lastCentre!.trim()}'",
+      );
     }
     debugPrint("[QuickAdd] Final knownCentres map: $knownCentres");
 
@@ -861,95 +903,114 @@ class _HomeScreenState extends State<HomeScreen>
         lastDuration: _lastDuration,
         lastExtra: _lastExtra,
         knownCentres: knownCentres,
-        onSave: ({
-          required String school,
-          required String centre,
-          required String subject,
-          required String board,
-          String? level,
-          required DateTime date,
-          required String startTime,
-          required String duration,
-          required String extraTime,
-        }) async {
-          final normalizedStart = _normalizeHHMM(
-            startTime,
-            fallback: "09:00",
-          );
-          final normalizedDuration = _normalizeHHMM(
-            duration,
-            fallback: "01:30",
-            allowZero: false,
-          );
-          final normalizedExtra = _normalizeHHMM(
-            extraTime,
-            fallback: "00:15",
-          );
+        onSave:
+            ({
+              required String school,
+              required String centre,
+              required String subject,
+              required String board,
+              String? level,
+              required DateTime date,
+              required String startTime,
+              required String duration,
+              required String extraTime,
+            }) async {
+              final normalizedStart = _normalizeHHMM(
+                startTime,
+                fallback: "09:00",
+              );
+              final normalizedDuration = _normalizeHHMM(
+                duration,
+                fallback: "01:30",
+                allowZero: false,
+              );
+              final normalizedExtra = _normalizeHHMM(
+                extraTime,
+                fallback: "00:15",
+              );
 
-          if (_toMin(normalizedDuration) <= 0) {
-            _toast("Invalid Duration", "Set a valid exam duration before saving", Icons.warning_amber_rounded, NotificationType.error);
-            return;
-          }
-
-          final dd = date.day.toString().padLeft(2, '0');
-          final mm = date.month.toString().padLeft(2, '0');
-          final yy = date.year.toString();
-
-          bool isPast = false;
-          try {
-            final startParts = normalizedStart.split(':');
-            if (startParts.length == 2) {
-              final hh = int.parse(startParts[0]);
-              final mm = int.parse(startParts[1]);
-              final scheduled = DateTime(date.year, date.month, date.day, hh, mm);
-              if (scheduled.isBefore(DateTime.now())) {
-                isPast = true;
+              if (_toMin(normalizedDuration) <= 0) {
+                _toast(
+                  "Invalid Duration",
+                  "Set a valid exam duration before saving",
+                  Icons.warning_amber_rounded,
+                  NotificationType.error,
+                );
+                return;
               }
-            }
-          } catch (_) {}
 
-          var newCard = ExamCardData(
-            recordId: generateId(),
-            school: school,
-            centreNumber: centre,
-            date: "$dd/$mm/$yy",
-            subject: "$subject ($board)",
-            examLevel: (level?.trim().isEmpty ?? true) ? null : level!.trim(),
-            start: normalizedStart,
-            duration: normalizedDuration,
-            end: normalizedStart,
-            normalStart: normalizedStart,
-            normalDuration: normalizedDuration,
-            normalEnd: normalizedStart,
-            extraTime: normalizedExtra,
-            totalDuration: "00:00",
-            extraEnd: normalizedStart,
-            expanded: false,
-            autoStart: !isPast,
-          );
-          newCard = _recompute(newCard);
+              final dd = date.day.toString().padLeft(2, '0');
+              final mm = date.month.toString().padLeft(2, '0');
+              final yy = date.year.toString();
 
-          setState(() {
-            _cards.insert(0, newCard);
-            _lastSchool = null;
-            _lastCentre = null;
-            _lastSubject = null;
-            _lastBoard = null;
-            _lastLevel = null;
-            _lastStart = null;
-            _lastDuration = null;
-            _lastExtra = null;
-            _updateFilteredAndGroupedCards();
-          });
-          await _saveState();
-          if (!mounted) return;
-          context.safePop(true);
-        },
+              bool isPast = false;
+              try {
+                final startParts = normalizedStart.split(':');
+                if (startParts.length == 2) {
+                  final hh = int.parse(startParts[0]);
+                  final mm = int.parse(startParts[1]);
+                  final scheduled = DateTime(
+                    date.year,
+                    date.month,
+                    date.day,
+                    hh,
+                    mm,
+                  );
+                  if (scheduled.isBefore(DateTime.now())) {
+                    isPast = true;
+                  }
+                }
+              } catch (_) {}
+
+              var newCard = ExamCardData(
+                recordId: generateId(),
+                school: school,
+                centreNumber: centre,
+                date: "$dd/$mm/$yy",
+                subject: "$subject ($board)",
+                examLevel: (level?.trim().isEmpty ?? true)
+                    ? null
+                    : level!.trim(),
+                start: normalizedStart,
+                duration: normalizedDuration,
+                end: normalizedStart,
+                normalStart: normalizedStart,
+                normalDuration: normalizedDuration,
+                normalEnd: normalizedStart,
+                extraTime: normalizedExtra,
+                totalDuration: "00:00",
+                extraEnd: normalizedStart,
+                expanded: false,
+                autoStart: !isPast,
+              );
+              newCard = _recompute(newCard);
+
+              setState(() {
+                _cards.insert(0, newCard);
+                _lastSchool = null;
+                _lastCentre = null;
+                _lastSubject = null;
+                _lastBoard = null;
+                _lastLevel = null;
+                _lastStart = null;
+                _lastDuration = null;
+                _lastExtra = null;
+                _updateFilteredAndGroupedCards();
+              });
+              await _saveState();
+              if (!mounted) return;
+              context.safePop(true);
+            },
       ),
     );
 
     if (result == true) {
-      _toast("Exam Created", "New exam successfully created", Icons.check_circle_rounded, NotificationType.success);
+      _toast(
+        "Exam Created",
+        "New exam successfully created",
+        Icons.check_circle_rounded,
+        NotificationType.success,
+      );
     }
   }
 
@@ -961,16 +1022,15 @@ class _HomeScreenState extends State<HomeScreen>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
-      builder: (_) => VigiloDurationPickerSheet(
-        initialDuration: time,
-        title: title,
-      ),
+      builder: (_) =>
+          VigiloDurationPickerSheet(initialDuration: time, title: title),
     );
     return res ?? "";
   }
 
-  int get _activeExamCount =>
-      _cards.where((c) => (c.running || c.isPaused) && c.phase != ExamPhase.finished).length;
+  int get _activeExamCount => _cards
+      .where((c) => (c.running || c.isPaused) && c.phase != ExamPhase.finished)
+      .length;
 
   bool _isArchivableExam(ExamCardData card) {
     final isFinished = card.phase == ExamPhase.finished || card.progress >= 1.0;
@@ -1003,6 +1063,8 @@ class _HomeScreenState extends State<HomeScreen>
   String _statusFilter = 'All';
   String _dateFilter = 'All';
   bool _showSessionMgr = false;
+  String? _highlightedDate;
+  final Map<String, GlobalKey> _dateKeys = {};
 
   // ── Speed Dial FAB state ─────────────────────────────────────────────────
   bool _fabOpen = false;
@@ -1138,14 +1200,29 @@ class _HomeScreenState extends State<HomeScreen>
                     _saveState();
                     if (nowOn) {
                       try {
-                        _toast("Vibration Enabled", "Vibration is on for this exam", Icons.vibration_rounded, NotificationType.success);
+                        _toast(
+                          "Vibration Enabled",
+                          "Vibration is on for this exam",
+                          Icons.vibration_rounded,
+                          NotificationType.success,
+                        );
                         await HapticFeedback.vibrate();
                       } catch (_) {}
                     } else {
-                      _toast("Vibration Disabled", "Vibration is off for this exam", Icons.phonelink_erase_rounded, NotificationType.information);
+                      _toast(
+                        "Vibration Disabled",
+                        "Vibration is off for this exam",
+                        Icons.phonelink_erase_rounded,
+                        NotificationType.information,
+                      );
                     }
                   } else {
-                    _toast("Action Required", "Open an exam to use Vibrate", Icons.touch_app_rounded, NotificationType.warning);
+                    _toast(
+                      "Action Required",
+                      "Open an exam to use Vibrate",
+                      Icons.touch_app_rounded,
+                      NotificationType.warning,
+                    );
                   }
                 }
               },
@@ -1178,23 +1255,48 @@ class _HomeScreenState extends State<HomeScreen>
                         NotificationType.success,
                       );
                     } else {
-                      _toast("Archive Failed", "No finished selected exams to archive", Icons.archive_rounded, NotificationType.error);
+                      _toast(
+                        "Archive Failed",
+                        "No finished selected exams to archive",
+                        Icons.archive_rounded,
+                        NotificationType.error,
+                      );
                     }
-                    _toast("Archive Mode", "Archive mode has been disabled", Icons.archive_outlined, NotificationType.information);
+                    _toast(
+                      "Archive Mode",
+                      "Archive mode has been disabled",
+                      Icons.archive_outlined,
+                      NotificationType.information,
+                    );
                     isArchiveMode = false;
                     setState(() {});
                     return;
                   }
 
                   if (_cards.isEmpty) {
-                    _toast("Archive Failed", "No exams available to archive", Icons.archive_rounded, NotificationType.error);
+                    _toast(
+                      "Archive Failed",
+                      "No exams available to archive",
+                      Icons.archive_rounded,
+                      NotificationType.error,
+                    );
                     return;
                   }
                   if (_archivableExamCount == 0) {
-                    _toast("Action Restricted", "Only finished exams can be archived", Icons.block_rounded, NotificationType.error);
+                    _toast(
+                      "Action Restricted",
+                      "Only finished exams can be archived",
+                      Icons.block_rounded,
+                      NotificationType.error,
+                    );
                     return;
                   }
-                  _toast("Archive Mode", "Tap finished exams to archive them", Icons.archive_rounded, NotificationType.information);
+                  _toast(
+                    "Archive Mode",
+                    "Tap finished exams to archive them",
+                    Icons.archive_rounded,
+                    NotificationType.information,
+                  );
                   isArchiveMode = true;
                   setState(() {});
                 }
@@ -1279,9 +1381,19 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                           );
                           if (v) {
-                            _toast("Auto-Start Enabled", "The exam will auto-start at the scheduled time", Icons.timer_rounded, NotificationType.success);
+                            _toast(
+                              "Auto-Start Enabled",
+                              "The exam will auto-start at the scheduled time",
+                              Icons.timer_rounded,
+                              NotificationType.success,
+                            );
                           } else {
-                            _toast("Auto-Start Disabled", "Auto start is off", Icons.timer_off_rounded, NotificationType.information);
+                            _toast(
+                              "Auto-Start Disabled",
+                              "Auto start is off",
+                              Icons.timer_off_rounded,
+                              NotificationType.information,
+                            );
                           }
                           _saveState();
                         },
@@ -1329,7 +1441,12 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     );
                   } else {
-                    _toast("Action Required", "Open an exam to use Officer Tools", Icons.touch_app_rounded, NotificationType.warning);
+                    _toast(
+                      "Action Required",
+                      "Open an exam to use Officer Tools",
+                      Icons.touch_app_rounded,
+                      NotificationType.warning,
+                    );
                   }
                 }
               },
@@ -1378,91 +1495,160 @@ class _HomeScreenState extends State<HomeScreen>
                               _dateFilter = 'All';
                               _updateFilteredAndGroupedCards();
                             }),
+                            onJumpToDateTap: _openDatePicker,
                           )
                         : const SizedBox(width: double.infinity, height: 0),
                   ),
                   Expanded(
                     child: isArchiveView
                         ? (_archiveCards.isEmpty
-                            ? const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Spacer(),
-                                  HomeEmptyStateWidget(),
-                                  Spacer(),
-                                  SizedBox(height: 100),
-                                ],
-                              )
-                            : ListView.separated(
-                                padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                                itemCount: _archiveCards.length,
-                                separatorBuilder: (_, index) => const SizedBox(height: 16),
-                                itemBuilder: (context, idx) {
-                                  final c = _archiveCards[idx];
-                                  return _buildExamCard(c, idx, key: ValueKey('archive_${c.recordId}'));
-                                },
-                              ))
+                              ? const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Spacer(),
+                                    HomeEmptyStateWidget(),
+                                    Spacer(),
+                                    SizedBox(height: 100),
+                                  ],
+                                )
+                              : ListView.separated(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    20,
+                                    8,
+                                    20,
+                                    100,
+                                  ),
+                                  itemCount: _archiveCards.length,
+                                  separatorBuilder: (_, index) =>
+                                      const SizedBox(height: 16),
+                                  itemBuilder: (context, idx) {
+                                    final c = _archiveCards[idx];
+                                    return _buildExamCard(
+                                      c,
+                                      idx,
+                                      key: ValueKey('archive_${c.recordId}'),
+                                    );
+                                  },
+                                ))
                         : (_filteredCardsCached.isEmpty
-                            ? const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Spacer(),
-                                  HomeEmptyStateWidget(),
-                                  Spacer(),
-                                  SizedBox(height: 100),
-                                ],
-                              )
-                            : ListView(
-                                padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                                children: _flattenedItems.map((item) {
-                                  if (item.dateHeader != null) {
-                                    final date = item.dateHeader!;
-                                    final sessionsCount = _groupedCardsCached[date]?.length ?? 0;
-                                    return Padding(
-                                      key: ValueKey('header_$date'),
-                                      padding: const EdgeInsets.fromLTRB(2, 10, 2, 10),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 3,
-                                            height: 14,
+                              ? const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Spacer(),
+                                    HomeEmptyStateWidget(),
+                                    Spacer(),
+                                    SizedBox(height: 100),
+                                  ],
+                                )
+                              : SingleChildScrollView(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    20,
+                                    8,
+                                    20,
+                                    100,
+                                  ),
+                                  child: Column(
+                                    children: _flattenedItems.map((item) {
+                                      if (item.dateHeader != null) {
+                                        final date = item.dateHeader!;
+                                        final sessionsCount =
+                                            _groupedCardsCached[date]?.length ??
+                                            0;
+                                        final headerKey = _dateKeys.putIfAbsent(
+                                          date,
+                                          () => GlobalKey(),
+                                        );
+                                        final isHighlighted =
+                                            _highlightedDate == date;
+                                        return Padding(
+                                          key: headerKey,
+                                          padding: const EdgeInsets.fromLTRB(
+                                            2,
+                                            6,
+                                            2,
+                                            6,
+                                          ),
+                                          child: AnimatedContainer(
+                                            duration: const Duration(
+                                              milliseconds: 300,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 8,
+                                            ),
                                             decoration: BoxDecoration(
-                                              color: VigiloUiColors.blueSoft(dark),
-                                              borderRadius: BorderRadius.circular(2),
+                                              color: isHighlighted
+                                                  ? VigiloUiColors.amber(
+                                                      dark,
+                                                    ).withValues(alpha: 0.12)
+                                                  : Colors.transparent,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: isHighlighted
+                                                    ? VigiloUiColors.amber(dark)
+                                                    : Colors.transparent,
+                                                width: 1.5,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  width: 3,
+                                                  height: 14,
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        VigiloUiColors.blueSoft(
+                                                          dark,
+                                                        ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          2,
+                                                        ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  _fd(date),
+                                                  style: TextStyle(
+                                                    color:
+                                                        VigiloUiColors.blueSoft(
+                                                          dark,
+                                                        ),
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                    letterSpacing: 0.2,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  '$sessionsCount session${sessionsCount == 1 ? '' : 's'}',
+                                                  style: TextStyle(
+                                                    color:
+                                                        VigiloUiColors.textFaint(
+                                                          dark,
+                                                        ),
+                                                    fontSize: 11,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            _fd(date),
-                                            style: TextStyle(
-                                              color: VigiloUiColors.blueSoft(dark),
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12,
-                                              letterSpacing: 0.2,
-                                            ),
+                                        );
+                                      } else {
+                                        final c = item.card!;
+                                        final idx = item.cardIndex!;
+                                        return Padding(
+                                          key: ValueKey('card_${c.recordId}'),
+                                          padding: const EdgeInsets.only(
+                                            bottom: 16,
                                           ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            '$sessionsCount session${sessionsCount == 1 ? '' : 's'}',
-                                            style: TextStyle(
-                                              color: VigiloUiColors.textFaint(dark),
-                                              fontSize: 11,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  } else {
-                                    final c = item.card!;
-                                    final idx = item.cardIndex!;
-                                    return Padding(
-                                      key: ValueKey('card_${c.recordId}'),
-                                      padding: const EdgeInsets.only(bottom: 16),
-                                      child: _buildExamCard(c, idx),
-                                    );
-                                  }
-                                }).toList(),
-                              )),
+                                          child: _buildExamCard(c, idx),
+                                        );
+                                      }
+                                    }).toList(),
+                                  ),
+                                )),
                   ),
                 ],
               ),
@@ -1508,30 +1694,55 @@ class _HomeScreenState extends State<HomeScreen>
                             _closeFab();
                             Navigator.of(context).push(
                               PageRouteBuilder(
-                                pageBuilder: (context, animation, secondaryAnimation) => ImportFlowSheet(
-                                  dark: dark,
-                                  onToggleTheme: widget.onToggleTheme,
-                                  initialCentreNumber: _lastCentre ?? (_cards.isNotEmpty ? _cards.first.centreNumber : ''),
-                                  onImportSessions: (newSessions) async {
-                                    await _sessionService.importSessions(newSessions);
-                                    if (newSessions.isNotEmpty) {
-                                      setState(() {
-                                        _lastCentre = newSessions.first.centreNumber;
-                                      });
-                                    }
-                                    await _refreshCards();
-                                    await _saveState();
-                                  },
-                                  onClose: () => context.safePop(),
-                                ),
-                                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                  final tween = Tween(begin: const Offset(0.0, 1.0), end: Offset.zero)
-                                      .chain(CurveTween(curve: Curves.easeOutCubic));
-                                  return SlideTransition(
-                                    position: animation.drive(tween),
-                                    child: child,
-                                  );
-                                },
+                                pageBuilder:
+                                    (
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                    ) => ImportFlowSheet(
+                                      dark: dark,
+                                      onToggleTheme: widget.onToggleTheme,
+                                      initialCentreNumber:
+                                          _lastCentre ??
+                                          (_cards.isNotEmpty
+                                              ? _cards.first.centreNumber
+                                              : ''),
+                                      onImportSessions: (newSessions) async {
+                                        await _sessionService.importSessions(
+                                          newSessions,
+                                        );
+                                        if (newSessions.isNotEmpty) {
+                                          setState(() {
+                                            _lastCentre =
+                                                newSessions.first.centreNumber;
+                                          });
+                                        }
+                                        await _refreshCards();
+                                        await _saveState();
+                                      },
+                                      onClose: () => context.safePop(),
+                                    ),
+                                transitionsBuilder:
+                                    (
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                      child,
+                                    ) {
+                                      final tween =
+                                          Tween(
+                                            begin: const Offset(0.0, 1.0),
+                                            end: Offset.zero,
+                                          ).chain(
+                                            CurveTween(
+                                              curve: Curves.easeOutCubic,
+                                            ),
+                                          );
+                                      return SlideTransition(
+                                        position: animation.drive(tween),
+                                        child: child,
+                                      );
+                                    },
                               ),
                             );
                           },
@@ -1576,7 +1787,9 @@ class _HomeScreenState extends State<HomeScreen>
     final sb = StringBuffer();
     sb.write('$_statusFilter|$_dateFilter|${_cards.length}|');
     for (final c in _cards) {
-      sb.write('${c.recordId}:${c.expanded}:${c.phase.index}:${c.running}:${c.isPaused}:${c.progress}:${c.date}:${c.normalStart}:${c.roomsSnapshot};');
+      sb.write(
+        '${c.recordId}:${c.expanded}:${c.phase.index}:${c.running}:${c.isPaused}:${c.progress}:${c.date}:${c.normalStart}:${c.roomsSnapshot};',
+      );
     }
     return sb.toString();
   }
@@ -1599,7 +1812,8 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (_dateFilter != 'All') {
       final now = DateTime.now();
-      final todayStr = "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+      final todayStr =
+          "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
       list = list.where((c) {
         if (_dateFilter == 'Today') {
           return c.date == todayStr;
@@ -1612,10 +1826,16 @@ class _HomeScreenState extends State<HomeScreen>
               final y = int.parse(parts[2]);
               final examDate = DateTime(y, m, d);
               final weekday = now.weekday;
-              final startOfWeek = DateTime(now.year, now.month, now.day).subtract(Duration(days: weekday - 1));
+              final startOfWeek = DateTime(
+                now.year,
+                now.month,
+                now.day,
+              ).subtract(Duration(days: weekday - 1));
               final endOfWeek = startOfWeek.add(const Duration(days: 7));
-              return (examDate.isAfter(startOfWeek.subtract(const Duration(seconds: 1))) &&
-                      examDate.isBefore(endOfWeek));
+              return (examDate.isAfter(
+                    startOfWeek.subtract(const Duration(seconds: 1)),
+                  ) &&
+                  examDate.isBefore(endOfWeek));
             }
           } catch (_) {}
           return false;
@@ -1694,13 +1914,87 @@ class _HomeScreenState extends State<HomeScreen>
         final y = int.parse(p[2]);
         final dt = DateTime(y, m, d);
         const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const months = [
+          '',
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
         final weekday = days[dt.weekday - 1];
         final monthStr = months[m];
         return '$weekday, $d $monthStr $y';
       }
     } catch (_) {}
     return date;
+  }
+
+  Future<void> _openDatePicker() async {
+    debugPrint('[JumpToDate] Opening Date Picker...');
+    final Map<String, int> dateCounts = {};
+    for (final entry in _groupedCardsCached.entries) {
+      dateCounts[entry.key] = entry.value.length;
+    }
+    debugPrint(
+      '[JumpToDate] Available dates in Session Manager: ${dateCounts.keys.toList()}',
+    );
+
+    final selectedDate = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) =>
+          VigiloDateJumpSheet(dark: widget.dark, dateSessionCounts: dateCounts),
+    );
+
+    debugPrint('[JumpToDate] User selected date from sheet: $selectedDate');
+    if (selectedDate != null && mounted) {
+      // 1. Close Session Manager
+      setState(() {
+        _showSessionMgr = false;
+      });
+
+      // 2. Scroll to date section
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final key = _dateKeys[selectedDate];
+        debugPrint(
+          '[JumpToDate] GlobalKey lookup for date $selectedDate: $key',
+        );
+        if (key != null) {
+          debugPrint('[JumpToDate] key.currentContext: ${key.currentContext}');
+          if (key.currentContext != null) {
+            debugPrint(
+              '[JumpToDate] Attempting scroll to element: ${key.currentContext}',
+            );
+            Scrollable.ensureVisible(
+              key.currentContext!,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+              alignment: 0.05,
+            );
+          } else {
+            debugPrint(
+              '[JumpToDate] WARNING: currentContext is null! Widget might be offscreen/not rendered.',
+            );
+          }
+        } else {
+          debugPrint('[JumpToDate] ERROR: key not found in _dateKeys mapping.');
+        }
+        setState(() => _highlightedDate = selectedDate);
+        Future.delayed(const Duration(milliseconds: 1400), () {
+          if (mounted) setState(() => _highlightedDate = null);
+        });
+      });
+    }
   }
 
   Widget _header(bool dark) {
@@ -1736,9 +2030,19 @@ class _HomeScreenState extends State<HomeScreen>
                 isArchiveMode = false;
                 if (isArchiveView) {
                   _showSessionMgr = false;
-                  _toast("Showing archived exams", "Archived exam records are shown below", Icons.archive_rounded, NotificationType.information);
+                  _toast(
+                    "Showing archived exams",
+                    "Archived exam records are shown below",
+                    Icons.archive_rounded,
+                    NotificationType.information,
+                  );
                 } else {
-                  _toast("Showing active exams", "Current running and scheduled exams are shown below", Icons.play_circle_fill_rounded, NotificationType.information);
+                  _toast(
+                    "Showing active exams",
+                    "Current running and scheduled exams are shown below",
+                    Icons.play_circle_fill_rounded,
+                    NotificationType.information,
+                  );
                 }
               }),
             ),
@@ -1770,7 +2074,13 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _headerIcon(bool dark, IconData icon, {required VoidCallback onTap, Color? color, bool selected = false}) {
+  Widget _headerIcon(
+    bool dark,
+    IconData icon, {
+    required VoidCallback onTap,
+    Color? color,
+    bool selected = false,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -1778,25 +2088,31 @@ class _HomeScreenState extends State<HomeScreen>
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: VigiloUiColors.panel(dark).withValues(alpha:dark ? 0.72 : 0.92),
+          color: VigiloUiColors.panel(
+            dark,
+          ).withValues(alpha: dark ? 0.72 : 0.92),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected
                 ? (color ?? VigiloUiColors.blue(dark))
                 : (dark
-                    ? VigiloUiColors.line(dark).withValues(alpha:0.70)
-                    : VigiloUiColors.line(dark)),
+                      ? VigiloUiColors.line(dark).withValues(alpha: 0.70)
+                      : VigiloUiColors.line(dark)),
             width: selected ? 1.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha:dark ? 0.16 : 0.07),
+              color: Colors.black.withValues(alpha: dark ? 0.16 : 0.07),
               blurRadius: dark ? 8 : 10,
               offset: Offset(0, dark ? 3 : 4),
             ),
           ],
         ),
-        child: Icon(icon, color: color ?? VigiloUiColors.textSoft(dark), size: 23),
+        child: Icon(
+          icon,
+          color: color ?? VigiloUiColors.textSoft(dark),
+          size: 23,
+        ),
       ),
     );
   }
@@ -1809,6 +2125,7 @@ class _HomeScreenState extends State<HomeScreen>
       return false;
     }
   }
+
   int getExpandedCardIndex() {
     return _cards.indexWhere((card) => card.expanded);
   }
@@ -1841,7 +2158,12 @@ class _HomeScreenState extends State<HomeScreen>
       onSelect: () {
         if (!isArchiveView) {
           if (!_isArchivableExam(c)) {
-            _toast("Action Restricted", "Only finished exams can be archived", Icons.block_rounded, NotificationType.error);
+            _toast(
+              "Action Restricted",
+              "Only finished exams can be archived",
+              Icons.block_rounded,
+              NotificationType.error,
+            );
             return;
           }
           setState(() {
@@ -1860,7 +2182,12 @@ class _HomeScreenState extends State<HomeScreen>
           if (_archiveCards.isEmpty) {
             isArchiveView = false;
           }
-          _toast("Exam Restored", "The exam has been successfully restored", Icons.settings_backup_restore_rounded, NotificationType.success);
+          _toast(
+            "Exam Restored",
+            "The exam has been successfully restored",
+            Icons.settings_backup_restore_rounded,
+            NotificationType.success,
+          );
           _saveState();
           setState(() {
             _updateFilteredAndGroupedCards();
@@ -1921,18 +2248,29 @@ class _HomeScreenState extends State<HomeScreen>
               var year = int.tryParse(parts[2]);
 
               const months = {
-                'jan': 1, 'january': 1,
-                'feb': 2, 'february': 2,
-                'mar': 3, 'march': 3,
-                'apr': 4, 'april': 4,
+                'jan': 1,
+                'january': 1,
+                'feb': 2,
+                'february': 2,
+                'mar': 3,
+                'march': 3,
+                'apr': 4,
+                'april': 4,
                 'may': 5,
-                'jun': 6, 'june': 6,
-                'jul': 7, 'july': 7,
-                'aug': 8, 'august': 8,
-                'sep': 9, 'september': 9,
-                'oct': 10, 'october': 10,
-                'nov': 11, 'november': 11,
-                'dec': 12, 'december': 12,
+                'jun': 6,
+                'june': 6,
+                'jul': 7,
+                'july': 7,
+                'aug': 8,
+                'august': 8,
+                'sep': 9,
+                'september': 9,
+                'oct': 10,
+                'october': 10,
+                'nov': 11,
+                'november': 11,
+                'dec': 12,
+                'december': 12,
               };
               final month = months[monthStr];
               if (day != null && month != null && year != null) {
@@ -1959,7 +2297,8 @@ class _HomeScreenState extends State<HomeScreen>
         } catch (_) {}
 
         final now = DateTime.now();
-        final isToday = cardDate != null &&
+        final isToday =
+            cardDate != null &&
             cardDate.year == now.year &&
             cardDate.month == now.month &&
             cardDate.day == now.day;
@@ -2007,7 +2346,8 @@ class _HomeScreenState extends State<HomeScreen>
               icon: Icons.error_outline_rounded,
             );
             return;
-          } else if (c.phase == ExamPhase.extra && newNormalSec + c.extraSeconds < elapsedSec) {
+          } else if (c.phase == ExamPhase.extra &&
+              newNormalSec + c.extraSeconds < elapsedSec) {
             NotificationService.show(
               context,
               title: "Invalid Duration",
@@ -2043,9 +2383,7 @@ class _HomeScreenState extends State<HomeScreen>
             detail = "Adjustment entered after exam finished";
           }
           setState(
-            () => _cards[idx] = _recompute(
-              c.copyWith(normalDuration: res),
-            ),
+            () => _cards[idx] = _recompute(c.copyWith(normalDuration: res)),
           );
           await _saveState();
           final recordId = _cards[idx].recordId;
@@ -2073,7 +2411,8 @@ class _HomeScreenState extends State<HomeScreen>
           int newExtraSec = _toMin(res) * 60;
           int elapsedSec = (c.progress * c.totalSeconds).round();
 
-          if (c.phase == ExamPhase.extra && c.normalSeconds + newExtraSec < elapsedSec) {
+          if (c.phase == ExamPhase.extra &&
+              c.normalSeconds + newExtraSec < elapsedSec) {
             NotificationService.show(
               context,
               title: "Invalid Extra Time",
@@ -2087,9 +2426,7 @@ class _HomeScreenState extends State<HomeScreen>
           final previousMinutes = _toMin(c.extraTime);
           final updatedMinutes = _toMin(res);
 
-          setState(
-            () => _cards[idx] = _recompute(c.copyWith(extraTime: res)),
-          );
+          setState(() => _cards[idx] = _recompute(c.copyWith(extraTime: res)));
           String detail = "";
           if (c.phase == ExamPhase.normal) {
             detail = "Adjustment entered before extra time";
@@ -2117,8 +2454,7 @@ class _HomeScreenState extends State<HomeScreen>
       },
       onUpdate: (u) async {
         final wasRunning = c.running;
-        final becameRunning =
-            u.running && !wasRunning && u.epochStart != null;
+        final becameRunning = u.running && !wasRunning && u.epochStart != null;
         if (becameRunning) {
           if (!mounted || idx < 0 || idx >= _cards.length) return;
           final now = u.epochStart!;
