@@ -24,6 +24,7 @@ import 'widgets/confirmation_dialog.dart';
 import 'widgets/exam_card_widget.dart';
 import 'widgets/footer_widget.dart';
 import 'widgets/home_empty_state_widget.dart';
+import 'widgets/filtered_empty_state_widget.dart';
 import 'widgets/license_required_view.dart';
 import 'widgets/stat_chip_widget.dart';
 import 'widgets/vigilo_date_picker.dart';
@@ -1592,14 +1593,22 @@ class _HomeScreenState extends State<HomeScreen>
                                   },
                                 ))
                         : (_filteredCardsCached.isEmpty
-                              ? const SingleChildScrollView(
+                              ? SingleChildScrollView(
                                   child: Center(
                                     child: Column(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        SizedBox(height: 20),
-                                        HomeEmptyStateWidget(),
-                                        SizedBox(height: 120),
+                                        const SizedBox(height: 20),
+                                        _cards.isEmpty
+                                            ? const HomeEmptyStateWidget()
+                                            : FilteredEmptyStateWidget(
+                                                onClear: () => setState(() {
+                                                  _statusFilter = 'All';
+                                                  _dateFilter = 'All';
+                                                  _updateFilteredAndGroupedCards();
+                                                }),
+                                              ),
+                                        const SizedBox(height: 120),
                                       ],
                                     ),
                                   ),
@@ -2126,8 +2135,10 @@ class _HomeScreenState extends State<HomeScreen>
             _headerIcon(
               dark,
               Icons.tune_rounded,
-              color: _showSessionMgr ? VigiloUiColors.blue(dark) : null,
-              selected: _showSessionMgr,
+              color: (_showSessionMgr || _statusFilter != 'All' || _dateFilter != 'All')
+                  ? VigiloUiColors.blue(dark)
+                  : null,
+              selected: _showSessionMgr || _statusFilter != 'All' || _dateFilter != 'All',
               onTap: () => setState(() {
                 _showSessionMgr = !_showSessionMgr;
                 if (_showSessionMgr) {

@@ -84,8 +84,8 @@ void main() {
     }
 
     Future<void> pumpMultiple(WidgetTester tester) async {
-      for (int i = 0; i < 15; i++) {
-        await tester.pump(const Duration(milliseconds: 40));
+      for (int i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
       }
     }
 
@@ -318,7 +318,8 @@ void main() {
             matching: find.byType(GestureDetector),
           );
           await tester.tap(undoBtnFinder);
-          await Future.delayed(const Duration(milliseconds: 300));
+          // Wait for the async DB roundtrip (_undoLastImport → _refreshCards → setState)
+          await Future.delayed(const Duration(milliseconds: 1500));
           await pumpMultiple(tester);
 
           // 6. Verify SnackBar and active cards are removed
