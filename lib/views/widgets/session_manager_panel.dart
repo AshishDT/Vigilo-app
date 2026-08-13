@@ -50,6 +50,7 @@ class SessionManagerPanel extends StatelessWidget {
         border: Border.all(color: VigiloUiColors.line(dark)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: double.infinity,
@@ -111,22 +112,21 @@ class SessionManagerPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      'All',
-                      'Not Started',
-                      'Running',
-                      'Finished',
-                    ].map(
-                      (o) => _buildChip(
-                        o,
-                        selected: statusFilter == o,
-                        onTap: () => onStatusFilterChanged(o),
-                      ),
-                    ).toList(),
-                  ),
+                Wrap(
+                  alignment: WrapAlignment.start,
+                  runSpacing: 8,
+                  children: [
+                    'All',
+                    'Not Started',
+                    'Running',
+                    'Finished',
+                  ].map(
+                    (o) => _buildChip(
+                      o,
+                      selected: statusFilter == o,
+                      onTap: () => onStatusFilterChanged(o),
+                    ),
+                  ).toList(),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -139,59 +139,58 @@ class SessionManagerPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      ...['All', 'Today', 'This Week'].map(
-                        (o) => _buildChip(
-                          o,
-                          selected: dateFilter == o,
-                          onTap: () => onDateFilterChanged(o),
-                        ),
+                Wrap(
+                  alignment: WrapAlignment.start,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    ...['All', 'Today', 'This Week'].map(
+                      (o) => _buildChip(
+                        o,
+                        selected: dateFilter == o,
+                        onTap: () => onDateFilterChanged(o),
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: onJumpToDateTap,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
+                    ),
+                    GestureDetector(
+                      onTap: onJumpToDateTap,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: VigiloUiColors.blue(dark).withValues(
+                            alpha: 0.12,
                           ),
-                          decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
                             color: VigiloUiColors.blue(dark).withValues(
-                              alpha: 0.12,
+                              alpha: 0.4,
                             ),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: VigiloUiColors.blue(dark).withValues(
-                                alpha: 0.4,
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.calendar_today_rounded,
-                                color: VigiloUiColors.blue(dark),
-                                size: 13,
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                'Jump to date',
-                                style: TextStyle(
-                                  color: VigiloUiColors.blue(dark),
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
                           ),
                         ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              color: VigiloUiColors.blue(dark),
+                              size: 13,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              'Jump to date',
+                              style: TextStyle(
+                                color: VigiloUiColors.blue(dark),
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
                 if (lastImportSessions.isNotEmpty) ...[
                   const SizedBox(height: 12),

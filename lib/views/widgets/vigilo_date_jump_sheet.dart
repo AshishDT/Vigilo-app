@@ -83,8 +83,8 @@ class VigiloDateJumpSheet extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    spacing: 8,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 24,
                     children: [
                       Expanded(
                         child: Column(
