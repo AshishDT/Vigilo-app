@@ -74,16 +74,17 @@ class _AddExamSheetState extends State<AddExamSheet> {
   late final TextEditingController _schoolCtl;
   late final TextEditingController _centreCtl;
   late final TextEditingController _subjectCtl;
-  late final TextEditingController _boardCtl;
+  late final TextEditingController _otherBoardCtl;
   late final TextEditingController _otherLevelCtl;
 
   String? _examLevel;
+  String? _examBoard;
 
   late final DraggableScrollableController _dragController;
   late final FocusNode _schoolFocus;
   late final FocusNode _centreFocus;
   late final FocusNode _subjectFocus;
-  late final FocusNode _boardFocus;
+  late final FocusNode _otherBoardFocus;
   late final FocusNode _otherLevelFocus;
 
   late DateTime _selectedDate;
@@ -99,8 +100,21 @@ class _AddExamSheetState extends State<AddExamSheet> {
     _schoolCtl = TextEditingController(text: widget.lastSchool ?? "");
     _centreCtl = TextEditingController(text: widget.lastCentre ?? "");
     _subjectCtl = TextEditingController(text: widget.lastSubject ?? "");
-    _boardCtl = TextEditingController(text: widget.lastBoard ?? "");
     
+    final rawBoard = widget.lastBoard;
+    if (rawBoard != null && rawBoard.trim().isNotEmpty) {
+      if (_examBoardOptions.contains(rawBoard.trim())) {
+        _examBoard = rawBoard.trim();
+        _otherBoardCtl = TextEditingController(text: '');
+      } else {
+        _examBoard = 'Other';
+        _otherBoardCtl = TextEditingController(text: rawBoard.trim());
+      }
+    } else {
+      _examBoard = null;
+      _otherBoardCtl = TextEditingController(text: '');
+    }
+
     final rawLevel = widget.lastLevel;
     if (rawLevel != null && rawLevel.trim().isNotEmpty) {
       if (_examLevelOptions.contains(rawLevel.trim())) {
@@ -131,20 +145,20 @@ class _AddExamSheetState extends State<AddExamSheet> {
     _schoolCtl.addListener(_onSchoolTextChanged);
     _centreCtl.addListener(_onTextChanged);
     _subjectCtl.addListener(_onTextChanged);
-    _boardCtl.addListener(_onTextChanged);
+    _otherBoardCtl.addListener(_onTextChanged);
     _otherLevelCtl.addListener(_onTextChanged);
 
     _dragController = DraggableScrollableController();
     _schoolFocus = FocusNode();
     _centreFocus = FocusNode();
     _subjectFocus = FocusNode();
-    _boardFocus = FocusNode();
+    _otherBoardFocus = FocusNode();
     _otherLevelFocus = FocusNode();
 
     _schoolFocus.addListener(_onFocusChanged);
     _centreFocus.addListener(_onFocusChanged);
     _subjectFocus.addListener(_onFocusChanged);
-    _boardFocus.addListener(_onFocusChanged);
+    _otherBoardFocus.addListener(_onFocusChanged);
     _otherLevelFocus.addListener(_onFocusChanged);
     
     _selectedDate = DateTime.now();
@@ -194,7 +208,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
     if (_schoolFocus.hasFocus ||
         _centreFocus.hasFocus ||
         _subjectFocus.hasFocus ||
-        _boardFocus.hasFocus ||
+        _otherBoardFocus.hasFocus ||
         _otherLevelFocus.hasFocus) {
       if (_dragController.isAttached) {
         _dragController.animateTo(
@@ -220,10 +234,12 @@ class _AddExamSheetState extends State<AddExamSheet> {
   }
 
   bool _isValidToSave() {
+    final hasBoard = _examBoard != null &&
+        (_examBoard != 'Other' || _otherBoardCtl.text.trim().isNotEmpty);
     return _schoolCtl.text.trim().isNotEmpty &&
         _centreCtl.text.trim().isNotEmpty &&
         _subjectCtl.text.trim().isNotEmpty &&
-        _boardCtl.text.trim().isNotEmpty;
+        hasBoard;
   }
 
   @override
@@ -231,26 +247,26 @@ class _AddExamSheetState extends State<AddExamSheet> {
     _schoolCtl.removeListener(_onSchoolTextChanged);
     _centreCtl.removeListener(_onTextChanged);
     _subjectCtl.removeListener(_onTextChanged);
-    _boardCtl.removeListener(_onTextChanged);
+    _otherBoardCtl.removeListener(_onTextChanged);
     _otherLevelCtl.removeListener(_onTextChanged);
 
     _schoolFocus.removeListener(_onFocusChanged);
     _centreFocus.removeListener(_onFocusChanged);
     _subjectFocus.removeListener(_onFocusChanged);
-    _boardFocus.removeListener(_onFocusChanged);
+    _otherBoardFocus.removeListener(_onFocusChanged);
     _otherLevelFocus.removeListener(_onFocusChanged);
 
     _schoolFocus.dispose();
     _centreFocus.dispose();
     _subjectFocus.dispose();
-    _boardFocus.dispose();
+    _otherBoardFocus.dispose();
     _otherLevelFocus.dispose();
     _dragController.dispose();
 
     _schoolCtl.dispose();
     _centreCtl.dispose();
     _subjectCtl.dispose();
-    _boardCtl.dispose();
+    _otherBoardCtl.dispose();
     _otherLevelCtl.dispose();
     _rebuildTimer?.cancel();
     super.dispose();
@@ -483,9 +499,8 @@ class _AddExamSheetState extends State<AddExamSheet> {
     );
   }
 
-  // ── Exam Level dropdown ──────────────────────────────────────────────────
+  // ── Dropdowns ────────────────────────────────────────────────────────────
   // Styled to match _textField: same inputBg, line border, borderRadius: 16.
-  // Optional — null value = blank/unset.
   static const List<String> _examLevelOptions = [
     'GCSE',
     'A Level',
@@ -494,9 +509,19 @@ class _AddExamSheetState extends State<AddExamSheet> {
     'Other',
   ];
 
+  static const List<String> _examBoardOptions = [
+    'OCR',
+    'AQA',
+    'Edexcel',
+    'Other',
+  ];
+
   Widget _dropdownField({
     required String? value,
+    required String hintText,
+    required List<String> options,
     required ValueChanged<String?> onChanged,
+    bool showNone = true,
   }) {
     final colors = _SheetColors(context);
     return Container(
@@ -519,17 +544,17 @@ class _AddExamSheetState extends State<AddExamSheet> {
             borderRadius: BorderRadius.circular(14),
             icon: Icon(Icons.keyboard_arrow_down_rounded, color: colors.textSoft),
             hint: Text(
-              'Select exam level (optional)',
+              hintText,
               style: TextStyle(color: colors.textFaint, fontSize: 15, fontWeight: FontWeight.w600),
             ),
             style: TextStyle(color: colors.text, fontSize: 16, fontWeight: FontWeight.w700),
             items: [
-              // Blank option to clear the selection
-              DropdownMenuItem<String>(
-                value: null,
-                child: Text('None', style: TextStyle(color: colors.textFaint, fontSize: 16, fontWeight: FontWeight.w700)),
-              ),
-              ..._examLevelOptions.map(
+              if (showNone)
+                DropdownMenuItem<String>(
+                  value: null,
+                  child: Text('None', style: TextStyle(color: colors.textFaint, fontSize: 16, fontWeight: FontWeight.w700)),
+                ),
+              ...options.map(
                 (o) => DropdownMenuItem<String>(value: o, child: Text(o)),
               ),
             ],
@@ -839,12 +864,17 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                 controller: _subjectCtl,
                                 hint: 'Enter exam subject',
                                 focusNode: _subjectFocus,
-                                nextFocusNode: _boardFocus,
+                                nextFocusNode: _examLevel == 'Other'
+                                    ? _otherLevelFocus
+                                    : (_examBoard == 'Other' ? _otherBoardFocus : _schoolFocus),
                               ),
                               const SizedBox(height: 14),
                               _formLabel('Exam Level'),
                               _dropdownField(
                                 value: _examLevel,
+                                hintText: 'Select exam level (optional)',
+                                options: _examLevelOptions,
+                                showNone: true,
                                 onChanged: (v) {
                                   setState(() {
                                     _examLevel = v;
@@ -861,17 +891,35 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                   controller: _otherLevelCtl,
                                   hint: 'Enter custom exam level',
                                   focusNode: _otherLevelFocus,
-                                  nextFocusNode: _boardFocus,
+                                  nextFocusNode: _examBoard == 'Other' ? _otherBoardFocus : _schoolFocus,
                                 ),
                               ],
                               const SizedBox(height: 14),
                               _formLabel('Exam Board'),
-                              _textField(
-                                controller: _boardCtl,
-                                hint: 'OCR, AQA, Edexcel',
-                                focusNode: _boardFocus,
-                                nextFocusNode: _schoolFocus,
+                              _dropdownField(
+                                value: _examBoard,
+                                hintText: 'Select exam board',
+                                options: _examBoardOptions,
+                                showNone: true,
+                                onChanged: (v) {
+                                  setState(() {
+                                    _examBoard = v;
+                                    if (v != 'Other') {
+                                      _otherBoardCtl.clear();
+                                    }
+                                  });
+                                },
                               ),
+                              if (_examBoard == 'Other') ...[
+                                const SizedBox(height: 14),
+                                _formLabel('Specify Exam Board'),
+                                _textField(
+                                  controller: _otherBoardCtl,
+                                  hint: 'Enter custom exam board',
+                                  focusNode: _otherBoardFocus,
+                                  nextFocusNode: _schoolFocus,
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -991,7 +1039,11 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                     final school = _schoolCtl.text.trim();
                                     final centre = _centreCtl.text.trim();
                                     final subj = _subjectCtl.text.trim();
-                                    final board = _boardCtl.text.trim();
+                                    
+                                    String boardToSave = _examBoard ?? '';
+                                    if (_examBoard == 'Other') {
+                                      boardToSave = _otherBoardCtl.text.trim();
+                                    }
 
                                     String? levelToSave = _examLevel;
                                     if (_examLevel == 'Other') {
@@ -1003,7 +1055,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                       school: school,
                                       centre: centre,
                                       subject: subj,
-                                      board: board,
+                                      board: boardToSave,
                                       level: levelToSave,
                                       date: _selectedDate,
                                       startTime: _startHHMM,

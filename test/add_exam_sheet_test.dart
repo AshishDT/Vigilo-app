@@ -50,7 +50,7 @@ void main() {
       // Verify custom level text field is not visible initially
       expect(find.text('Specify Exam Level'), findsNothing);
 
-      final dropdownFinder = find.byType(DropdownButton<String>);
+      final dropdownFinder = find.byType(DropdownButton<String>).first;
       await tester.ensureVisible(dropdownFinder);
       await tester.tap(dropdownFinder, warnIfMissed: false);
       await tester.pumpAndSettle();
@@ -106,7 +106,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final dropdownFinder = find.byType(DropdownButton<String>);
+      final dropdownFinder = find.byType(DropdownButton<String>).first;
       await tester.ensureVisible(dropdownFinder);
       await tester.tap(dropdownFinder, warnIfMissed: false);
       await tester.pumpAndSettle();
@@ -148,7 +148,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final dropdownFinder = find.byType(DropdownButton<String>);
+      final dropdownFinder = find.byType(DropdownButton<String>).first;
       await tester.ensureVisible(dropdownFinder);
 
       // Open dropdown and select 'Other'
@@ -217,6 +217,211 @@ void main() {
       // Verify custom level field is visible and pre-populated with 'IB Diploma'
       expect(find.text('Specify Exam Level'), findsOneWidget);
       expect(find.text('IB Diploma'), findsOneWidget);
+    });
+  });
+
+  group('AddExamSheet Exam Board Tests', () {
+    testWidgets('shows custom board field only when "Other" is selected and passes custom board on save', (WidgetTester tester) async {
+      String? savedBoard;
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          AddExamSheet(
+            lastSchool: 'Northbridge Academy',
+            lastCentre: '12345',
+            lastSubject: 'Physics',
+            lastBoard: '',
+            onSave: ({
+              required school,
+              required centre,
+              required subject,
+              required board,
+              level,
+              required date,
+              required startTime,
+              required duration,
+              required extraTime,
+            }) async {
+              savedBoard = board;
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify custom board text field is not visible initially
+      expect(find.text('Specify Exam Board'), findsNothing);
+
+      // Find the second dropdown (first is Exam Level, second is Exam Board)
+      final dropdownFinders = find.byType(DropdownButton<String>);
+      expect(dropdownFinders, findsNWidgets(2));
+      
+      // Tap the second dropdown (Exam Board)
+      await tester.ensureVisible(dropdownFinders.at(1));
+      await tester.tap(dropdownFinders.at(1), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      // Select 'Other' from dropdown menu items
+      await tester.tap(find.text('Other').last);
+      await tester.pumpAndSettle();
+
+      // Verify custom board text field is now displayed
+      expect(find.text('Specify Exam Board'), findsOneWidget);
+      expect(find.text('Enter custom exam board'), findsOneWidget);
+
+      // Enter a custom board
+      final customFieldFinder = find.widgetWithText(TextField, 'Enter custom exam board');
+      await tester.ensureVisible(customFieldFinder);
+      await tester.enterText(customFieldFinder, 'WJEC');
+      await tester.pumpAndSettle();
+
+      // Tap Save button
+      final saveFinder = find.text('Save');
+      await tester.ensureVisible(saveFinder);
+      await tester.tap(saveFinder, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(savedBoard, equals('WJEC'));
+    });
+
+    testWidgets('validation prevents saving when dropdown is set to "Other" but custom board text field is empty', (WidgetTester tester) async {
+      bool onSaveCalled = false;
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          AddExamSheet(
+            lastSchool: 'Northbridge Academy',
+            lastCentre: '12345',
+            lastSubject: 'Physics',
+            lastBoard: '',
+            onSave: ({
+              required school,
+              required centre,
+              required subject,
+              required board,
+              level,
+              required date,
+              required startTime,
+              required duration,
+              required extraTime,
+            }) async {
+              onSaveCalled = true;
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final dropdownFinders = find.byType(DropdownButton<String>);
+      await tester.ensureVisible(dropdownFinders.at(1));
+      await tester.tap(dropdownFinders.at(1), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      // Select 'Other' from dropdown menu items but leave input empty
+      await tester.tap(find.text('Other').last);
+      await tester.pumpAndSettle();
+
+      // Tap Save button
+      final saveFinder = find.text('Save');
+      await tester.ensureVisible(saveFinder);
+      await tester.tap(saveFinder, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(onSaveCalled, isFalse);
+    });
+
+    testWidgets('clears custom board text field when dropdown board changes away from "Other"', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          AddExamSheet(
+            lastSchool: 'Northbridge Academy',
+            lastCentre: '12345',
+            lastSubject: 'Physics',
+            lastBoard: '',
+            onSave: ({
+              required school,
+              required centre,
+              required subject,
+              required board,
+              level,
+              required date,
+              required startTime,
+              required duration,
+              required extraTime,
+            }) async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final dropdownFinders = find.byType(DropdownButton<String>);
+      
+      // Open dropdown and select 'Other'
+      await tester.ensureVisible(dropdownFinders.at(1));
+      await tester.tap(dropdownFinders.at(1), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Other').last);
+      await tester.pumpAndSettle();
+
+      // Type custom board
+      final customFieldFinder = find.widgetWithText(TextField, 'Enter custom exam board');
+      await tester.ensureVisible(customFieldFinder);
+      await tester.enterText(customFieldFinder, 'WJEC');
+      await tester.pumpAndSettle();
+
+      // Unfocus before opening dropdown again
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+
+      // Open dropdown again and select 'AQA'
+      await tester.ensureVisible(dropdownFinders.at(1));
+      await tester.tap(dropdownFinders.at(1), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('AQA').last);
+      await tester.pumpAndSettle();
+
+      // Custom board input field should disappear
+      expect(find.text('Specify Exam Board'), findsNothing);
+
+      // Open dropdown again and select 'Other'
+      await tester.ensureVisible(dropdownFinders.at(1));
+      await tester.tap(dropdownFinders.at(1), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Other').last);
+      await tester.pumpAndSettle();
+
+      // Custom input field should be empty (cleared)
+      final textField = tester.widget<TextField>(find.widgetWithText(TextField, 'Enter custom exam board'));
+      expect(textField.controller?.text, isEmpty);
+    });
+
+    testWidgets('pre-populates custom board when lastBoard is a non-standard board string', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          AddExamSheet(
+            lastSchool: 'Northbridge Academy',
+            lastCentre: '12345',
+            lastSubject: 'Computer Science',
+            lastBoard: 'CIE',
+            onSave: ({
+              required school,
+              required centre,
+              required subject,
+              required board,
+              level,
+              required date,
+              required startTime,
+              required duration,
+              required extraTime,
+            }) async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify custom board field is visible and pre-populated with 'CIE'
+      expect(find.text('Specify Exam Board'), findsOneWidget);
+      expect(find.text('CIE'), findsOneWidget);
     });
   });
 }
