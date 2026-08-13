@@ -198,6 +198,12 @@ void main() {
         // Verify all 6 cards are now saved in DB
         dbState = await sessionService.loadHomeState();
         expect(dbState.cards.length, equals(6));
+
+        // Pump empty widget to dispose HomeScreen and cancel active timers before tearDownAll
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump();
+        await Future.delayed(const Duration(milliseconds: 200));
+        await tester.pump();
       });
     });
   });

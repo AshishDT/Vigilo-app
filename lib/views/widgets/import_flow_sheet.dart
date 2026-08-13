@@ -100,6 +100,8 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
   // Final parsed sessions for preview
   List<_PreviewSession> _previewSessions = [];
   int _totalSessionsToCreate = 0;
+  int _previewPage = 0;
+  static const int _pageSize = 5;
 
   @override
   void initState() {
@@ -468,9 +470,30 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
     setState(() {
       _previewSessions = list;
       _totalSessionsToCreate = totalCount;
+      _previewPage = 0;
       _step = 2; // Proceed to Step 3: Preview Sessions
     });
   }
+
+  @visibleForTesting
+  void setParsedRowsForTesting(List<Map<String, dynamic>> rows) {
+    setState(() {
+      _parsedRows = rows;
+      _mappings['Exam Subject'] = 'subject';
+      _mappings['Exam Board'] = 'board';
+      _mappings['Date'] = 'date';
+      _mappings['Start Time'] = 'time';
+      _mappings['Duration'] = 'duration';
+      _mappings['Room'] = 'room';
+    });
+    _generatePreview();
+  }
+
+  @visibleForTesting
+  int get stepForTesting => _step;
+
+  @visibleForTesting
+  int get previewPageForTesting => _previewPage;
 
   String? _getMappedValue(Map<String, dynamic> row, String field) {
     final col = _mappings[field];
@@ -1297,103 +1320,227 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
 
   // ── STEP 3: PREVIEW SESSIONS ─────────────────────────────────────────────
   Widget _buildStep3Preview(_FlowColors colors) {
-    // Group preview sessions by Date
+    // Group all preview sessions by Date first
     final Map<String, List<_PreviewSession>> groups = {};
     for (var s in _previewSessions) {
       groups.putIfAbsent(s.date, () => []).add(s);
     }
     final dates = groups.keys.toList();
 
+    // Determine total pages & enforce valid page bounds
+    final totalDates = dates.length;
+    final totalPages = (totalDates / _pageSize).ceil();
+    if (_previewPage >= totalPages && totalPages > 0) {
+      _previewPage = totalPages - 1;
+    }
+
+    // Get slice of dates for the current page
+    final start = _previewPage * _pageSize;
+    final end = (start + _pageSize).clamp(0, totalDates);
+    final currentPageDates = dates.isEmpty
+        ? <String>[]
+        : dates.sublist(start, end);
+
+    // Summary counts for the persistent bar (acting on full dataset)
+    final validCount = _previewSessions.where((s) => s.errors.isEmpty).length;
+    final flaggedCount = _previewSessions.where((s) => s.errors.isNotEmpty).length;
+
     return Column(
       children: [
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          color: colors.panel,
-          child: Row(
-            children: [
-              Icon(Icons.calendar_today_outlined, color: colors.blue, size: 16),
-              const SizedBox(width: 10),
-              Expanded(
+        Expanded(
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '$_totalSessionsToCreate sessions to create',
-                      style: TextStyle(
-                        color: colors.text,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      color: colors.panel,
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_today_outlined, color: colors.blue, size: 16),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '$_totalSessionsToCreate sessions to create',
+                                  style: TextStyle(
+                                    color: colors.text,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                Text(
+                                  '$_orgName  \u00b7  ${_centreController.text}',
+                                  style: TextStyle(color: colors.textSoft, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      '$_orgName  \u00b7  ${_centreController.text}',
-                      style: TextStyle(color: colors.textSoft, fontSize: 12),
-                    ),
+                    Divider(height: 1, color: colors.line),
                   ],
+                ),
+              ),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _PinnedSummaryBarDelegate(
+                  height: 51,
+                  child: Container(
+                    color: colors.bg,
+                    child: Container(
+                      margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: colors.panel3,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: colors.line),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: colors.green, size: 15),
+                          const SizedBox(width: 6),
+                          Text(
+                            '$validCount valid',
+                            style: TextStyle(
+                              color: colors.green,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Icon(Icons.error, color: colors.red, size: 15),
+                          const SizedBox(width: 6),
+                          Text(
+                            '$flaggedCount flagged',
+                            style: TextStyle(
+                              color: colors.red,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (totalPages > 1)
+                            Text(
+                              'Page ${_previewPage + 1} of $totalPages',
+                              style: TextStyle(color: colors.textFaint, fontSize: 12),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (ctx, idx) {
+                      final date = currentPageDates[idx];
+                      final dateSessions = groups[date]!;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 4, 0, 8),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 3,
+                                  height: 14,
+                                  decoration: BoxDecoration(
+                                    color: colors.blueSoft,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  date,
+                                  style: TextStyle(
+                                    color: colors.blueSoft,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: colors.panel,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: colors.line),
+                            ),
+                            child: Column(
+                              children: [
+                                for (int i = 0; i < dateSessions.length; i++) ...[
+                                  if (i > 0)
+                                    Divider(height: 1, color: colors.lineSoft),
+                                  _buildPreviewSessionRow(colors, dateSessions[i]),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      );
+                    },
+                    childCount: currentPageDates.length,
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        Divider(height: 1, color: colors.line),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-            itemCount: dates.length,
-            itemBuilder: (ctx, idx) {
-              final date = dates[idx];
-              final dateSessions = groups[date]!;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 4, 0, 8),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 3,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: colors.blueSoft,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+        // Pagination controls
+        if (totalPages > 1)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildPageBtn(
+                  colors: colors,
+                  icon: Icons.chevron_left,
+                  label: 'Previous',
+                  enabled: _previewPage > 0,
+                  onTap: () => setState(() => _previewPage--),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(
+                          totalPages,
+                          (i) => _buildPageDot(i, colors),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          date,
-                          style: TextStyle(
-                            color: colors.blueSoft,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colors.panel,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: colors.line),
-                    ),
-                    child: Column(
-                      children: [
-                        for (int i = 0; i < dateSessions.length; i++) ...[
-                          if (i > 0)
-                            Divider(height: 1, color: colors.lineSoft),
-                          _buildPreviewSessionRow(colors, dateSessions[i]),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              );
-            },
+                ),
+                const SizedBox(width: 12),
+                _buildPageBtn(
+                  colors: colors,
+                  icon: Icons.chevron_right,
+                  label: 'Next',
+                  enabled: _previewPage < totalPages - 1,
+                  onTap: () => setState(() => _previewPage++),
+                  iconTrailing: true,
+                ),
+              ],
+            ),
           ),
-        ),
+
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
           child: Text(
@@ -1824,6 +1971,59 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
       ),
     );
   }
+
+  Widget _buildPageBtn({
+    required _FlowColors colors,
+    required IconData icon,
+    required String label,
+    required bool enabled,
+    required VoidCallback onTap,
+    bool iconTrailing = false,
+  }) {
+    final children = [
+      if (!iconTrailing) Icon(icon, size: 16, color: enabled ? colors.blueSoft : colors.textFaint),
+      if (!iconTrailing) const SizedBox(width: 3),
+      Text(
+        label,
+        style: TextStyle(
+          color: enabled ? colors.blueSoft : colors.textFaint,
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      if (iconTrailing) const SizedBox(width: 3),
+      if (iconTrailing) Icon(icon, size: 16, color: enabled ? colors.blueSoft : colors.textFaint),
+    ];
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: enabled ? colors.line : colors.line.withValues(alpha: 0.4),
+          ),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: children),
+      ),
+    );
+  }
+
+  Widget _buildPageDot(int i, _FlowColors colors) {
+    final selected = i == _previewPage;
+    return GestureDetector(
+      onTap: () => setState(() => _previewPage = i),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        width: selected ? 20 : 7,
+        height: 7,
+        decoration: BoxDecoration(
+          color: selected ? colors.blue : colors.line,
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
+    );
+  }
 }
 
 class _PreviewSession {
@@ -1852,4 +2052,27 @@ class _PreviewSession {
     required this.notes,
     required this.errors,
   });
+}
+
+class _PinnedSummaryBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  _PinnedSummaryBarDelegate({required this.child, required this.height});
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedSummaryBarDelegate oldDelegate) {
+    return child != oldDelegate.child || height != oldDelegate.height;
+  }
 }
