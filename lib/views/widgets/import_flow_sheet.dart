@@ -1513,22 +1513,18 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                   enabled: _previewPage > 0,
                   onTap: () => setState(() => _previewPage--),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(
-                          totalPages,
-                          (i) => _buildPageDot(i, colors),
-                        ),
-                      ),
+                const SizedBox(width: 16),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(
+                      totalPages,
+                      (i) => _buildPageDot(i, colors),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 _buildPageBtn(
                   colors: colors,
                   icon: Icons.chevron_right,
