@@ -72,8 +72,8 @@ void main() {
         ),
       );
 
-      // Verify Jump to date button is rendered
-      final jumpButton = find.text('Jump to date');
+      // Verify Jump to date button is rendered by finding its calendar icon
+      final jumpButton = find.byIcon(Icons.calendar_today_rounded);
       expect(jumpButton, findsOneWidget);
 
       // Tap on it and verify callback triggers

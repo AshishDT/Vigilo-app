@@ -142,11 +142,11 @@ void main() {
           state.highlightDateForTest('26/03/2026');
           await tester.pump();
 
-          // Verify the AnimatedContainer containing the cards gets the amber highlight border
+          // Verify the AnimatedContainer containing the cards gets the blue highlight border
           final groupColumn = tester.widget<Column>(groupColumnFinder);
           final groupAnimatedContainer = groupColumn.children[1] as AnimatedContainer;
           final decoration = groupAnimatedContainer.decoration as BoxDecoration;
-          expect(decoration.border?.top.color, const Color(0xFFE59422)); // VigiloUiColors.amber(false) = Color(0xFFE59422)
+          expect(decoration.border?.top.color, const Color(0xFF256BDB)); // VigiloUiColors.blue(false) = Color(0xFF256BDB)
 
           await disposeHomeScreen(tester);
         });

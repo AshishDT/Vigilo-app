@@ -86,11 +86,11 @@ class SessionManagerPanel extends StatelessWidget {
                   GestureDetector(
                     onTap: onClear,
                     child: Text(
-                      'Clear',
+                      'Clear Filters',
                       style: TextStyle(
                         color: VigiloUiColors.amber(dark),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -98,7 +98,7 @@ class SessionManagerPanel extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -113,8 +113,6 @@ class SessionManagerPanel extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Wrap(
-                  alignment: WrapAlignment.start,
-                  runSpacing: 8,
                   children: [
                     'All',
                     'Not Started',
@@ -128,7 +126,7 @@ class SessionManagerPanel extends StatelessWidget {
                     ),
                   ).toList(),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Text(
                   'DATE',
                   style: TextStyle(
@@ -140,9 +138,7 @@ class SessionManagerPanel extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Wrap(
-                  alignment: WrapAlignment.start,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+                  runSpacing: 6,
                   children: [
                     ...['All', 'Today', 'This Week'].map(
                       (o) => _buildChip(
@@ -151,13 +147,11 @@ class SessionManagerPanel extends StatelessWidget {
                         onTap: () => onDateFilterChanged(o),
                       ),
                     ),
+                    const SizedBox(width: 6),
                     GestureDetector(
                       onTap: onJumpToDateTap,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
+                        padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
                           color: VigiloUiColors.blue(dark).withValues(
                             alpha: 0.12,
@@ -169,24 +163,10 @@ class SessionManagerPanel extends StatelessWidget {
                             ),
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.calendar_today_rounded,
-                              color: VigiloUiColors.blue(dark),
-                              size: 13,
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              'Jump to date',
-                              style: TextStyle(
-                                color: VigiloUiColors.blue(dark),
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                        child: Icon(
+                          Icons.calendar_today_rounded,
+                          color: VigiloUiColors.blue(dark),
+                          size: 15,
                         ),
                       ),
                     ),
@@ -196,7 +176,7 @@ class SessionManagerPanel extends StatelessWidget {
                   const SizedBox(height: 12),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: VigiloUiColors.amber(dark).withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
@@ -214,35 +194,35 @@ class SessionManagerPanel extends StatelessWidget {
                             Icon(
                               Icons.history_rounded,
                               color: VigiloUiColors.amber(dark),
-                              size: 14,
+                              size: 13,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 5),
                             Text(
                               'LAST IMPORT',
                               style: TextStyle(
                                 color: VigiloUiColors.amber(dark),
-                                fontSize: 10.5,
+                                fontSize: 10,
                                 fontWeight: FontWeight.w700,
-                                letterSpacing: 0.5,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '${lastImportSessions.length} session${lastImportSessions.length == 1 ? '' : 's'}'
+                              '${protected.isEmpty ? '' : ' \u00b7 ${protected.length} protected'}',
+                              style: TextStyle(
+                                color: VigiloUiColors.textSoft(dark),
+                                fontSize: 11.5,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${lastImportSessions.length} session${lastImportSessions.length == 1 ? '' : 's'}'
-                          '${protected.isEmpty ? '' : ' · ${protected.length} protected (started, archived, or has an incident)'}',
-                          style: TextStyle(
-                            color: VigiloUiColors.textSoft(dark),
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         GestureDetector(
                           onTap: undoable.isEmpty ? null : onUndoLastImport,
                           child: Container(
+                            width: double.infinity,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
                               vertical: 9,
                             ),
                             decoration: BoxDecoration(
@@ -259,7 +239,7 @@ class SessionManagerPanel extends StatelessWidget {
                               ),
                             ),
                             child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
                                   Icons.undo_rounded,
@@ -271,7 +251,7 @@ class SessionManagerPanel extends StatelessWidget {
                                 const SizedBox(width: 6),
                                 Text(
                                   undoable.isEmpty
-                                      ? "Can't undo - all sessions protected"
+                                      ? "Can't undo -- all protected"
                                       : 'Undo ${undoable.length} session${undoable.length == 1 ? '' : 's'}',
                                   style: TextStyle(
                                     color: undoable.isEmpty
@@ -288,6 +268,18 @@ class SessionManagerPanel extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if (protected.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, left: 2),
+                      child: Text(
+                        'Protected = started, archived, or has an incident',
+                        style: TextStyle(
+                          color: VigiloUiColors.textFaint(dark),
+                          fontSize: 10,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
                 ],
               ],
             ),
@@ -304,8 +296,8 @@ class SessionManagerPanel extends StatelessWidget {
   }) => GestureDetector(
     onTap: onTap,
     child: Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      margin: const EdgeInsets.only(right: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
         color: selected ? VigiloUiColors.blue(dark) : VigiloUiColors.panel3(dark),
         borderRadius: BorderRadius.circular(16),
@@ -316,7 +308,7 @@ class SessionManagerPanel extends StatelessWidget {
         style: TextStyle(
           color: selected ? Colors.white : VigiloUiColors.textSoft(dark),
           fontSize: 12,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w500,
         ),
       ),
     ),

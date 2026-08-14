@@ -1713,7 +1713,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                   BorderRadius.circular(18),
                                               border: Border.all(
                                                 color: isHighlighted
-                                                    ? VigiloUiColors.amber(dark)
+                                                    ? VigiloUiColors.blue(dark)
                                                     : Colors.transparent,
                                                 width: 1.5,
                                               ),
