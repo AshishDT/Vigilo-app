@@ -143,6 +143,7 @@ void main() {
           extraEnd: '10:30',
           running: isRunning,
           wasEverStarted: wasStarted,
+          importedAsPast: inPast,
           logs: hasIncident
               ? [
                   Incident(

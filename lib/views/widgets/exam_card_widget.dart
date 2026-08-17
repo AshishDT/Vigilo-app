@@ -249,7 +249,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                         data.phase == ExamPhase.finished ||
                         data.isPaused ||
                         data.running;
-                    final showArchiveCheck = isArchiveMode && (isExamCompleted || data.isDatePassed);
+                    final showArchiveCheck = isArchiveMode && (isExamCompleted || data.isLocked);
                     final hideChevronInArchive = isArchiveMode && isExamCompleted;
                     final showChevron = !data.isLocked && !hideChevronInArchive;
 
@@ -647,7 +647,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
       if (data.importedAsPast || data.autoStart) {
         return _pill('DATE PASSED', VigiloUiColors.textFaint(isDark));
       } else {
-        return _pill('READY TO START', VigiloUiColors.green(isDark));
+        return _pill('READY TO START', VigiloUiColors.blue(isDark));
       }
     }
     if (data.phase == ExamPhase.finished) {
@@ -848,32 +848,47 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             active: extraActive,
             borderColor: finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.amber(isDark),
             children: [
-              Expanded(
-                child: _summaryTimeValue(
-                  isDark,
-                  'Extra Time',
-                  data.extraTime,
-                  finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.amber(isDark),
-                ),
-              ),
-              _verticalDivider(isDark, height: 30),
-              Expanded(
-                child: _summaryTimeValue(
-                  isDark,
-                  'Duration',
-                  data.totalDuration,
-                  finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.amber(isDark),
-                ),
-              ),
-              _verticalDivider(isDark, height: 30),
-              Expanded(
-                child: _summaryTimeValue(
-                  isDark,
-                  'Extra End',
-                  _formatHeaderHm(data.extraEnd),
-                  finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.amber(isDark),
-                ),
-              ),
+              Builder(builder: (context) {
+                final hasExtra = data.extraTime.isNotEmpty &&
+                    data.extraTime != '00:00' &&
+                    data.extraTime != '0';
+                final extraTimeVal = hasExtra ? data.extraTime : '00:00';
+                final durationVal = hasExtra ? data.totalDuration : '00:00';
+                final extraEndVal = hasExtra ? _formatHeaderHm(data.extraEnd) : '00:00';
+
+                return Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _summaryTimeValue(
+                          isDark,
+                          'Extra Time',
+                          extraTimeVal,
+                          finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.amber(isDark),
+                        ),
+                      ),
+                      _verticalDivider(isDark, height: 30),
+                      Expanded(
+                        child: _summaryTimeValue(
+                          isDark,
+                          'Duration',
+                          durationVal,
+                          finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.amber(isDark),
+                        ),
+                      ),
+                      _verticalDivider(isDark, height: 30),
+                      Expanded(
+                        child: _summaryTimeValue(
+                          isDark,
+                          'Extra End',
+                          extraEndVal,
+                          finished ? VigiloUiColors.finished(isDark) : VigiloUiColors.amber(isDark),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ],
           ),
         ],
