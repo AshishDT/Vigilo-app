@@ -182,7 +182,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
       duration: const Duration(milliseconds: 120),
       curve: Curves.easeOut,
       child: GestureDetector(
-        onTap: (data.isDatePassed && !isExamCompleted && !isArchiveMode)
+        onTap: (data.isLocked && !isExamCompleted && !isArchiveMode)
             ? null
             : () {
                 setState(() {
@@ -251,7 +251,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                         data.running;
                     final showArchiveCheck = isArchiveMode && (isExamCompleted || data.isDatePassed);
                     final hideChevronInArchive = isArchiveMode && isExamCompleted;
-                    final showChevron = !data.isDatePassed && !hideChevronInArchive;
+                    final showChevron = !data.isLocked && !hideChevronInArchive;
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,7 +383,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                   }),
                   const SizedBox(height: 16),
                   Opacity(
-                    opacity: data.isDatePassed ? 0.4 : 1.0,
+                    opacity: data.isLocked ? 0.4 : 1.0,
                     child: _compactTimingBox(isDark),
                   ),
                   SizeTransition(
@@ -644,7 +644,11 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
 
   Widget _buildClosedCardStatusPill(ExamCardData data, bool isDark) {
     if (data.isDatePassed) {
-      return _pill('DATE PASSED', VigiloUiColors.textFaint(isDark));
+      if (data.importedAsPast || data.autoStart) {
+        return _pill('DATE PASSED', VigiloUiColors.textFaint(isDark));
+      } else {
+        return _pill('READY TO START', VigiloUiColors.green(isDark));
+      }
     }
     if (data.phase == ExamPhase.finished) {
       return _pill('FINISHED', VigiloUiColors.green(isDark));

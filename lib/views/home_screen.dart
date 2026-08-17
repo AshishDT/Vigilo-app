@@ -949,24 +949,6 @@ class _HomeScreenState extends State<HomeScreen>
               final mm = date.month.toString().padLeft(2, '0');
               final yy = date.year.toString();
 
-              bool isPast = false;
-              try {
-                final startParts = normalizedStart.split(':');
-                if (startParts.length == 2) {
-                  final hh = int.parse(startParts[0]);
-                  final mm = int.parse(startParts[1]);
-                  final scheduled = DateTime(
-                    date.year,
-                    date.month,
-                    date.day,
-                    hh,
-                    mm,
-                  );
-                  if (scheduled.isBefore(DateTime.now())) {
-                    isPast = true;
-                  }
-                }
-              } catch (_) {}
 
               var newCard = ExamCardData(
                 recordId: generateId(),
@@ -987,7 +969,7 @@ class _HomeScreenState extends State<HomeScreen>
                 totalDuration: "00:00",
                 extraEnd: normalizedStart,
                 expanded: false,
-                autoStart: !isPast,
+                autoStart: false,
               );
               newCard = _recompute(newCard);
 
@@ -2428,9 +2410,7 @@ class _HomeScreenState extends State<HomeScreen>
             }
           }
 
-          if (cardDate == null) {
-            cardDate = DateTime.tryParse(c.date);
-          }
+          cardDate ??= DateTime.tryParse(c.date);
         } catch (_) {}
 
         final now = DateTime.now();

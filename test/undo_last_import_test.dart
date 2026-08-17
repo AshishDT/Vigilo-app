@@ -186,7 +186,7 @@ void main() {
           // 4. Verify LAST IMPORT banner is visible
           expect(find.text('LAST IMPORT'), findsOneWidget);
           expect(
-            find.text('8 sessions · 2 protected (started, archived, or has an incident)'),
+            find.text('8 sessions · 2 protected'),
             findsOneWidget,
           );
           expect(find.text('Undo 6 sessions'), findsOneWidget);
@@ -246,12 +246,12 @@ void main() {
           // 4. Verify LAST IMPORT banner is visible and showing disabled text
           expect(find.text('LAST IMPORT'), findsOneWidget);
           expect(
-            find.text("Can't undo - all sessions protected"),
+            find.text("Can't undo -- all protected"),
             findsOneWidget,
           );
 
           // Verify tap does nothing
-          final disabledBtnFinder = find.text("Can't undo - all sessions protected");
+          final disabledBtnFinder = find.text("Can't undo -- all protected");
           await tester.tap(disabledBtnFinder, warnIfMissed: false);
           await pumpMultiple(tester);
 
@@ -307,7 +307,7 @@ void main() {
           // 4. Verify LAST IMPORT banner counts the 2 archived sessions as protected
           expect(find.text('LAST IMPORT'), findsOneWidget);
           expect(
-            find.text('8 sessions · 2 protected (started, archived, or has an incident)'),
+            find.text('8 sessions · 2 protected'),
             findsOneWidget,
           );
           expect(find.text('Undo 6 sessions'), findsOneWidget);

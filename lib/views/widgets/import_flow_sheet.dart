@@ -708,7 +708,8 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           totalDuration: '00:00',
           extraEnd: s.startTime,
           expanded: false,
-          autoStart: !isPast,
+          autoStart: false,
+          importedAsPast: isPast,
           roomsSnapshot: room,
           notes: s.notes,
         );

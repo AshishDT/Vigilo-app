@@ -51,8 +51,9 @@ class ExamCardData {
     this.epochStart,
     this.pausedSeconds = 0,
     this.vibrateOn = true,
-    this.autoStart = true,
+    this.autoStart = false,
     this.autoStartUserModified = false,
+    this.importedAsPast = false,
     this.isPaused = false,
     this.wasEverStarted = false,
     List<ScheduleData>? scheduleList,
@@ -96,6 +97,7 @@ class ExamCardData {
   final bool vibrateOn;
   final bool autoStart;
   final bool autoStartUserModified;
+  final bool importedAsPast;
   final bool isPaused;
   final bool isSelected;
   final double tapScale;
@@ -135,25 +137,7 @@ class ExamCardData {
 
   int get totalSeconds => normalSeconds + extraSeconds;
 
-  bool get isDatePassed {
-    // An exam has a history if it is currently running/paused/finished OR
-    // if it was ever started (even after a reset — wasEverStarted survives resets).
-    // Imported idle sessions have epochStart pre-set by session_service so
-    // we cannot rely on epochStart alone.
-    final hasActuallyStarted =
-        running || isPaused || phase == ExamPhase.finished || wasEverStarted;
-    if (hasActuallyStarted) return false;
-
-    // If autoStart is enabled, the 1-second tick will start this exam as soon
-    // as its scheduled time arrives. There is a race window of up to ~1 second
-    // between the moment isDatePassed first becomes true (at render time) and
-    // the moment the tick fires startSession() and sets running=true. During
-    // that window, a Flutter rebuild (from animation controllers etc.) would
-    // show "DATE PASSED" for a split second. Guard against that by never
-    // reporting date-passed for an auto-start exam — it will transition to
-    // running on the next tick automatically.
-    if (autoStart && progress == 0.0) return false;
-
+  DateTime? get scheduledDateTime {
     try {
       String? cleanDate;
       final clean = date.trim().replaceAll(RegExp(r'\s+'), ' ');
@@ -218,8 +202,7 @@ class ExamCardData {
           final y = int.parse(dp[2]);
           final hh = int.parse(tp[0]);
           final mm = int.parse(tp[1]);
-          final scheduled = DateTime(y, m, d, hh, mm);
-          return scheduled.isBefore(DateTime.now());
+          return DateTime(y, m, d, hh, mm);
         }
       }
     } catch (_) {}
@@ -231,14 +214,44 @@ class ExamCardData {
         if (tp.length >= 2) {
           final hh = int.parse(tp[0]);
           final mm = int.parse(tp[1]);
-          final scheduled = DateTime(parsed.year, parsed.month, parsed.day, hh, mm);
-          return scheduled.isBefore(DateTime.now());
+          return DateTime(parsed.year, parsed.month, parsed.day, hh, mm);
         }
       }
     } catch (_) {}
 
-    return false;
+    return null;
   }
+
+  bool get isDatePassed {
+    // An exam has a history if it is currently running/paused/finished OR
+    // if it was ever started (even after a reset — wasEverStarted survives resets).
+    // Imported idle sessions have epochStart pre-set by session_service so
+    // we cannot rely on epochStart alone.
+    final hasActuallyStarted =
+        running || isPaused || phase == ExamPhase.finished || wasEverStarted;
+    if (hasActuallyStarted) return false;
+
+    final sched = scheduledDateTime;
+    if (sched == null) return false;
+
+    // If autoStart is enabled, the 1-second tick will start this exam as soon
+    // as its scheduled time arrives. There is a race window of up to ~1 second
+    // between the moment isDatePassed first becomes true (at render time) and
+    // the moment the tick fires startSession() and sets running=true. During
+    // that window, a Flutter rebuild (from animation controllers etc.) would
+    // show "DATE PASSED" for a split second. Guard against that by never
+    // reporting date-passed for an auto-start exam that is within 5 seconds of
+    // its start time.
+    if (autoStart && progress == 0.0) {
+      if (DateTime.now().difference(sched).inSeconds < 5) {
+        return false;
+      }
+    }
+
+    return sched.isBefore(DateTime.now());
+  }
+
+  bool get isLocked => isDatePassed && (importedAsPast || autoStart);
 
   (String, String) _splitTrailingMetadata(String value) {
     final trimmed = value.trim();
@@ -283,6 +296,7 @@ class ExamCardData {
     'vibrateOn': vibrateOn,
     'autoStart': autoStart,
     'autoStartUserModified': autoStartUserModified,
+    'importedAsPast': importedAsPast,
     'isPaused': isPaused,
     'wasEverStarted': wasEverStarted,
     'scheduleList': scheduleList?.map((item) => item.toJson()).toList(),
@@ -321,8 +335,9 @@ class ExamCardData {
         : DateTime.fromMillisecondsSinceEpoch(m['epochStart'] as int),
     pausedSeconds: (m['pausedSeconds'] ?? 0) as int,
     vibrateOn: (m['vibrateOn'] ?? true) as bool,
-    autoStart: (m['autoStart'] ?? true) as bool,
+    autoStart: (m['autoStart'] ?? false) as bool,
     autoStartUserModified: (m['autoStartUserModified'] ?? false) as bool,
+    importedAsPast: (m['importedAsPast'] ?? false) as bool,
     isPaused: (m['isPaused'] ?? false) as bool,
     wasEverStarted: (m['wasEverStarted'] ?? false) as bool,
     scheduleList: m['scheduleList'] != null
@@ -384,6 +399,7 @@ class ExamCardData {
     bool? vibrateOn,
     bool? autoStart,
     bool? autoStartUserModified,
+    bool? importedAsPast,
     bool? isPaused,
     bool? wasEverStarted,
     bool? isSelected,
@@ -428,6 +444,7 @@ class ExamCardData {
       autoStart: autoStart ?? this.autoStart,
       autoStartUserModified:
           autoStartUserModified ?? this.autoStartUserModified,
+      importedAsPast: importedAsPast ?? this.importedAsPast,
       isPaused: isPaused ?? this.isPaused,
       wasEverStarted: wasEverStarted ?? this.wasEverStarted,
       isSelected: isSelected ?? this.isSelected,
