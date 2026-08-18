@@ -65,7 +65,7 @@ class FilteredEmptyStateWidget extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'No exams match these filters',
+              'No matches',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: VigiloUiColors.text(isDark),
