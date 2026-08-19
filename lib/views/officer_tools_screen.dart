@@ -306,6 +306,15 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     if (widget.data.messages != null) {
       messageLog = List<Message>.from(widget.data.messages!);
     }
+    if (widget.data.selectedRecipients != null) {
+      selectedInvigilators
+        ..clear()
+        ..addAll(widget.data.selectedRecipients!);
+    } else {
+      selectedInvigilators
+        ..clear()
+        ..addAll(allInvigilators);
+    }
     _setUpByController.text = widget.data.setUpBy;
     _setUpRole = normalizeSetUpRole(widget.data.setUpRole);
     _syncSetupControllersFromSchedule();
@@ -350,7 +359,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             .toSet()
             .toList()
           ..sort();
-    selectedInvigilators.retainWhere(invigilators.contains);
+    if (invigilators.isNotEmpty) {
+      selectedInvigilators.retainWhere(invigilators.contains);
+    }
     _updateData(
       _currentData.copyWith(
         roomsSnapshot: rooms.join(', '),
@@ -359,6 +370,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         setUpRole: _setUpRole,
         notes: _setupNotesController.text.trim(),
         scheduleList: scheduleList,
+        messages: messageLog,
+        selectedRecipients: selectedInvigilators,
       ),
     );
   }
@@ -461,6 +474,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         roomsSnapshot: _scheduleRoomsSummary(),
         invigilatorsSnapshot: allInvigilators.join(", "),
         scheduleList: scheduleList,
+        messages: messageLog,
       ),
     );
     widget.onSaveData();
@@ -611,6 +625,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               ..clear()
               ..addAll(selection);
           });
+          _updateData(
+            _currentData.copyWith(selectedRecipients: selectedInvigilators),
+          );
+          widget.onSaveData();
         },
       ),
     );

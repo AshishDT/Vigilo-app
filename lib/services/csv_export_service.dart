@@ -942,10 +942,7 @@ class CsvExportService {
         break;
       }
     }
-    if (anchor == null) {
-      return const <SessionEvent>[];
-    }
-    final recordedStartUtc = anchor.occurredAtUtc;
+    final DateTime? recordedStartUtc = anchor?.occurredAtUtc;
 
     SessionEvent? lastSessionStart;
     for (final event in sorted) {
@@ -962,7 +959,7 @@ class CsvExportService {
     SessionEvent? recoveryEnd;
     for (final event in sorted) {
       if (!_isTerminationEvent(event.type)) continue;
-      if (event.occurredAtUtc.isBefore(recordedStartUtc)) continue;
+      if (recordedStartUtc != null && event.occurredAtUtc.isBefore(recordedStartUtc)) continue;
 
       if (lastSessionStart != null &&
           event.occurredAtUtc.isBefore(lastSessionStart.occurredAtUtc)) {
@@ -991,7 +988,6 @@ class CsvExportService {
       if (_isInternalAuditEvent(event.type)) continue;
       if (_isInvigilatorUpdatePayload(payload)) continue;
 
-      if (event.occurredAtUtc.isBefore(recordedStartUtc)) continue;
       if (chosenTermination != null &&
           event.occurredAtUtc.isAfter(chosenTermination.occurredAtUtc)) {
         continue;
@@ -1025,7 +1021,12 @@ class CsvExportService {
           continue;
         default:
           final isRestart = _isRestartPayload(payload);
-          if (!keptStart && !isRestart) continue;
+          if (anchor != null && !keptStart && !isRestart) {
+            if (event.type != SessionEventType.incident &&
+                event.type != SessionEventType.controlAction) {
+              continue;
+            }
+          }
           filtered.add(event);
           if (isRestart) {
             keptStart = true;

@@ -630,6 +630,55 @@ void main() {
       expect(text, contains('09:12:00,Incident,Normal Time,Medical incident'));
       expect(text, contains(',Core,Normal Time,Exam ended'));
     });
+
+    test('appends incident on unstarted exam session and persists in home state', () async {
+      const recordId = 'record-unstarted-1';
+      final card = ExamCardData(
+        recordId: recordId,
+        school: 'Battersea Academy',
+        centreNumber: '12345',
+        date: '06/03/2026',
+        subject: 'DT GCSE (AQA)',
+        start: '10:00',
+        duration: '01:00',
+        end: '11:00',
+        normalStart: '10:00',
+        normalDuration: '01:00',
+        normalEnd: '11:00',
+        extraTime: '00:00',
+        extraEnd: '11:00',
+        totalDuration: '01:00',
+        roomsSnapshot: 'H1',
+        invigilatorsSnapshot: 'Angela',
+        setUpBy: 'Basil',
+        setUpRole: 'Exam Officer',
+      );
+
+      await sessionService.persistHomeState(
+        cards: [card],
+        archiveCards: const [],
+        lastUsed: _emptyLastUsed(),
+      );
+
+      // Log incident on unstarted (idle) exam session
+      await sessionService.appendIncident(
+        examRecordId: recordId,
+        incident: Incident(
+          'Toilet break',
+          incidentType: 'toilet',
+          room: 'H1',
+          studentID: 'ST-001',
+          duration: '5',
+          time: DateTime(2026, 3, 6, 9, 50, 0),
+        ),
+      );
+
+      final state = await sessionService.loadHomeState();
+      final loadedCard = state.cards.firstWhere((c) => c.recordId == recordId);
+      expect(loadedCard.logs.length, equals(1));
+      expect(loadedCard.logs.first.message, equals('Toilet break'));
+      expect(loadedCard.logs.first.studentID, equals('ST-001'));
+    });
   });
 }
 

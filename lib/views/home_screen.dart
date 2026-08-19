@@ -1386,17 +1386,13 @@ class _HomeScreenState extends State<HomeScreen>
                           _saveState();
                         },
                         onUpdateData: (updated) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (!mounted || i < 0 || i >= _cards.length) return;
-                            final current = _cards[i];
-                            setState(() {
-                              _cards[i] = _mergeOfficerToolsUpdate(
-                                current: current,
-                                updated: updated,
-                              );
-                            });
-                            _saveState();
-                          });
+                          if (!mounted || i < 0 || i >= _cards.length) return;
+                          final current = _cards[i];
+                          _cards[i] = _mergeOfficerToolsUpdate(
+                            current: current,
+                            updated: updated,
+                          );
+                          _saveState();
                         },
                         onDeleteData: () async {
                           final ok = await showDialog<bool>(

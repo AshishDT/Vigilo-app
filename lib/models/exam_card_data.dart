@@ -59,6 +59,7 @@ class ExamCardData {
     List<ScheduleData>? scheduleList,
     List<BriefingItem>? briefings,
     List<Message>? messages,
+    List<String>? selectedRecipients,
     this.isSelected = false,
     this.tapScale = 1.0,
     this.isActiveTime = true,
@@ -72,6 +73,9 @@ class ExamCardData {
        messages = messages == null
            ? null
            : List<Message>.unmodifiable(messages),
+       selectedRecipients = selectedRecipients == null
+           ? null
+           : List<String>.unmodifiable(selectedRecipients),
        logs = List<Incident>.unmodifiable(logs ?? const []);
 
   final String? recordId;
@@ -106,6 +110,7 @@ class ExamCardData {
   final List<ScheduleData>? scheduleList;
   final List<BriefingItem>? briefings;
   final List<Message>? messages;
+  final List<String>? selectedRecipients;
   final List<Incident> logs;
 
   String get subjectName => _splitTrailingMetadata(subject).$1;
@@ -302,6 +307,7 @@ class ExamCardData {
     'scheduleList': scheduleList?.map((item) => item.toJson()).toList(),
     'briefings': briefings?.map((item) => item.toJson()).toList(),
     'messages': messages?.map((item) => item.toJson()).toList(),
+    'selectedRecipients': selectedRecipients,
     'logs': logs.map((item) => item.toJson()).toList(),
   };
 
@@ -361,6 +367,9 @@ class ExamCardData {
               .map((item) => Message.fromJson(Map<String, dynamic>.from(item)))
               .toList()
         : null,
+    selectedRecipients: m['selectedRecipients'] != null
+        ? List<String>.from(m['selectedRecipients'] as List)
+        : null,
     logs: m['logs'] != null
         ? (m['logs'] as List)
               .map((item) => Incident.fromJson(Map<String, dynamic>.from(item)))
@@ -410,6 +419,7 @@ class ExamCardData {
     List<BriefingItem>? briefings,
     List<Message>? messages,
     List<Incident>? logs,
+    List<String>? selectedRecipients,
     double? tapScale,
     bool? isActiveTime,
   }) {
@@ -452,6 +462,7 @@ class ExamCardData {
       briefings: briefings ?? this.briefings,
       messages: messages ?? this.messages,
       logs: logs ?? this.logs,
+      selectedRecipients: selectedRecipients ?? this.selectedRecipients,
       tapScale: tapScale ?? this.tapScale,
       isActiveTime: isActiveTime ?? this.isActiveTime,
     );

@@ -728,14 +728,9 @@ class SessionService {
       final snapshotMap = await _querySnapshotMap(txn, examRecordId);
       if (snapshotMap == null) return;
       final snapshot = SessionSnapshot.fromMap(snapshotMap);
-      if (snapshot.sessionStatus != SessionStatus.running &&
-          snapshot.sessionStatus != SessionStatus.paused) {
+      if (snapshot.sessionStatus == SessionStatus.ended) {
         return;
       }
-
-      final startEventUtc = await _firstStartEventUtc(txn, examRecordId);
-      final recordedStartUtc = startEventUtc ?? snapshot.startedAtUtc;
-      if (occurredAtUtc.isBefore(recordedStartUtc)) return;
 
       final event = await _buildEvent(
         txn,
@@ -1675,10 +1670,7 @@ class SessionService {
         break;
       }
     }
-    if (anchor == null) {
-      return const <SessionEvent>[];
-    }
-    final recordedStartUtc = anchor.occurredAtUtc;
+    final DateTime? recordedStartUtc = anchor?.occurredAtUtc;
 
     // Use the last session start as the reference for finding the active termination
     SessionEvent? lastSessionStart;
@@ -1696,7 +1688,7 @@ class SessionService {
     SessionEvent? recoveryEnd;
     for (final event in sorted) {
       if (!_isTerminationEvent(event.type)) continue;
-      if (event.occurredAtUtc.isBefore(recordedStartUtc)) {
+      if (recordedStartUtc != null && event.occurredAtUtc.isBefore(recordedStartUtc)) {
         continue;
       }
 
@@ -1728,8 +1720,6 @@ class SessionService {
       if (_isInternalAuditEvent(event.type)) continue;
       if (_isInvigilatorUpdatePayload(payload)) continue;
 
-      // Filter events before the very first start/restart or after the final termination
-      if (event.occurredAtUtc.isBefore(recordedStartUtc)) continue;
       if (chosenTermination != null &&
           event.occurredAtUtc.isAfter(chosenTermination.occurredAtUtc)) {
         continue;
@@ -1763,7 +1753,13 @@ class SessionService {
           continue;
         default:
           final isRestart = _isRestartPayload(payload);
-          if (!keptStart && !isRestart) continue;
+          if (anchor != null && !keptStart && !isRestart) {
+            // Keep user-logged incidents and control actions even if before start anchor
+            if (event.type != SessionEventType.incident &&
+                event.type != SessionEventType.controlAction) {
+              continue;
+            }
+          }
           filtered.add(event);
           if (isRestart) {
             keptStart = true;
@@ -1898,7 +1894,7 @@ class SessionService {
       return card.copyWith(
         running: false,
         isPaused: false,
-        epochStart: snapshot.startedAtUtc.toLocal(),
+        epochStart: snapshot.startedAtUtc?.toLocal(),
         pausedSeconds: card.pausedSeconds,
         progress: clampedProgress,
         phase: phase,
