@@ -251,7 +251,7 @@ class SessionManagerPanel extends StatelessWidget {
                                 const SizedBox(width: 6),
                                 Text(
                                   undoable.isEmpty
-                                      ? "Can't undo -- all protected"
+                                      ? "Can't undo, all protected"
                                       : 'Undo ${undoable.length} session${undoable.length == 1 ? '' : 's'}',
                                   style: TextStyle(
                                     color: undoable.isEmpty

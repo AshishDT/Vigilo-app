@@ -247,12 +247,12 @@ void main() {
           // 4. Verify LAST IMPORT banner is visible and showing disabled text
           expect(find.text('LAST IMPORT'), findsOneWidget);
           expect(
-            find.text("Can't undo -- all protected"),
+            find.text("Can't undo, all protected"),
             findsOneWidget,
           );
 
           // Verify tap does nothing
-          final disabledBtnFinder = find.text("Can't undo -- all protected");
+          final disabledBtnFinder = find.text("Can't undo, all protected");
           await tester.tap(disabledBtnFinder, warnIfMissed: false);
           await pumpMultiple(tester);
 
