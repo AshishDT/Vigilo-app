@@ -2939,7 +2939,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     children: [
                       Expanded(
                         child: Text(
-                          data.subject,
+                          data.subjectBoard.trim().isNotEmpty
+                              ? '${data.subjectName} (${data.subjectBoard})'
+                              : data.subject,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

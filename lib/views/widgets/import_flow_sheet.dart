@@ -694,10 +694,9 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           school: effectiveOrgName,
           centreNumber: _centreController.text.trim(),
           date: s.date,
-          subject: s.level != null && s.level!.isNotEmpty
-              ? '${s.subject} (${s.board})'
-              : '${s.subject} (${s.board})',
+          subject: s.subject,
           examLevel: s.level,
+          examBoard: s.board.trim().isEmpty ? null : s.board.trim(),
           start: s.startTime,
           duration: s.duration,
           end: s.startTime,

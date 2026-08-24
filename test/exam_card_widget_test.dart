@@ -90,4 +90,64 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'renders Level and Board together separated by dot when both are provided',
+    (tester) async {
+      final pulse = AnimationController(
+        vsync: tester,
+        duration: const Duration(milliseconds: 200),
+      );
+      addTearDown(pulse.dispose);
+
+      final card = ExamCardData(
+        recordId: 'exam-2',
+        school: 'Bramwell Academy',
+        centreNumber: '68214',
+        date: '30/08/2026',
+        subject: 'Mathematics - Paper 1',
+        examLevel: 'GCSE',
+        examBoard: 'Edexcel',
+        start: '09:00',
+        duration: '01:30',
+        end: '10:30',
+        normalStart: '09:00',
+        normalDuration: '01:30',
+        normalEnd: '10:30',
+        extraTime: '00:15',
+        totalDuration: '01:45',
+        extraEnd: '10:45',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ExamCard(
+              data: card,
+              pulse: pulse,
+              onChevronTap: () {},
+              onEditDate: () {},
+              onEditStartTime: () {},
+              onEditDuration: () {},
+              onEditExtra: () {},
+              onUpdate: (_) {},
+              isExamCompleted: false,
+              isArchiveMode: false,
+              onSelect: () {},
+              extraPulse: false,
+              tapScale: 1.0,
+              onTimeTap: () {},
+              onProgressChangeEnd: (_) {},
+              onProgressDragState: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.textContaining('Mathematics - Paper 1'), findsOneWidget);
+      expect(find.textContaining('GCSE'), findsOneWidget);
+      expect(find.textContaining('·'), findsOneWidget);
+      expect(find.textContaining('Edexcel'), findsOneWidget);
+    },
+  );
 }

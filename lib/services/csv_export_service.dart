@@ -314,7 +314,10 @@ class CsvExportService {
   }
 
   String _examBoard(ExamRecord record, ExamCardData? card) {
-    final source = (card?.subject ?? record.examName).trim();
+    if (card != null && card.subjectBoard.trim().isNotEmpty) {
+      return card.subjectBoard.trim();
+    }
+    final source = record.examName.trim();
     return _subjectBoardOnly(source);
   }
 

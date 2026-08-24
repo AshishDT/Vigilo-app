@@ -30,6 +30,7 @@ class ExamCardData {
     required this.date,
     required this.subject,
     this.examLevel,
+    this.examBoard,
     required this.start,
     required this.duration,
     required this.end,
@@ -81,6 +82,7 @@ class ExamCardData {
   final String? recordId;
   final String school, centreNumber, date, subject;
   final String? examLevel;
+  final String? examBoard;
   final String start, duration, end;
   final String normalStart, normalDuration, normalEnd;
   final String extraTime, totalDuration, extraEnd;
@@ -115,7 +117,11 @@ class ExamCardData {
 
   String get subjectName => _splitTrailingMetadata(subject).$1;
 
-  String get subjectBoard => _splitTrailingMetadata(subject).$2;
+  String get subjectBoard {
+    final explicit = examBoard?.trim() ?? '';
+    if (explicit.isNotEmpty) return explicit;
+    return _splitTrailingMetadata(subject).$2;
+  }
 
   String get organizationName => _splitTrailingMetadata(school).$1;
 
@@ -278,6 +284,7 @@ class ExamCardData {
     'date': date,
     'subject': subject,
     'examLevel': examLevel,
+    'examBoard': examBoard,
     'start': start,
     'duration': duration,
     'end': end,
@@ -318,6 +325,7 @@ class ExamCardData {
     date: m['date'],
     subject: m['subject'],
     examLevel: m['examLevel'] as String?,
+    examBoard: m['examBoard'] as String?,
     start: m['start'],
     duration: m['duration'],
     end: m['end'],
@@ -385,6 +393,8 @@ class ExamCardData {
     String? subject,
     String? examLevel,
     bool clearExamLevel = false,
+    String? examBoard,
+    bool clearExamBoard = false,
     String? start,
     String? duration,
     String? end,
@@ -430,6 +440,7 @@ class ExamCardData {
       date: date ?? this.date,
       subject: subject ?? this.subject,
       examLevel: clearExamLevel ? null : (examLevel ?? this.examLevel),
+      examBoard: clearExamBoard ? null : (examBoard ?? this.examBoard),
       start: start ?? this.start,
       duration: duration ?? this.duration,
       end: end ?? this.end,

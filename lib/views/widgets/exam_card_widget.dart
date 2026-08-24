@@ -245,6 +245,8 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                 children: [
                   Builder(builder: (context) {
                     final hasExamLevel = (data.examLevel ?? '').trim().isNotEmpty;
+                    final hasExamBoard = data.subjectBoard.trim().isNotEmpty;
+                    final hasLevelOrBoard = hasExamLevel || hasExamBoard;
                     final hasStatusPill = data.isDatePassed ||
                         data.phase == ExamPhase.finished ||
                         data.isPaused ||
@@ -319,33 +321,62 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                           ],
                         ),
 
-                        // Row 2 (Level Line - rendered ONLY if level is present)
-                        if (hasExamLevel) ...[
-                          const SizedBox(height: 5),
+                        // Row 2 (Level + Board Line - rendered if level or board is present)
+                        if (hasLevelOrBoard) ...[
+                          const SizedBox(height: 4),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Expanded(
-                                child: Text(
-                                  data.examLevel!,
-                                  style: TextStyle(
-                                    color: VigiloUiColors.textSoft(isDark),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    height: 1.2,
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      if (hasExamLevel)
+                                        TextSpan(
+                                          text: data.examLevel!,
+                                          style: TextStyle(
+                                            color: VigiloUiColors.textSoft(isDark),
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      if (hasExamLevel && hasExamBoard)
+                                        TextSpan(
+                                          text: '  ·  ',
+                                          style: TextStyle(
+                                            color: VigiloUiColors.textFaint(isDark),
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      if (hasExamBoard)
+                                        TextSpan(
+                                          text: data.subjectBoard,
+                                          style: TextStyle(
+                                            color: VigiloUiColors.textSoft(isDark),
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
                               ),
                               if (hasStatusPill) ...[
-                                const SizedBox(width: 10),
+                                const SizedBox(width: 8),
                                 _buildClosedCardStatusPill(data, isDark),
                               ],
                             ],
                           ),
                         ],
 
+                        // Inter-group spacing between (Name + Level/Board) and (Date + Org)
+                        const SizedBox(height: 8),
+
                         // Date Row
-                        const SizedBox(height: 5),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
@@ -360,15 +391,15 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                                 ),
                               ),
                             ),
-                            if (!hasExamLevel && hasStatusPill) ...[
-                              const SizedBox(width: 10),
+                            if (!hasLevelOrBoard && hasStatusPill) ...[
+                              const SizedBox(width: 8),
                               _buildClosedCardStatusPill(data, isDark),
                             ],
                           ],
                         ),
 
                         // Organization Line
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 3),
                         Text(
                           organizationLine,
                           style: TextStyle(
@@ -381,7 +412,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                       ],
                     );
                   }),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Opacity(
                     opacity: data.isLocked ? 0.4 : 1.0,
                     child: _compactTimingBox(isDark),

@@ -955,10 +955,11 @@ class _HomeScreenState extends State<HomeScreen>
                 school: school,
                 centreNumber: centre,
                 date: "$dd/$mm/$yy",
-                subject: "$subject ($board)",
+                subject: subject.trim(),
                 examLevel: (level?.trim().isEmpty ?? true)
                     ? null
                     : level!.trim(),
+                examBoard: board.trim().isEmpty ? null : board.trim(),
                 start: normalizedStart,
                 duration: normalizedDuration,
                 end: normalizedStart,
