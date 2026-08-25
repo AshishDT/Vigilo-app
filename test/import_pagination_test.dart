@@ -26,10 +26,11 @@ void main() {
     final dynamic state = tester.state(stateFinder);
 
     // 2. Set up mock parsed rows (17 rows with 6 unique dates to trigger 2 pages)
+    final futureYear = DateTime.now().year + 1;
     final mockRows = List.generate(17, (i) => {
       'subject': 'Subject Row $i',
       'board': 'Edexcel',
-      'date': '${20 + (i % 6)}/08/2026', // 20/08 to 25/08 (6 unique dates)
+      'date': '${20 + (i % 6)}/08/$futureYear', // 20/08 to 25/08 in future year (6 unique dates)
       'time': '09:00',
       'duration': '01:30',
       'room': 'Room A',
@@ -48,8 +49,8 @@ void main() {
     expect(find.text('Page 1 of 2'), findsOneWidget);
 
     // Verify date headers on page 1 (first 5 unique dates: 20/08, 21/08, 22/08, 23/08, 24/08)
-    expect(find.text('20/08/2026'), findsOneWidget);
-    expect(find.text('25/08/2026'), findsNothing);
+    expect(find.text('20/08/$futureYear'), findsOneWidget);
+    expect(find.text('25/08/$futureYear'), findsNothing);
 
     // Verify sessions on page 1
     expect(find.text('Subject Row 0'), findsOneWidget); // 20/08
@@ -73,8 +74,8 @@ void main() {
     expect(find.text('Page 2 of 2'), findsOneWidget);
 
     // Verify date headers and sessions on page 2 (6th unique date: 25/08)
-    expect(find.text('20/08/2026'), findsNothing);
-    expect(find.text('25/08/2026'), findsOneWidget);
+    expect(find.text('20/08/$futureYear'), findsNothing);
+    expect(find.text('25/08/$futureYear'), findsOneWidget);
     expect(find.text('Subject Row 4'), findsNothing);
     expect(find.text('Subject Row 5'), findsOneWidget); // 25/08
 

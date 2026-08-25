@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigilo/services/import_service.dart';
+import 'package:vigilo/views/widgets/import_flow_sheet.dart';
 
 void main() {
   group('ImportService Duration Normalization & Conversion Tests', () {
@@ -23,6 +25,204 @@ void main() {
       expect(ImportService.durationToMinutes('-01:00'), -60);
       expect(ImportService.durationToMinutes('-00:30'), -30);
       expect(ImportService.durationToMinutes('00:-30'), -30);
+    });
+  });
+
+  group('ImportFlowSheet Past-Date Validation Tests', () {
+    testWidgets('rejects past-dated rows and flags reason in preview', (WidgetTester tester) async {
+      List<dynamic> imported = [];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ImportFlowSheet(
+              dark: false,
+              onToggleTheme: () {},
+              initialCentreNumber: '12345',
+              onImportSessions: (sessions) async {
+                imported = sessions;
+              },
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final stateFinder = find.byType(ImportFlowSheet);
+      final dynamic state = tester.state(stateFinder);
+
+      final yesterday = DateTime.now().subtract(const Duration(days: 1));
+      final yesterdayStr = "${yesterday.day.toString().padLeft(2, '0')}/${yesterday.month.toString().padLeft(2, '0')}/${yesterday.year}";
+
+      final futureDay = DateTime.now().add(const Duration(days: 10));
+      final futureDayStr = "${futureDay.day.toString().padLeft(2, '0')}/${futureDay.month.toString().padLeft(2, '0')}/${futureDay.year}";
+
+      final mockRows = [
+        {
+          'subject': 'Past Exam Maths',
+          'board': 'Edexcel',
+          'date': yesterdayStr,
+          'time': '09:00',
+          'duration': '01:30',
+          'room': 'Hall A',
+        },
+        {
+          'subject': 'Future Exam English',
+          'board': 'AQA',
+          'date': futureDayStr,
+          'time': '09:00',
+          'duration': '01:30',
+          'room': 'Hall B',
+        },
+      ];
+
+      state.setParsedRowsForTesting(mockRows);
+      await tester.pump();
+
+      // Check preview step
+      expect(state.stepForTesting, equals(2));
+
+      // 1 valid (future), 1 flagged (past)
+      expect(find.text('1 valid'), findsOneWidget);
+      expect(find.text('1 flagged'), findsOneWidget);
+      expect(find.text('1 sessions to create'), findsOneWidget);
+
+      // Verify the past date error message is rendered in preview
+      expect(find.textContaining('Scheduled date is in the past'), findsOneWidget);
+      expect(find.text('Past Exam Maths'), findsOneWidget);
+      expect(find.text('Future Exam English'), findsOneWidget);
+    });
+
+    testWidgets('rejects today rows with past start time', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ImportFlowSheet(
+              dark: false,
+              onToggleTheme: () {},
+              initialCentreNumber: '12345',
+              onImportSessions: (sessions) async {},
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final stateFinder = find.byType(ImportFlowSheet);
+      final dynamic state = tester.state(stateFinder);
+
+      final now = DateTime.now();
+      final todayStr = "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+
+      // If current time is after 00:05, test an earlier time today
+      if (now.hour > 0 || now.minute > 10) {
+        final pastTime = "00:01";
+        final mockRows = [
+          {
+            'subject': 'Past Time Today',
+            'board': 'OCR',
+            'date': todayStr,
+            'time': pastTime,
+            'duration': '01:00',
+            'room': 'Gym',
+          },
+        ];
+
+        state.setParsedRowsForTesting(mockRows);
+        await tester.pump();
+
+        expect(find.text('0 valid'), findsOneWidget);
+        expect(find.text('1 flagged'), findsOneWidget);
+        expect(find.textContaining('Scheduled time is in the past'), findsOneWidget);
+      }
+    });
+
+    testWidgets('renders long error text, long notes, and long rooms without RenderFlex overflow', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ImportFlowSheet(
+              dark: false,
+              onToggleTheme: () {},
+              initialCentreNumber: '12345',
+              onImportSessions: (sessions) async {},
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final stateFinder = find.byType(ImportFlowSheet);
+      final dynamic state = tester.state(stateFinder);
+
+      final yesterday = DateTime.now().subtract(const Duration(days: 1));
+      final yesterdayStr = "${yesterday.day.toString().padLeft(2, '0')}/${yesterday.month.toString().padLeft(2, '0')}/${yesterday.year}";
+
+      final mockRows = [
+        {
+          'subject': 'Very Long Subject Name For An Advanced Qualification Examination 2026',
+          'board': 'Cambridge International Examinations Board UK',
+          'date': yesterdayStr,
+          'time': '09:00',
+          'duration': '01:30',
+          'room': 'Extraordinarily Long Main Examination Sports Hall Complex Block C Room 102',
+          'notes': 'This is an extremely long note containing detailed instructions for invigilators and candidates regarding examination conduct and special arrangements.',
+        },
+      ];
+
+      state.setParsedRowsForTesting(mockRows);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('1 flagged'), findsOneWidget);
+      expect(find.textContaining('Scheduled date is in the past'), findsOneWidget);
+    });
+
+    testWidgets('shows clean Missing and Invalid messages for Date and Start Time', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ImportFlowSheet(
+              dark: false,
+              onToggleTheme: () {},
+              initialCentreNumber: '12345',
+              onImportSessions: (sessions) async {},
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final stateFinder = find.byType(ImportFlowSheet);
+      final dynamic state = tester.state(stateFinder);
+
+      final mockRows = [
+        {
+          'subject': 'Exam Missing Both',
+          'board': 'Edexcel',
+          'date': '',
+          'time': '',
+          'duration': '01:30',
+        },
+        {
+          'subject': 'Exam Invalid Both',
+          'board': 'AQA',
+          'date': 'InvalidDate',
+          'time': 'InvalidTime',
+          'duration': '01:30',
+        },
+      ];
+
+      state.setParsedRowsForTesting(mockRows);
+      await tester.pump();
+
+      expect(find.text('Missing Date'), findsOneWidget);
+      expect(find.text('Missing Start Time'), findsOneWidget);
+      expect(find.text('Invalid Date ("InvalidDate")'), findsOneWidget);
+      expect(find.text('Invalid Start Time ("InvalidTime")'), findsOneWidget);
     });
   });
 }

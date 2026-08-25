@@ -390,16 +390,53 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
         errors.add('Missing Exam Board');
       }
 
-      final date = rawDate != null
-          ? ImportService.normalizeDate(rawDate)
-          : null;
-      if (date == null) errors.add('Invalid or missing Date ("$rawDate")');
+      String? date;
+      if (rawDate == null || rawDate.toString().trim().isEmpty) {
+        errors.add('Missing Date');
+      } else {
+        final normDate = ImportService.normalizeDate(rawDate);
+        if (normDate == null) {
+          errors.add('Invalid Date ("$rawDate")');
+        } else {
+          date = normDate;
+        }
+      }
 
-      final startTime = rawStartTime != null
-          ? ImportService.normalizeStartTime(rawStartTime)
-          : null;
-      if (startTime == null) {
-        errors.add('Invalid or missing Start Time ("$rawStartTime")');
+      String? startTime;
+      if (rawStartTime == null || rawStartTime.toString().trim().isEmpty) {
+        errors.add('Missing Start Time');
+      } else {
+        final normStartTime = ImportService.normalizeStartTime(rawStartTime);
+        if (normStartTime == null) {
+          errors.add('Invalid Start Time ("$rawStartTime")');
+        } else {
+          startTime = normStartTime;
+        }
+      }
+
+      if (date != null && startTime != null) {
+        try {
+          final dateParts = date.split('/');
+          final timeParts = startTime.split(':');
+          if (dateParts.length == 3 && timeParts.length == 2) {
+            final d = int.parse(dateParts[0]);
+            final m = int.parse(dateParts[1]);
+            final y = int.parse(dateParts[2]);
+            final hh = int.parse(timeParts[0]);
+            final mm = int.parse(timeParts[1]);
+            final scheduled = DateTime(y, m, d, hh, mm);
+            final now = DateTime.now();
+            if (scheduled.isBefore(now)) {
+              final today = DateTime(now.year, now.month, now.day);
+              final examDay = DateTime(y, m, d);
+              if (examDay.isBefore(today)) {
+                errors.add('Scheduled date is in the past ("$rawDate")');
+              } else {
+                errors.add('Scheduled time is in the past ("$rawStartTime")');
+              }
+            }
+          }
+        } catch (_) {}
       }
 
       String? duration;
@@ -1613,6 +1650,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
@@ -1656,6 +1694,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -1681,8 +1720,12 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           if (s.notes.isNotEmpty) ...[
             const SizedBox(height: 6),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.sticky_note_2_outlined, size: 12, color: colors.amber),
+                Padding(
+                  padding: const EdgeInsets.only(top: 1.5),
+                  child: Icon(Icons.sticky_note_2_outlined, size: 12, color: colors.amber),
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -1703,23 +1746,32 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: s.errors.map((err) {
-                return Row(
-                  children: [
-                    Icon(
-                      Icons.error_outline_rounded,
-                      color: colors.red,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      err,
-                      style: TextStyle(
-                        color: colors.red,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1.5),
+                        child: Icon(
+                          Icons.error_outline_rounded,
+                          color: colors.red,
+                          size: 14,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          err,
+                          style: TextStyle(
+                            color: colors.red,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               }).toList(),
             ),
@@ -1728,12 +1780,14 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
               children: [
                 Icon(Icons.meeting_room_outlined, size: 13, color: colors.blue),
                 const SizedBox(width: 4),
-                Text(
-                  '${rooms.length} sessions will be created:',
-                  style: TextStyle(
-                    color: colors.blue,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    '${rooms.length} sessions will be created:',
+                    style: TextStyle(
+                      color: colors.blue,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -1769,9 +1823,11 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                   color: colors.textFaint,
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  rooms.isEmpty || rooms.first.isEmpty ? 'No Room' : rooms.first,
-                  style: TextStyle(color: colors.textFaint, fontSize: 12),
+                Expanded(
+                  child: Text(
+                    rooms.isEmpty || rooms.first.isEmpty ? 'No Room' : rooms.first,
+                    style: TextStyle(color: colors.textFaint, fontSize: 12),
+                  ),
                 ),
               ],
             ),
