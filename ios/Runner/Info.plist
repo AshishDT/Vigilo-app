@@ -47,5 +47,7 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSFaceIDUsageDescription</key>
+		<string>Vigilo ERC uses Face ID / Touch ID to secure candidate and exam data.</string>
 	</dict>
 </plist>
