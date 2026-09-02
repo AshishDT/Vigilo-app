@@ -33,9 +33,6 @@ import 'widgets/vigilo_duration_picker.dart';
 import 'widgets/session_manager_panel.dart';
 import 'widgets/vigilo_date_jump_sheet.dart';
 import 'widgets/speed_dial_option.dart';
-import '../services/security_service.dart';
-import 'no_lock_screen.dart';
-import 'widgets/security_privacy_shield.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -114,9 +111,6 @@ class _HomeScreenState extends State<HomeScreen>
   Timer? _clickTimer;
   bool _licenseLoaded = false;
   bool _licenseRequired = true;
-  bool _isNoLockState = false;
-  bool _isShieldActive = false;
-  bool _isAuthenticating = false;
 
   @override
   void initState() {
@@ -144,8 +138,6 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _initializeHomeState() async {
     await _sessionService.initialize();
     if (!mounted) return;
-    await _checkSecurityLockOnLaunch();
-    if (!mounted) return;
     await _loadState();
     if (!mounted) return;
     await _clearLegacyLicenceCentrePrefillIfNeeded();
@@ -153,58 +145,6 @@ class _HomeScreenState extends State<HomeScreen>
     await _seedOrganizationFromLicenseIfNeeded();
     if (!mounted) return;
     await _loadLicenseStatus();
-  }
-
-  Future<void> _checkSecurityLockOnLaunch() async {
-    final hasLock = await SecurityService().isDeviceLockConfigured();
-    if (!hasLock) {
-      if (mounted) {
-        setState(() {
-          _isNoLockState = true;
-          _isShieldActive = false;
-        });
-      }
-      return;
-    }
-
-    if (mounted) setState(() => _isShieldActive = true);
-    await _triggerSecurityAuthentication();
-  }
-
-  Future<void> _triggerSecurityAuthentication() async {
-    final hasLock = await SecurityService().isDeviceLockConfigured();
-    if (!hasLock) {
-      if (mounted) {
-        setState(() {
-          _isNoLockState = true;
-          _isShieldActive = false;
-        });
-      }
-      return;
-    }
-
-    if (mounted) {
-      setState(() {
-        _isShieldActive = true;
-        _isAuthenticating = true;
-      });
-    }
-
-    final authenticated = await SecurityService().authenticate();
-    if (!mounted) return;
-
-    if (authenticated) {
-      SecurityService().clearPause();
-      setState(() {
-        _isShieldActive = false;
-        _isAuthenticating = false;
-      });
-    } else {
-      setState(() {
-        _isShieldActive = true;
-        _isAuthenticating = false;
-      });
-    }
   }
 
   Future<void> _saveState() async {
@@ -339,47 +279,8 @@ class _HomeScreenState extends State<HomeScreen>
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {
       _sessionService.checkpoint();
-      SecurityService().recordPause();
     } else if (state == AppLifecycleState.resumed) {
       _loadLicenseStatus();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _handleAppResumeSecurity();
-      });
-    }
-  }
-
-  Future<void> _handleAppResumeSecurity() async {
-    final hasLock = await SecurityService().isDeviceLockConfigured();
-    if (!hasLock) {
-      if (mounted) {
-        setState(() {
-          _isNoLockState = true;
-          _isShieldActive = false;
-        });
-      }
-      return;
-    }
-
-    if (_isNoLockState) {
-      if (mounted) {
-        setState(() {
-          _isNoLockState = false;
-          _isShieldActive = true;
-        });
-      }
-      await _triggerSecurityAuthentication();
-      return;
-    }
-
-    if (_isShieldActive) {
-      return;
-    }
-
-    if (SecurityService().hasIdleTimedOut()) {
-      if (mounted) setState(() => _isShieldActive = true);
-      await _triggerSecurityAuthentication();
-    } else {
-      SecurityService().clearPause();
     }
   }
 
@@ -1168,27 +1069,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
     final dark = widget.dark;
 
-    if (_isNoLockState) {
-      return NoLockScreen(
-        dark: dark,
-        onToggleTheme: widget.onToggleTheme,
-        onLockDetected: () {
-          setState(() {
-            _isNoLockState = false;
-          });
-          _checkSecurityLockOnLaunch();
-        },
-      );
-    }
 
-    if (_isShieldActive) {
-      return SecurityPrivacyShield(
-        dark: dark,
-        onToggleTheme: widget.onToggleTheme,
-        onUnlockPressed: _triggerSecurityAuthentication,
-        isAuthenticating: _isAuthenticating,
-      );
-    }
 
     if (!_licenseLoaded) {
       return Scaffold(
