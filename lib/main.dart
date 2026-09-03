@@ -172,9 +172,14 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
       debugShowCheckedModeBanner: false,
       theme: dark ? darkTheme() : lightTheme(),
       builder: (context, child) {
+        final bool isLocked = _isNoLockState || _isShieldActive;
         return Stack(
           children: [
-            if (child != null) child,
+            if (child != null)
+              Offstage(
+                offstage: isLocked,
+                child: child,
+              ),
             if (_isNoLockState)
               NoLockScreen(
                 dark: dark,
