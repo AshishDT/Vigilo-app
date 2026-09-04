@@ -39,6 +39,9 @@ class VigiloApp extends StatefulWidget {
 }
 
 class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
+  static const MethodChannel _screenEventsChannel =
+      MethodChannel('com.vigilo.vigilo/screen_events');
+
   bool dark = true;
   bool _isNoLockState = false;
   bool _isShieldActive = false;
@@ -48,6 +51,11 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _screenEventsChannel.setMethodCallHandler((call) async {
+      if (call.method == 'onScreenOff') {
+        _handleScreenOff();
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FlutterNativeSplash.remove();
       _checkSecurityLockOnLaunch();
@@ -56,8 +64,22 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _screenEventsChannel.setMethodCallHandler(null);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _handleScreenOff() {
+    SecurityService().recordPause();
+    // When the physical screen powers down / locks, pre-render the privacy shield
+    // into the GPU surface buffer before the display turns off completely.
+    if (!SecurityService().isAuthenticating && !_isNoLockState) {
+      if (mounted && !_isShieldActive) {
+        setState(() {
+          _isShieldActive = true;
+        });
+      }
+    }
   }
 
   @override
