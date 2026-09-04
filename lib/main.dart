@@ -68,9 +68,27 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
         state == AppLifecycleState.detached) {
       SecurityService().recordPause();
     } else if (state == AppLifecycleState.resumed) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _handleAppResumeSecurity();
-      });
+      if (!SecurityService().isAuthenticating && !_isNoLockState) {
+        if (SecurityService().hasIdleTimedOut()) {
+          // Synchronously activate shield BEFORE frame rendering starts
+          if (mounted && !_isShieldActive) {
+            setState(() {
+              _isShieldActive = true;
+            });
+          }
+          _triggerSecurityAuthentication();
+          return;
+        } else {
+          SecurityService().clearPause();
+          if (mounted && _isShieldActive) {
+            setState(() {
+              _isShieldActive = false;
+            });
+          }
+          return;
+        }
+      }
+      _handleAppResumeSecurity();
     }
   }
 
@@ -91,6 +109,8 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
   }
 
   Future<void> _handleAppResumeSecurity() async {
+    if (SecurityService().isAuthenticating) return;
+
     final hasLock = await SecurityService().isDeviceLockConfigured();
     if (!hasLock) {
       if (mounted) {
@@ -113,15 +133,16 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
       return;
     }
 
-    if (_isShieldActive) {
-      return;
-    }
-
     if (SecurityService().hasIdleTimedOut()) {
-      if (mounted) setState(() => _isShieldActive = true);
+      if (mounted && !_isShieldActive) {
+        setState(() => _isShieldActive = true);
+      }
       await _triggerSecurityAuthentication();
     } else {
       SecurityService().clearPause();
+      if (mounted && _isShieldActive) {
+        setState(() => _isShieldActive = false);
+      }
     }
   }
 
