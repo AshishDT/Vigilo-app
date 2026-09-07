@@ -46,6 +46,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
   bool _isNoLockState = false;
   bool _isShieldActive = false;
   bool _isAuthenticating = false;
+  bool _requiresAuthentication = false;
 
   @override
   void initState() {
@@ -90,27 +91,40 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
         state == AppLifecycleState.detached) {
       SecurityService().recordPause();
     } else if (state == AppLifecycleState.resumed) {
-      if (!SecurityService().isAuthenticating && !_isNoLockState) {
-        if (SecurityService().hasIdleTimedOut()) {
-          // Synchronously activate shield BEFORE frame rendering starts
-          if (mounted && !_isShieldActive) {
-            setState(() {
-              _isShieldActive = true;
-            });
-          }
-          _triggerSecurityAuthentication();
-          return;
-        } else {
-          SecurityService().clearPause();
-          if (mounted && _isShieldActive) {
-            setState(() {
-              _isShieldActive = false;
-            });
-          }
-          return;
+      if (SecurityService().isAuthenticating || _isNoLockState) {
+        return;
+      }
+
+      // If authentication is actively required (from launch, timeout, or cancelled auth),
+      // keep the shield locked.
+      if (_requiresAuthentication) {
+        if (mounted && !_isShieldActive) {
+          setState(() {
+            _isShieldActive = true;
+          });
+        }
+        return;
+      }
+
+      // If authentication was NOT required (e.g. screen off or quick app switch):
+      if (SecurityService().hasIdleTimedOut()) {
+        // Idle timeout expired -> Lock the app & prompt authentication
+        _requiresAuthentication = true;
+        if (mounted && !_isShieldActive) {
+          setState(() {
+            _isShieldActive = true;
+          });
+        }
+        _triggerSecurityAuthentication();
+      } else {
+        // Under timeout threshold -> Automatically dismiss the temporary sleep shield
+        SecurityService().clearPause();
+        if (mounted && _isShieldActive) {
+          setState(() {
+            _isShieldActive = false;
+          });
         }
       }
-      _handleAppResumeSecurity();
     }
   }
 
@@ -121,11 +135,13 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
         setState(() {
           _isNoLockState = true;
           _isShieldActive = false;
+          _requiresAuthentication = false;
         });
       }
       return;
     }
 
+    _requiresAuthentication = true;
     if (mounted) setState(() => _isShieldActive = true);
     await _triggerSecurityAuthentication();
   }
@@ -139,6 +155,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
         setState(() {
           _isNoLockState = true;
           _isShieldActive = false;
+          _requiresAuthentication = false;
         });
       }
       return;
@@ -149,13 +166,22 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
         setState(() {
           _isNoLockState = false;
           _isShieldActive = true;
+          _requiresAuthentication = true;
         });
       }
       await _triggerSecurityAuthentication();
       return;
     }
 
+    if (_requiresAuthentication) {
+      if (mounted && !_isShieldActive) {
+        setState(() => _isShieldActive = true);
+      }
+      return;
+    }
+
     if (SecurityService().hasIdleTimedOut()) {
+      _requiresAuthentication = true;
       if (mounted && !_isShieldActive) {
         setState(() => _isShieldActive = true);
       }
@@ -175,11 +201,13 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
         setState(() {
           _isNoLockState = true;
           _isShieldActive = false;
+          _requiresAuthentication = false;
         });
       }
       return;
     }
 
+    _requiresAuthentication = true;
     if (mounted) {
       setState(() {
         _isShieldActive = true;
@@ -196,11 +224,13 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
 
     if (authenticated) {
       SecurityService().clearPause();
+      _requiresAuthentication = false;
       setState(() {
         _isShieldActive = false;
         _isAuthenticating = false;
       });
     } else {
+      _requiresAuthentication = true;
       setState(() {
         _isShieldActive = true;
         _isAuthenticating = false;
