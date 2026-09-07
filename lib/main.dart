@@ -1,8 +1,3 @@
-// REF: VIGILO-MVP-R41Y-2025-08-17
-// Changes vs R41X ONLY:
-// 1) Home screen empty state: shows icon + "No exams yet" when there are no cards.
-// 2) Officer Tools → Messages: "Edit presets" added for Quick Messages (persisted in localStorage).
-
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -144,54 +139,6 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
     _requiresAuthentication = true;
     if (mounted) setState(() => _isShieldActive = true);
     await _triggerSecurityAuthentication();
-  }
-
-  Future<void> _handleAppResumeSecurity() async {
-    if (SecurityService().isAuthenticating) return;
-
-    final hasLock = await SecurityService().isDeviceLockConfigured();
-    if (!hasLock) {
-      if (mounted) {
-        setState(() {
-          _isNoLockState = true;
-          _isShieldActive = false;
-          _requiresAuthentication = false;
-        });
-      }
-      return;
-    }
-
-    if (_isNoLockState) {
-      if (mounted) {
-        setState(() {
-          _isNoLockState = false;
-          _isShieldActive = true;
-          _requiresAuthentication = true;
-        });
-      }
-      await _triggerSecurityAuthentication();
-      return;
-    }
-
-    if (_requiresAuthentication) {
-      if (mounted && !_isShieldActive) {
-        setState(() => _isShieldActive = true);
-      }
-      return;
-    }
-
-    if (SecurityService().hasIdleTimedOut()) {
-      _requiresAuthentication = true;
-      if (mounted && !_isShieldActive) {
-        setState(() => _isShieldActive = true);
-      }
-      await _triggerSecurityAuthentication();
-    } else {
-      SecurityService().clearPause();
-      if (mounted && _isShieldActive) {
-        setState(() => _isShieldActive = false);
-      }
-    }
   }
 
   Future<void> _triggerSecurityAuthentication() async {
