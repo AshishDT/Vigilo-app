@@ -73,7 +73,7 @@ class SecurityService {
     try {
       final authenticated = await _auth.authenticate(
         localizedReason:
-            'Authenticate to access Vigilo ERC and protect candidate data',
+            'Authentication required to access exam sessions and candidate data.',
         options: const AuthenticationOptions(
           stickyAuth: true,
           biometricOnly: false, // Allows fallback to device PIN/pattern/password

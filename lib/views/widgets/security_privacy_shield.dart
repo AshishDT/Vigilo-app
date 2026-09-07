@@ -105,7 +105,7 @@ class SecurityPrivacyShield extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Authentication required to access exam \nsessions and candidate data.',
+                      'Authentication required to access exam sessions and candidate data.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: VigiloUiColors.textSoft(dark),
