@@ -1156,23 +1156,33 @@ class _HomeScreenState extends State<HomeScreen>
                 borderRadius: BorderRadius.circular(18),
               ),
               onPressed: _toggleFab,
-              icon: AnimatedRotation(
-                turns: _fabOpen ? 0.125 : 0,
-                duration: const Duration(milliseconds: 220),
-                child: const Icon(Icons.add, size: 16),
+              extendedPadding: const EdgeInsetsDirectional.only(
+                start: 13,
+                end: 16,
               ),
-              label: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                child: Text(
-                  _fabOpen ? 'Close' : 'Exam',
-                  key: ValueKey(_fabOpen),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.05,
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedRotation(
+                    turns: _fabOpen ? 0.125 : 0,
+                    duration: const Duration(milliseconds: 220),
+                    child: const Icon(Icons.add, size: 16),
                   ),
-                ),
+                  const SizedBox(width: 2),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: Text(
+                      _fabOpen ? 'Close' : 'Exam',
+                      key: ValueKey(_fabOpen),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.05,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
