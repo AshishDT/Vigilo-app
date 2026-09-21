@@ -2463,10 +2463,11 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     return 'Timing';
   }
 
-  Widget _otCategoryBadge(String text) {
+  Widget _otCategoryBadge(String text, {double? width}) {
     return Container(
+      width: width,
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(12),
@@ -2480,7 +2481,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         style: TextStyle(
           color: VigiloUiColors.blueSoft(_isDark),
           fontSize: 11.2,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -2676,90 +2677,123 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     required Incident incident,
     required bool expanded,
     required VoidCallback onTap,
+    bool showBottomDivider = true,
   }) {
     final time = _logTime(incident);
     final details = _logDetails(incident, time);
     final category = _logCategory(incident);
     final isIncident = category == 'Incident';
+    final isExpanded = isIncident && expanded;
 
-    return InkWell(
-      onTap: isIncident ? onTap : null,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: VigiloUiColors.line(_isDark).withValues(alpha: 0.72),
-              width: 1,
+    const double badgeWidth = 74;
+    const double badgeSpacing = 10;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: isExpanded ? 4 : 0),
+      child: Material(
+        color: isExpanded
+            ? VigiloUiColors.panel2(_isDark).withValues(alpha: 0.5)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: isIncident ? onTap : null,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: EdgeInsets.fromLTRB(
+              isExpanded ? 14 : 2,
+              16,
+              isExpanded ? 14 : 2,
+              16,
             ),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+            decoration: BoxDecoration(
+              borderRadius: isExpanded ? BorderRadius.circular(14) : null,
+              border: isExpanded
+                  ? Border.all(
+                      color: VigiloUiColors.lineSoft(_isDark),
+                      width: .7,
+                    )
+                  : (showBottomDivider
+                      ? Border(
+                          bottom: BorderSide(
+                            color: VigiloUiColors.line(_isDark).withValues(alpha: 0.72),
+                            width: 1,
+                          ),
+                        )
+                      : null),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _otCategoryBadge(category),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    _logTitle(incident),
-                    style: const TextStyle(
-                      fontSize: 15.4,
-                      fontWeight: FontWeight.w800,
-                      height: 1.35,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _otCategoryBadge(category, width: badgeWidth),
+                    const SizedBox(width: badgeSpacing),
+                    Expanded(
+                      child: Text(
+                        _logTitle(incident),
+                        style: const TextStyle(
+                          fontSize: 15.4,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      time,
+                      style: TextStyle(
+                        color: VigiloUiColors.textSoft(_isDark),
+                        fontSize: 13.2,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Icon(
+                      _logIcon(incident),
+                      color: VigiloUiColors.blackWhite(_isDark),
+                      size: 22,
+                    ),
+                  ],
+                ),
+                AnimatedCrossFade(
+                  firstChild: const SizedBox.shrink(),
+                  secondChild: Padding(
+                    padding: const EdgeInsets.only(
+                      top: 10,
+                      left: badgeWidth + badgeSpacing,
+                      right: 4,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: details
+                          .map(
+                            (detail) => Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Text(
+                                detail,
+                                style: TextStyle(
+                                  color: VigiloUiColors.textSoft(_isDark),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.45,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  time,
-                  style: TextStyle(
-                    color: VigiloUiColors.textSoft(_isDark),
-                    fontSize: 13.2,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Icon(
-                  _logIcon(incident),
-                  color: VigiloUiColors.blackWhite(_isDark),
-                  size: 22,
+                  crossFadeState: isExpanded
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                  duration: const Duration(milliseconds: 180),
+                  sizeCurve: Curves.easeInOut,
                 ),
               ],
             ),
-            AnimatedCrossFade(
-              firstChild: const SizedBox.shrink(),
-              secondChild: Padding(
-                padding: const EdgeInsets.only(top: 12, left: 78, right: 44),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: details
-                      .map(
-                        (detail) => Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Text(
-                            detail,
-                            style: TextStyle(
-                              color: VigiloUiColors.textSoft(_isDark),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              height: 1.45,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ),
-              crossFadeState: (isIncident && expanded)
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 180),
-              sizeCurve: Curves.easeInOut,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -3845,9 +3879,19 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               else
                                 ...List.generate(_currentData.logs.length, (i) {
                                   final incident = _currentData.logs[i];
+                                  final isThisExpanded = _expandedLogIndex == i &&
+                                      _logCategory(incident) == 'Incident';
+                                  final isNextExpanded = i + 1 < _currentData.logs.length &&
+                                      _expandedLogIndex == i + 1 &&
+                                      _logCategory(_currentData.logs[i + 1]) == 'Incident';
+                                  final isLast = i == _currentData.logs.length - 1;
+                                  final showBottomDivider =
+                                      !isThisExpanded && !isNextExpanded && !isLast;
+
                                   return _timelineLogRow(
                                     incident: incident,
                                     expanded: _expandedLogIndex == i,
+                                    showBottomDivider: showBottomDivider,
                                     onTap: () {
                                       setState(() {
                                         _expandedLogIndex =
