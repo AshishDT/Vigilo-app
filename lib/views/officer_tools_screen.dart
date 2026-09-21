@@ -99,6 +99,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   Timer? _updateTimer;
 
   bool get _isExamCompleted => _currentData.phase == ExamPhase.finished;
+  bool get _isExamNotStarted =>
+      !_currentData.running && !_currentData.isPaused && !_isExamCompleted;
 
   void _updateData(ExamCardData data) {
     setState(() {
@@ -3111,7 +3113,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                       });
                                       widget.onPause();
                                     },
-                                    disabled: _isExamCompleted,
+                                    disabled: _isExamCompleted || _isExamNotStarted,
                                   ),
                                   _otControlItem(
                                     title: "Restart Exam",
@@ -3140,7 +3142,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                         }
                                       }
                                     },
-                                    disabled: _isExamCompleted || data.isPaused,
+                                    disabled: _isExamCompleted || data.isPaused || _isExamNotStarted,
                                   ),
                                   _otControlItem(
                                     title: "End Exam",
