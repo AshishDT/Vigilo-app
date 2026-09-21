@@ -901,21 +901,25 @@ class CsvExportService {
     final detail = _readText(incidentMap['detail']);
     final action = _readText(incidentMap['action']);
 
+    final parts = <String>[];
     if (duration.isNotEmpty) {
       final normalizedDuration = _normalizeAuditMessage(duration);
       final durationText = normalizedDuration.contains('minute')
           ? duration
           : '$duration minutes';
-      return 'Duration: $durationText';
+      parts.add('Duration: $durationText');
     }
 
     if (detail.isNotEmpty && action.isNotEmpty) {
       final detailEndsSentence = RegExp(r'[.!?]$').hasMatch(detail);
-      return detailEndsSentence ? '$detail $action' : '$detail. $action';
+      parts.add(detailEndsSentence ? '$detail $action' : '$detail. $action');
+    } else if (detail.isNotEmpty) {
+      parts.add(detail);
+    } else if (action.isNotEmpty) {
+      parts.add(action);
     }
-    if (detail.isNotEmpty) return detail;
-    if (action.isNotEmpty) return action;
-    return '';
+
+    return parts.join('. ');
   }
 
   Map<String, dynamic> _decodePayload(String? payloadJson) {

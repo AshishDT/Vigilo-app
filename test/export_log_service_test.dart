@@ -679,6 +679,91 @@ void main() {
       expect(loadedCard.logs.first.message, equals('Toilet break'));
       expect(loadedCard.logs.first.studentID, equals('ST-001'));
     });
+
+    test('exports toilet visit approved with notes/action and declined with reason', () async {
+      const recordId = 'record-toilet-details-test';
+      final card = ExamCardData(
+        recordId: recordId,
+        school: 'Battersea Academy',
+        centreNumber: '12345',
+        date: '06/03/2026',
+        subject: 'Maths GCSE',
+        start: '09:00',
+        duration: '01:00',
+        end: '10:00',
+        normalStart: '09:00',
+        normalDuration: '01:00',
+        normalEnd: '10:00',
+        extraTime: '00:00',
+        totalDuration: '01:00',
+        extraEnd: '10:00',
+        roomsSnapshot: 'H1',
+        invigilatorsSnapshot: 'Angela',
+        setUpBy: 'Basil',
+        setUpRole: 'Exam Officer',
+      );
+
+      await sessionService.persistHomeState(
+        cards: [card],
+        archiveCards: const [],
+        lastUsed: _emptyLastUsed(),
+      );
+
+      await sessionService.startSession(
+        examRecordId: recordId,
+        startedAt: DateTime(2026, 3, 6, 9, 0, 0).toUtc(),
+      );
+
+      // Approved toilet visit with duration, notes, and action
+      await sessionService.appendIncident(
+        examRecordId: recordId,
+        incident: Incident(
+          'Toilet break',
+          incidentType: 'toilet',
+          room: 'H1',
+          studentID: 'DR654',
+          duration: '5',
+          detail: 'Accompanied by staff',
+          action: 'Returned safely',
+          time: DateTime(2026, 3, 6, 9, 15, 0),
+        ),
+      );
+
+      // Declined toilet visit with reason
+      await sessionService.appendIncident(
+        examRecordId: recordId,
+        incident: Incident(
+          'Toilet break',
+          incidentType: 'toilet',
+          room: 'H1',
+          studentID: 'AB123',
+          duration: '',
+          detail: 'Final 15 minutes of exam',
+          action: 'Declined',
+          time: DateTime(2026, 3, 6, 9, 50, 0),
+        ),
+      );
+
+      final text = await exportService.buildRecordCsvText(
+        examRecordId: recordId,
+      );
+
+      // Verify approved visit details contains duration, notes, and action
+      expect(
+        text,
+        contains(
+          '2026-03-06 09:15:00,Incident,Normal Time,Toilet visit,H1,DR654,,Duration: 5 minutes. Accompanied by staff. Returned safely',
+        ),
+      );
+
+      // Verify declined visit details contains reason and outcome
+      expect(
+        text,
+        contains(
+          '2026-03-06 09:50:00,Incident,Normal Time,Toilet visit,H1,AB123,,Final 15 minutes of exam. Declined',
+        ),
+      );
+    });
   });
 }
 

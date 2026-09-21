@@ -26,5 +26,13 @@ class VigiloUiColors {
   static Color purple(bool dark) => const Color(0xFF7C5CFA);
   static Color blackWhite(bool dark) => dark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
   static Color timeCardBg(bool dark) => dark ? const Color(0xFF0F2236) : const Color(0xFFF8FAFC);
+
+  // ============================================================
+  // Incident Tab Colours
+  // ============================================================
+  static Color incidentToilet(bool dark) => dark ? const Color(0xFF4DD0C4) : const Color(0xFF17877D);
+  static Color incidentMedical(bool dark) => dark ? const Color(0xFFFF8A65) : const Color(0xFFD65A2E);
+  static Color incidentMalpractice(bool dark) => dark ? const Color(0xFFB18AFF) : const Color(0xFF6B3FD6);
+  static Color incidentLateArrival(bool dark) => dark ? const Color(0xFFE8B84B) : const Color(0xFFB8860B);
 }
 
