@@ -1183,7 +1183,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           ),
                           const _StaticInfoRow(
                             'Recommended Action',
-                            'Export logs after each exam session',
+                            "Export logs after each exam session, then use Archive or Delete Exam Data (in that exam's Privacy tab) to keep your Home Screen showing only relevant, upcoming exams.",
                           ),
                           const _StaticInfoRow(
                             'Licence Changes',
