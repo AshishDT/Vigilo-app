@@ -352,6 +352,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
 
   bool _isMappingValid() {
     return _mappings['Exam Subject'] != null &&
+        _mappings['Exam Level'] != null &&
         _mappings['Exam Board'] != null &&
         _mappings['Date'] != null &&
         _mappings['Start Time'] != null &&
@@ -385,6 +386,9 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
       final List<String> errors = [];
       if (rawSubject == null || rawSubject.isEmpty) {
         errors.add('Missing Exam Subject');
+      }
+      if (rawLevel == null || rawLevel.isEmpty) {
+        errors.add('Missing Exam Level');
       }
       if (rawBoard == null || rawBoard.isEmpty) {
         errors.add('Missing Exam Board');
@@ -515,8 +519,16 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
   @visibleForTesting
   void setParsedRowsForTesting(List<Map<String, dynamic>> rows) {
     setState(() {
-      _parsedRows = rows;
+      _parsedRows = rows.map((r) {
+        if (!r.containsKey('level')) {
+          final updated = Map<String, dynamic>.from(r);
+          updated['level'] = 'GCSE';
+          return updated;
+        }
+        return r;
+      }).toList();
       _mappings['Exam Subject'] = 'subject';
+      _mappings['Exam Level'] = 'level';
       _mappings['Exam Board'] = 'board';
       _mappings['Date'] = 'date';
       _mappings['Start Time'] = 'time';
@@ -1264,6 +1276,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                   children: _mappings.keys.map((field) {
                     final isRequired =
                         field == 'Exam Subject' ||
+                        field == 'Exam Level' ||
                         field == 'Exam Board' ||
                         field == 'Date' ||
                         field == 'Start Time' ||
