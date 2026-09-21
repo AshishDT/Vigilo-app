@@ -19,6 +19,7 @@ import 'license_activation_screen.dart';
 import '../utils/notifications.dart';
 import 'officer_tools_screen.dart';
 import 'widgets/add_exam_sheet.dart';
+import 'widgets/animated_scale_on_press.dart';
 import 'widgets/import_flow_sheet.dart';
 import 'widgets/confirmation_dialog.dart';
 import 'widgets/exam_card_widget.dart';
@@ -2164,37 +2165,39 @@ class _HomeScreenState extends State<HomeScreen>
     Color? color,
     bool selected = false,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: VigiloUiColors.panel(
-            dark,
-          ).withValues(alpha: dark ? 0.72 : 0.92),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected
-                ? (color ?? VigiloUiColors.blue(dark))
-                : (dark
-                      ? VigiloUiColors.line(dark).withValues(alpha: 0.70)
-                      : VigiloUiColors.line(dark)),
-            width: selected ? 1.5 : 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: dark ? 0.16 : 0.07),
-              blurRadius: dark ? 8 : 10,
-              offset: Offset(0, dark ? 3 : 4),
+    return AnimatedScaleOnPress(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: VigiloUiColors.panel(
+              dark,
+            ).withValues(alpha: dark ? 0.72 : 0.92),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected
+                  ? (color ?? VigiloUiColors.blue(dark))
+                  : (dark
+                        ? VigiloUiColors.line(dark).withValues(alpha: 0.70)
+                        : VigiloUiColors.line(dark)),
+              width: selected ? 1.5 : 1.0,
             ),
-          ],
-        ),
-        child: Icon(
-          icon,
-          color: color ?? VigiloUiColors.textSoft(dark),
-          size: 23,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: dark ? 0.16 : 0.07),
+                blurRadius: dark ? 8 : 10,
+                offset: Offset(0, dark ? 3 : 4),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: color ?? VigiloUiColors.textSoft(dark),
+            size: 23,
+          ),
         ),
       ),
     );

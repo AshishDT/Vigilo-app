@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../enums/exam_phase.dart';
 import '../../models/exam_card_data.dart';
 import '../../utils/constants.dart';
+import 'animated_scale_on_press.dart';
 
 class SessionManagerPanel extends StatelessWidget {
   final bool dark;
@@ -83,14 +84,16 @@ class SessionManagerPanel extends StatelessWidget {
                 ),
                 const Spacer(),
                 if (statusFilter != 'All' || dateFilter != 'All')
-                  GestureDetector(
-                    onTap: onClear,
-                    child: Text(
-                      'Clear Filters',
-                      style: TextStyle(
-                        color: VigiloUiColors.amber(dark),
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
+                  AnimatedScaleOnPress(
+                    child: GestureDetector(
+                      onTap: onClear,
+                      child: Text(
+                        'Clear Filters',
+                        style: TextStyle(
+                          color: VigiloUiColors.amber(dark),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -148,25 +151,27 @@ class SessionManagerPanel extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: onJumpToDateTap,
-                      child: Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: VigiloUiColors.blue(dark).withValues(
-                            alpha: 0.12,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
+                    AnimatedScaleOnPress(
+                      child: GestureDetector(
+                        onTap: onJumpToDateTap,
+                        child: Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
                             color: VigiloUiColors.blue(dark).withValues(
-                              alpha: 0.4,
+                              alpha: 0.12,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: VigiloUiColors.blue(dark).withValues(
+                                alpha: 0.4,
+                              ),
                             ),
                           ),
-                        ),
-                        child: Icon(
-                          Icons.calendar_today_rounded,
-                          color: VigiloUiColors.blue(dark),
-                          size: 15,
+                          child: Icon(
+                            Icons.calendar_today_rounded,
+                            color: VigiloUiColors.blue(dark),
+                            size: 15,
+                          ),
                         ),
                       ),
                     ),
@@ -218,50 +223,53 @@ class SessionManagerPanel extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        GestureDetector(
-                          onTap: undoable.isEmpty ? null : onUndoLastImport,
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 9,
-                            ),
-                            decoration: BoxDecoration(
-                              color: undoable.isEmpty
-                                  ? VigiloUiColors.panel3(dark)
-                                  : VigiloUiColors.amber(dark).withValues(
-                                      alpha: 0.15,
-                                    ),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: undoable.isEmpty
-                                    ? VigiloUiColors.line(dark)
-                                    : VigiloUiColors.amber(dark),
+                        AnimatedScaleOnPress(
+                          isDisabled: undoable.isEmpty,
+                          child: GestureDetector(
+                            onTap: undoable.isEmpty ? null : onUndoLastImport,
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 9,
                               ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.undo_rounded,
-                                  size: 14,
+                              decoration: BoxDecoration(
+                                color: undoable.isEmpty
+                                    ? VigiloUiColors.panel3(dark)
+                                    : VigiloUiColors.amber(dark).withValues(
+                                        alpha: 0.15,
+                                      ),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
                                   color: undoable.isEmpty
-                                      ? VigiloUiColors.textFaint(dark)
+                                      ? VigiloUiColors.line(dark)
                                       : VigiloUiColors.amber(dark),
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  undoable.isEmpty
-                                      ? "Can't undo, all protected"
-                                      : 'Undo ${undoable.length} session${undoable.length == 1 ? '' : 's'}',
-                                  style: TextStyle(
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.undo_rounded,
+                                    size: 14,
                                     color: undoable.isEmpty
                                         ? VigiloUiColors.textFaint(dark)
                                         : VigiloUiColors.amber(dark),
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w700,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    undoable.isEmpty
+                                        ? "Can't undo, all protected"
+                                        : 'Undo ${undoable.length} session${undoable.length == 1 ? '' : 's'}',
+                                    style: TextStyle(
+                                      color: undoable.isEmpty
+                                          ? VigiloUiColors.textFaint(dark)
+                                          : VigiloUiColors.amber(dark),
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -293,22 +301,24 @@ class SessionManagerPanel extends StatelessWidget {
     String label, {
     required bool selected,
     required VoidCallback onTap,
-  }) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      margin: const EdgeInsets.only(right: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        color: selected ? VigiloUiColors.blue(dark) : VigiloUiColors.panel3(dark),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: selected ? VigiloUiColors.blue(dark) : VigiloUiColors.line(dark)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: selected ? Colors.white : VigiloUiColors.textSoft(dark),
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
+  }) => AnimatedScaleOnPress(
+    child: GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? VigiloUiColors.blue(dark) : VigiloUiColors.panel3(dark),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: selected ? VigiloUiColors.blue(dark) : VigiloUiColors.line(dark)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : VigiloUiColors.textSoft(dark),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
     ),

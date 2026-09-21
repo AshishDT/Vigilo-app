@@ -4002,7 +4002,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   icon: Icons.delete_outline_rounded,
                                   title: "Delete Exam Data",
                                   subtitle:
-                                      "Permanently delete all exam data from this device",
+                                      "Permanently delete data for this exam",
                                   sectionId: 'delete',
                                   content: "",
                                   isDanger: true,
