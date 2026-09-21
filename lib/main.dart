@@ -39,9 +39,9 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
 
   bool dark = true;
   bool _isNoLockState = false;
-  bool _isShieldActive = false;
+  bool _isShieldActive = true;
   bool _isAuthenticating = false;
-  bool _requiresAuthentication = false;
+  bool _requiresAuthentication = true;
 
   @override
   void initState() {
@@ -53,7 +53,6 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      FlutterNativeSplash.remove();
       _checkSecurityLockOnLaunch();
     });
   }
@@ -133,11 +132,16 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
           _requiresAuthentication = false;
         });
       }
+      FlutterNativeSplash.remove();
       return;
     }
 
     _requiresAuthentication = true;
     if (mounted) setState(() => _isShieldActive = true);
+    // Ensure the SecurityPrivacyShield is fully painted to the GPU buffer
+    // before dismissing the OS native splash screen.
+    await WidgetsBinding.instance.endOfFrame;
+    FlutterNativeSplash.remove();
     await _triggerSecurityAuthentication();
   }
 

@@ -61,10 +61,10 @@ void main() {
 
       // Verify custom level text field is now displayed
       expect(find.text('Specify Exam Level'), findsOneWidget);
-      expect(find.text('Enter custom exam level'), findsOneWidget);
+      expect(find.text('Enter exam level'), findsOneWidget);
 
       // Enter a custom level
-      final customFieldFinder = find.widgetWithText(TextField, 'Enter custom exam level');
+      final customFieldFinder = find.widgetWithText(TextField, 'Enter exam level');
       await tester.ensureVisible(customFieldFinder);
       await tester.enterText(customFieldFinder, 'BTEC Higher');
       await tester.pumpAndSettle();
@@ -158,7 +158,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Type custom level
-      final customFieldFinder = find.widgetWithText(TextField, 'Enter custom exam level');
+      final customFieldFinder = find.widgetWithText(TextField, 'Enter exam level');
       await tester.ensureVisible(customFieldFinder);
       await tester.enterText(customFieldFinder, 'BTEC');
       await tester.pumpAndSettle();
@@ -185,7 +185,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Custom input field should be empty (cleared)
-      final textField = tester.widget<TextField>(find.widgetWithText(TextField, 'Enter custom exam level'));
+      final textField = tester.widget<TextField>(find.widgetWithText(TextField, 'Enter exam level'));
       expect(textField.controller?.text, isEmpty);
     });
 
@@ -267,10 +267,10 @@ void main() {
 
       // Verify custom board text field is now displayed
       expect(find.text('Specify Exam Board'), findsOneWidget);
-      expect(find.text('Enter custom exam board'), findsOneWidget);
+      expect(find.text('Enter exam board'), findsOneWidget);
 
       // Enter a custom board
-      final customFieldFinder = find.widgetWithText(TextField, 'Enter custom exam board');
+      final customFieldFinder = find.widgetWithText(TextField, 'Enter exam board');
       await tester.ensureVisible(customFieldFinder);
       await tester.enterText(customFieldFinder, 'WJEC');
       await tester.pumpAndSettle();
@@ -364,7 +364,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Type custom board
-      final customFieldFinder = find.widgetWithText(TextField, 'Enter custom exam board');
+      final customFieldFinder = find.widgetWithText(TextField, 'Enter exam board');
       await tester.ensureVisible(customFieldFinder);
       await tester.enterText(customFieldFinder, 'WJEC');
       await tester.pumpAndSettle();
@@ -391,7 +391,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Custom input field should be empty (cleared)
-      final textField = tester.widget<TextField>(find.widgetWithText(TextField, 'Enter custom exam board'));
+      final textField = tester.widget<TextField>(find.widgetWithText(TextField, 'Enter exam board'));
       expect(textField.controller?.text, isEmpty);
     });
 
