@@ -1,4 +1,5 @@
 import 'widgets/animated_scale_on_press.dart';
+import 'widgets/late_arrival_incident_dialog.dart';
 
 // Vigilo ERC v1.0 — Stage 6 Polish R06
 import 'dart:async';
@@ -578,6 +579,53 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 ? "Toilet visit request declined"
                 : "Toilet visit has been logged",
             Icons.wc_rounded,
+            NotificationType.success,
+          );
+          context.safePop();
+        },
+      ),
+    );
+  }
+
+  void _showLateArrivalIncidentDialog() {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.42),
+      builder: (_) => LateArrivalIncidentDialog(
+        initialRoom: _scheduleRoomsSummary(),
+        onSave: (room, candidateRef, admitted, supervisionTime, startTime, reason, actions) {
+          final outcome = admitted ? 'Admitted' : 'Not Admitted';
+          final detailParts = <String>[];
+          detailParts.add('Supervision time: $supervisionTime');
+          if (admitted && startTime.isNotEmpty) {
+            detailParts.add('Actual start: $startTime');
+          }
+          if (reason.isNotEmpty) {
+            detailParts.add('Reason: $reason');
+          }
+          if (actions.isNotEmpty) {
+            detailParts.add('Actions: $actions');
+          }
+          final detail = detailParts.join('. ');
+
+          widget.onLog(
+            Incident(
+              "Late arrival",
+              eventType: "incident",
+              incidentType: "late_arrival",
+              room: room,
+              studentID: candidateRef,
+              staffMember: "",
+              detail: detail,
+              action: outcome,
+            ),
+          );
+          _showBanner(
+            "Incident Logged",
+            admitted
+                ? "Late arrival (Admitted) logged"
+                : "Late arrival (Not Admitted) logged",
+            Icons.schedule_rounded,
             NotificationType.success,
           );
           context.safePop();
@@ -2359,7 +2407,15 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     return incident.message == 'Malpractice' ||
         incident.message == 'Suspected malpractice' ||
         incident.message == 'Malpractice concern' ||
-        incident.message == 'Cheating concern';
+        incident.message == 'Cheating concern' ||
+        incident.incidentType == 'malpractice';
+  }
+
+  bool _isLateArrival(Incident incident) {
+    return incident.message == 'Late arrival' ||
+        incident.message == 'Late Arrival' ||
+        incident.incidentType == 'late_arrival' ||
+        incident.incidentType == 'latearrival';
   }
 
   String _logTime(Incident incident) {
@@ -2378,6 +2434,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     if (incident.message == 'Medical incident') {
       return Icons.medical_services;
     }
+    if (_isLateArrival(incident)) {
+      return Icons.schedule_rounded;
+    }
     if (incident.message == 'Invigilator list updated') {
       return Icons.group_rounded;
     }
@@ -2387,6 +2446,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   String _logCategory(Incident incident) {
     if (incident.eventType == 'incident' ||
         incident.message == 'Toilet break' ||
+        _isLateArrival(incident) ||
         _isMalpracticeConcern(incident) ||
         incident.message == 'Medical incident') {
       return 'Incident';
@@ -2501,7 +2561,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     if (incident.message == 'Toilet break') {
       final student = _formatStudentID(incident.studentID);
       final isDeclined = incident.action.toLowerCase() == 'declined';
-      final title = isDeclined ? 'Toilet Visit (Declined)' : 'Toilet Visit';
+      final title = isDeclined ? 'Toilet Visit (Declined)' : 'Toilet Visit (Approved)';
       if (student.isEmpty) return title;
       return '$title\n$student';
     }
@@ -2514,6 +2574,13 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       final student = _formatStudentID(incident.studentID);
       if (student.isEmpty) return 'Medical Incident';
       return 'Medical Incident\n$student';
+    }
+    if (_isLateArrival(incident)) {
+      final student = _formatStudentID(incident.studentID);
+      final isAdmitted = incident.action.toLowerCase() == 'admitted';
+      final title = isAdmitted ? 'Late Arrival (Admitted)' : 'Late Arrival (Not Admitted)';
+      if (student.isEmpty) return title;
+      return '$title\n$student';
     }
     if (isDurationAdjustment && incident.updatedDuration.isNotEmpty) {
       return '$formattedMessage - ${incident.updatedDuration} min';
@@ -2533,8 +2600,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     if (incident.message == 'Toilet break') {
       _addLogDetail(details, 'Room', incident.room);
       _addLogDetail(details, 'Student ID', incident.studentID);
-      if (incident.action.toLowerCase() == 'declined') {
-        _addLogDetail(details, 'Outcome', 'Declined');
+      final isDeclined = incident.action.toLowerCase() == 'declined';
+      _addLogDetail(details, 'Outcome', isDeclined ? 'Declined' : 'Approved');
+      if (isDeclined) {
         _addLogDetail(details, 'Reason for decline', incident.detail);
       } else {
         _addLogDetail(
@@ -2544,6 +2612,28 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         );
         _addLogDetail(details, 'Notes', incident.detail);
         _addLogDetail(details, 'Action taken', incident.action);
+      }
+      return details;
+    }
+
+    if (_isLateArrival(incident)) {
+      _addLogDetail(details, 'Room', incident.room);
+      _addLogDetail(details, 'Candidate Reference', incident.studentID);
+      _addLogDetail(details, 'Outcome', incident.action);
+      if (incident.detail.isNotEmpty) {
+        final parts = incident.detail.split('. ');
+        for (final p in parts) {
+          final colonIdx = p.indexOf(':');
+          if (colonIdx > 0 && colonIdx < p.length - 1) {
+            _addLogDetail(
+              details,
+              p.substring(0, colonIdx).trim(),
+              p.substring(colonIdx + 1).trim(),
+            );
+          } else {
+            _addLogDetail(details, 'Details', p.trim());
+          }
+        }
       }
       return details;
     }
@@ -3349,6 +3439,14 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     onTap: _showMalpracticeIncidentDialog,
                                     disabled: _isExamCompleted,
                                   ),
+                                  _otIncidentActionButton(
+                                    title: "Late Arrival",
+                                    subtitle: "Record a late arrival",
+                                    icon: Icons.schedule_rounded,
+                                    color: VigiloUiColors.incidentLateArrival(_isDark),
+                                    onTap: _showLateArrivalIncidentDialog,
+                                    disabled: _isExamCompleted,
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 24),
@@ -3425,6 +3523,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                         visualTitle = "Medical";
                                         visualIcon = Icons.medical_services_outlined;
                                         visualColor = VigiloUiColors.incidentMedical(_isDark);
+                                      } else if (_isLateArrival(incident)) {
+                                        visualTitle = incident.studentID.trim().isNotEmpty
+                                            ? "Late Arrival ${incident.studentID.trim()}"
+                                            : "Late Arrival";
+                                        visualIcon = Icons.schedule_rounded;
+                                        visualColor = VigiloUiColors.incidentLateArrival(_isDark);
                                       } else {
                                         visualTitle = "Malpractice";
                                         visualIcon =
@@ -3512,7 +3616,11 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                               height: 3,
                                                             ),
                                                             Text(
-                                                              "Student: ${incident.studentID.trim()}",
+                                                              _isLateArrival(incident)
+                                                                  ? (incident.action.toLowerCase() == 'admitted'
+                                                                      ? 'Admitted -- full duration required'
+                                                                      : 'Not admitted')
+                                                                  : "Student: ${incident.studentID.trim()}",
                                                               style: TextStyle(
                                                                 color:
                                                                     VigiloUiColors.textSoft(_isDark),
@@ -7039,7 +7147,7 @@ class _RoleSelectorDialog extends StatefulWidget {
 class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
   // ignore: non_constant_identifier_names
   bool get _isDark => Theme.of(context).brightness == Brightness.dark;
-  late String _selection = widget.initialSelection;
+  late final String _selection = widget.initialSelection;
 
   void _save(String role) {
     widget.onSave(role);

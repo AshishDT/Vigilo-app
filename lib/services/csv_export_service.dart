@@ -210,7 +210,7 @@ class CsvExportService {
     buffer.writeln();
     buffer.writeln('Exam Session ID: $sessionId');
     buffer.writeln('Exam Name: ${_noneIfBlank(_examName(record, card))}');
-    buffer.writeln('Exam Level: ${_noneIfBlank(record?.examLevel ?? card?.examLevel ?? '')}');
+    buffer.writeln('Exam Level: ${_noneIfBlank(record.examLevel ?? card?.examLevel ?? '')}');
     buffer.writeln('Exam Board: ${_noneIfBlank(_examBoard(record, card))}');
     buffer.writeln(
       'Exam Date: ${_noneIfBlank(_examDate(card: card, fallbackLocal: fallbackStartLocal))}',
@@ -616,6 +616,7 @@ class CsvExportService {
         return _incidentDescription(
           incidentType: _readText(incidentMap['incidentType']),
           message: _readText(incidentMap['message']),
+          action: _readText(incidentMap['action']),
           fallback: 'Incident detected',
         );
       case SessionEventType.controlAction:
@@ -645,15 +646,6 @@ class CsvExportService {
   ) {
     for (final event in events) {
       if (event.type == type) return event;
-    }
-    return null;
-  }
-
-  SessionEvent? _firstTerminationEvent(List<SessionEvent> events) {
-    for (final event in events) {
-      if (_isTerminationEvent(event.type)) {
-        return event;
-      }
     }
     return null;
   }
@@ -870,20 +862,30 @@ class CsvExportService {
   String _incidentDescription({
     required String incidentType,
     required String message,
+    String action = '',
     required String fallback,
   }) {
-    switch (_normalizeAuditMessage(incidentType)) {
-      case 'toilet':
-        return 'Toilet visit';
+    final normalizedType = _normalizeAuditMessage(incidentType);
+    final normalizedMessage = _normalizeAuditMessage(message);
+
+    if (normalizedType == 'toilet' || normalizedMessage == 'toilet break') {
+      final isDeclined = _normalizeAuditMessage(action) == 'declined';
+      return isDeclined ? 'Toilet visit (Declined)' : 'Toilet visit (Approved)';
+    }
+
+    switch (normalizedType) {
       case 'malpractice':
       case 'cheating':
         return 'Malpractice';
       case 'medical':
         return 'Medical incident';
+      case 'latearrival':
+      case 'late arrival':
+      case 'late_arrival':
+        return 'Late arrival';
     }
 
-    final normalizedMessage = _normalizeAuditMessage(message);
-    if (normalizedMessage == 'toilet break') return 'Toilet visit';
+    if (normalizedMessage == 'late arrival') return 'Late arrival';
     if (normalizedMessage == 'malpractice' ||
         normalizedMessage == 'malpractice concern' ||
         normalizedMessage == 'suspected malpractice' ||
@@ -900,6 +902,25 @@ class CsvExportService {
     final duration = _readText(incidentMap['duration']);
     final detail = _readText(incidentMap['detail']);
     final action = _readText(incidentMap['action']);
+    final incidentType = _normalizeAuditMessage(_readText(incidentMap['incidentType']));
+    final normalizedMessage = _normalizeAuditMessage(_readText(incidentMap['message']));
+
+    if (incidentType == 'latearrival' ||
+        incidentType == 'late arrival' ||
+        incidentType == 'late_arrival' ||
+        normalizedMessage == 'late arrival') {
+      final parts = <String>[];
+      if (action.isNotEmpty) {
+        final outcome = action.toLowerCase().startsWith('outcome:')
+            ? action
+            : 'Outcome: $action';
+        parts.add(outcome);
+      }
+      if (detail.isNotEmpty) {
+        parts.add(detail);
+      }
+      return parts.join('. ');
+    }
 
     final parts = <String>[];
     if (duration.isNotEmpty) {

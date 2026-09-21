@@ -164,7 +164,7 @@ void main() {
       expect(
         text,
         contains(
-          '2026-03-06 22:43:00,Incident,Normal Time,Toilet visit,H1,123,Angela,Duration: 5 minutes',
+          '2026-03-06 22:43:00,Incident,Normal Time,Toilet visit (Approved),H1,123,Angela,Duration: 5 minutes',
         ),
       );
       expect(
@@ -752,7 +752,7 @@ void main() {
       expect(
         text,
         contains(
-          '2026-03-06 09:15:00,Incident,Normal Time,Toilet visit,H1,DR654,,Duration: 5 minutes. Accompanied by staff. Returned safely',
+          '2026-03-06 09:15:00,Incident,Normal Time,Toilet visit (Approved),H1,DR654,,Duration: 5 minutes. Accompanied by staff. Returned safely',
         ),
       );
 
@@ -760,7 +760,94 @@ void main() {
       expect(
         text,
         contains(
-          '2026-03-06 09:50:00,Incident,Normal Time,Toilet visit,H1,AB123,,Final 15 minutes of exam. Declined',
+          '2026-03-06 09:50:00,Incident,Normal Time,Toilet visit (Declined),H1,AB123,,Final 15 minutes of exam. Declined',
+        ),
+      );
+    });
+
+    test('exports late arrival incident for admitted and not admitted candidates', () async {
+      const recordId = 'record-late-arrival-test';
+      final card = ExamCardData(
+        recordId: recordId,
+        school: 'Battersea Academy',
+        centreNumber: '12345',
+        date: '06/03/2026',
+        subject: 'Geography Paper 1',
+        start: '09:00',
+        duration: '01:00',
+        end: '10:00',
+        normalStart: '09:00',
+        normalDuration: '01:00',
+        normalEnd: '10:00',
+        extraTime: '00:00',
+        totalDuration: '01:00',
+        extraEnd: '10:00',
+        roomsSnapshot: 'H1',
+        invigilatorsSnapshot: 'Angela',
+        setUpBy: 'Basil',
+        setUpRole: 'Exam Officer',
+      );
+
+      await sessionService.persistHomeState(
+        cards: [card],
+        archiveCards: const [],
+        lastUsed: _emptyLastUsed(),
+      );
+
+      await sessionService.startSession(
+        examRecordId: recordId,
+        startedAt: DateTime(2026, 3, 6, 9, 0, 0).toUtc(),
+      );
+
+      // 1. Late arrival - Admitted
+      await sessionService.appendIncident(
+        examRecordId: recordId,
+        incident: Incident(
+          'Late arrival',
+          eventType: 'incident',
+          incidentType: 'late_arrival',
+          room: 'H1',
+          studentID: 'CD341',
+          action: 'Admitted',
+          detail:
+              'Supervision time: 09:15. Actual start: 09:20. Reason: Bus breakdown. Actions: Supervised throughout',
+          time: DateTime(2026, 3, 6, 9, 15, 0),
+        ),
+      );
+
+      // 2. Late arrival - Not Admitted
+      await sessionService.appendIncident(
+        examRecordId: recordId,
+        incident: Incident(
+          'Late arrival',
+          eventType: 'incident',
+          incidentType: 'late_arrival',
+          room: 'H1',
+          studentID: 'EF789',
+          action: 'Not Admitted',
+          detail:
+              'Supervision time: 09:45. Reason: Arrived too late. Actions: Escorted to reception',
+          time: DateTime(2026, 3, 6, 9, 45, 0),
+        ),
+      );
+
+      final text = await exportService.buildRecordCsvText(
+        examRecordId: recordId,
+      );
+
+      // Verify Late Arrival - Admitted row in CSV
+      expect(
+        text,
+        contains(
+          '2026-03-06 09:15:00,Incident,Normal Time,Late arrival,H1,CD341,,Outcome: Admitted. Supervision time: 09:15. Actual start: 09:20. Reason: Bus breakdown. Actions: Supervised throughout',
+        ),
+      );
+
+      // Verify Late Arrival - Not Admitted row in CSV
+      expect(
+        text,
+        contains(
+          '2026-03-06 09:45:00,Incident,Normal Time,Late arrival,H1,EF789,,Outcome: Not Admitted. Supervision time: 09:45. Reason: Arrived too late. Actions: Escorted to reception',
         ),
       );
     });
