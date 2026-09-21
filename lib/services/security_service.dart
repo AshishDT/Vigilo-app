@@ -15,8 +15,8 @@ class SecurityService {
   final LocalAuthentication _auth = LocalAuthentication();
 
   /// Configured idle timeout duration after which app lock is enforced upon background resume.
-  /// Set to 30 seconds for testing purposes. Production threshold: `Duration(minutes: 15)`.
-  static const Duration idleTimeout = Duration(seconds: 30);
+  /// Production threshold: `Duration(minutes: 15)`.
+  static const Duration idleTimeout = Duration(minutes: 15);
 
   DateTime? _lastPausedTime;
 

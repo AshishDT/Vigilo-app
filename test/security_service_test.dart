@@ -5,7 +5,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('SecurityService Tests', () {
-    test('hasIdleTimedOut checks 30-second timeout correctly', () async {
+    test('hasIdleTimedOut checks 15-minute timeout correctly', () async {
       final service = SecurityService();
       service.clearPause();
       expect(service.hasIdleTimedOut(), isFalse);
