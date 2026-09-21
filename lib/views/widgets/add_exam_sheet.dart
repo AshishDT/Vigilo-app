@@ -889,7 +889,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                 _formLabel('Specify Exam Level'),
                                 _textField(
                                   controller: _otherLevelCtl,
-                                  hint: 'Enter custom exam level',
+                                  hint: 'Enter exam level',
                                   focusNode: _otherLevelFocus,
                                   nextFocusNode: _examBoard == 'Other' ? _otherBoardFocus : _schoolFocus,
                                 ),
@@ -915,7 +915,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                 _formLabel('Specify Exam Board'),
                                 _textField(
                                   controller: _otherBoardCtl,
-                                  hint: 'Enter custom exam board',
+                                  hint: 'Enter exam board',
                                   focusNode: _otherBoardFocus,
                                   nextFocusNode: _schoolFocus,
                                 ),
