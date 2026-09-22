@@ -589,21 +589,59 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     );
   }
 
+  Duration get _currentExamDuration {
+    if (_currentData.normalSeconds > 0) {
+      return Duration(seconds: _currentData.normalSeconds);
+    }
+    if (_currentData.totalSeconds > 0) {
+      return Duration(seconds: _currentData.totalSeconds);
+    }
+    return const Duration(hours: 1, minutes: 30);
+  }
+
+  Duration get _currentExtraTimeDuration {
+    if (_currentData.extraSeconds > 0) {
+      return Duration(seconds: _currentData.extraSeconds);
+    }
+    return Duration.zero;
+  }
+
   void _showLateArrivalIncidentDialog() {
     showDialog<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.42),
       builder: (_) => LateArrivalIncidentDialog(
         initialRoom: _scheduleRoomsSummary(),
-        onSave: (room, candidateRef, admitted, supervisionTime, startTime, reason, actions) {
+        examDuration: _currentExamDuration,
+        extraTime: _currentExtraTimeDuration,
+        onSave: (
+          room,
+          candidateRef,
+          admitted,
+          supervisionTime,
+          startTime,
+          finishTime,
+          reason,
+          candidateWarned,
+          actions,
+        ) {
           final outcome = admitted ? 'Admitted' : 'Not Admitted';
           final detailParts = <String>[];
           detailParts.add('Supervision time: $supervisionTime');
           if (admitted && startTime.isNotEmpty) {
             detailParts.add('Actual start: $startTime');
           }
+          if (admitted && finishTime.isNotEmpty) {
+            detailParts.add('Candidate actual finish time: $finishTime');
+          }
           if (reason.isNotEmpty) {
             detailParts.add('Reason: $reason');
+          }
+          if (admitted && candidateWarned != null) {
+            final warningStr = candidateWarned ? 'Yes' : 'No';
+            detailParts.add(
+              'Candidate Warned Script May Not Be Accepted?: $warningStr',
+            );
           }
           if (actions.isNotEmpty) {
             detailParts.add('Actions: $actions');
@@ -620,6 +658,15 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               staffMember: "",
               detail: detail,
               action: outcome,
+              supervisionTime: supervisionTime,
+              actualStartTime: admitted ? startTime : '',
+              actualFinishTime: admitted ? finishTime : '',
+              reason: reason,
+              candidateWarnedScriptMayNotBeAccepted:
+                  admitted && candidateWarned != null
+                      ? (candidateWarned ? 'Yes' : 'No')
+                      : '',
+              actionsTaken: actions,
             ),
           );
           _showBanner(
@@ -2623,20 +2670,45 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       _addLogDetail(details, 'Room', incident.room);
       _addLogDetail(details, 'Candidate Reference', incident.studentID);
       _addLogDetail(details, 'Outcome', incident.action);
+      bool hasFinishTime = false;
+      bool hasWarning = false;
       if (incident.detail.isNotEmpty) {
         final parts = incident.detail.split('. ');
         for (final p in parts) {
           final colonIdx = p.indexOf(':');
           if (colonIdx > 0 && colonIdx < p.length - 1) {
+            final key = p.substring(0, colonIdx).trim();
+            final value = p.substring(colonIdx + 1).trim();
+            if (key.toLowerCase().contains('finish time')) {
+              hasFinishTime = true;
+            }
+            if (key.toLowerCase().contains('warned script')) {
+              hasWarning = true;
+            }
             _addLogDetail(
               details,
-              p.substring(0, colonIdx).trim(),
-              p.substring(colonIdx + 1).trim(),
+              key,
+              value,
             );
           } else {
             _addLogDetail(details, 'Details', p.trim());
           }
         }
+      }
+      if (!hasFinishTime && incident.actualFinishTime.isNotEmpty) {
+        _addLogDetail(
+          details,
+          'Candidate actual finish time',
+          incident.actualFinishTime,
+        );
+      }
+      if (!hasWarning &&
+          incident.candidateWarnedScriptMayNotBeAccepted.isNotEmpty) {
+        _addLogDetail(
+          details,
+          'Candidate Warned Script May Not Be Accepted?',
+          incident.candidateWarnedScriptMayNotBeAccepted,
+        );
       }
       return details;
     }

@@ -851,6 +851,70 @@ void main() {
         ),
       );
     });
+
+    test('exports late arrival incident with actual finish time and warning fields', () async {
+      const recordId = 'record-late-arrival-new-fields';
+      final card = ExamCardData(
+        recordId: recordId,
+        school: 'Battersea Academy',
+        centreNumber: '12345',
+        date: '06/03/2026',
+        subject: 'History Paper 2',
+        start: '13:00',
+        duration: '01:30',
+        end: '14:30',
+        normalStart: '13:00',
+        normalDuration: '01:30',
+        normalEnd: '14:30',
+        extraTime: '00:15',
+        totalDuration: '01:45',
+        extraEnd: '14:45',
+        roomsSnapshot: 'H2',
+        invigilatorsSnapshot: 'David',
+        setUpBy: 'Basil',
+        setUpRole: 'Exam Officer',
+      );
+
+      await sessionService.persistHomeState(
+        cards: [card],
+        archiveCards: const [],
+        lastUsed: _emptyLastUsed(),
+      );
+
+      await sessionService.startSession(
+        examRecordId: recordId,
+        startedAt: DateTime(2026, 3, 6, 13, 0, 0).toUtc(),
+      );
+
+      // Late arrival with new fields in detail and on incident
+      await sessionService.appendIncident(
+        examRecordId: recordId,
+        incident: Incident(
+          'Late arrival',
+          eventType: 'incident',
+          incidentType: 'late_arrival',
+          room: 'H2',
+          studentID: 'GH102',
+          action: 'Admitted',
+          actualFinishTime: '03:00 PM',
+          candidateWarnedScriptMayNotBeAccepted: 'Yes',
+          detail:
+              'Supervision time: 01:10 PM. Actual start: 01:15 PM. Candidate actual finish time: 03:00 PM. Reason: Severe train delay. Candidate Warned Script May Not Be Accepted?: Yes. Actions: Monitored in separate room',
+          time: DateTime(2026, 3, 6, 13, 10, 0),
+        ),
+      );
+
+      final text = await exportService.buildRecordCsvText(
+        examRecordId: recordId,
+      );
+
+      expect(
+        text,
+        contains(
+          '2026-03-06 13:10:00,Incident,Normal Time,Late arrival,H2,GH102,,Outcome: Admitted. Supervision time: 01:10 PM. Actual start: 01:15 PM. Candidate actual finish time: 03:00 PM. Reason: Severe train delay. Candidate Warned Script May Not Be Accepted?: Yes. Actions: Monitored in separate room',
+        ),
+      );
+    });
   });
 }
 

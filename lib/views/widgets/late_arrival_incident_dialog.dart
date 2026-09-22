@@ -9,17 +9,23 @@ class LateArrivalIncidentDialog extends StatefulWidget {
   const LateArrivalIncidentDialog({
     super.key,
     required this.initialRoom,
+    this.examDuration = const Duration(hours: 1, minutes: 30),
+    this.extraTime = Duration.zero,
     required this.onSave,
   });
 
   final String initialRoom;
+  final Duration examDuration;
+  final Duration extraTime;
   final void Function(
     String room,
     String candidateRef,
     bool admitted,
     String supervisionTime,
     String actualStartTime,
+    String actualFinishTime,
     String reason,
+    bool? candidateWarned,
     String actions,
   ) onSave;
 
@@ -39,8 +45,25 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
   late final FocusNode _actionsFocus = FocusNode();
 
   bool? _admitted;
+  bool? _warningGiven;
+  bool _finishTimeManuallyEdited = false;
   late TimeOfDay _supervisionTime;
   late TimeOfDay _candidateStartTime;
+  late TimeOfDay _candidateFinishTime;
+
+  Duration get _totalExamDuration {
+    final total = widget.examDuration + widget.extraTime;
+    if (total.inMinutes <= 0) {
+      return const Duration(hours: 1, minutes: 30);
+    }
+    return total;
+  }
+
+  TimeOfDay _addDuration(TimeOfDay t, Duration dur) {
+    final total = t.hour * 60 + t.minute + dur.inMinutes;
+    final wrapped = total % (24 * 60);
+    return TimeOfDay(hour: wrapped ~/ 60, minute: wrapped % 60);
+  }
 
   @override
   void initState() {
@@ -48,6 +71,7 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
     final now = TimeOfDay.now();
     _supervisionTime = now;
     _candidateStartTime = now;
+    _candidateFinishTime = _addDuration(now, _totalExamDuration);
   }
 
   @override
@@ -159,11 +183,21 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
 
   int _timeToMinutes(TimeOfDay t) => t.hour * 60 + t.minute;
 
-  bool get _isTimingValid {
+  bool get _isStartTimingValid {
     if (_admitted != true) return true;
     return _timeToMinutes(_candidateStartTime) >=
         _timeToMinutes(_supervisionTime);
   }
+
+  bool get _isFinishTimingValid {
+    if (_admitted != true) return true;
+    return _timeToMinutes(_candidateFinishTime) >
+            _timeToMinutes(_candidateStartTime) &&
+        _timeToMinutes(_candidateFinishTime) >
+            _timeToMinutes(_supervisionTime);
+  }
+
+  bool get _isTimingValid => _isStartTimingValid && _isFinishTimingValid;
 
   Future<void> _selectSupervisionTime() async {
     final picked = await _showLateArrivalThemedTimePicker(_supervisionTime);
@@ -173,6 +207,9 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
         if (_admitted == true &&
             _timeToMinutes(_candidateStartTime) < _timeToMinutes(picked)) {
           _candidateStartTime = picked;
+          if (!_finishTimeManuallyEdited) {
+            _candidateFinishTime = _addDuration(picked, _totalExamDuration);
+          }
         }
       });
     }
@@ -182,195 +219,31 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
     final picked = await _showLateArrivalThemedTimePicker(_candidateStartTime);
     if (!mounted) return;
     if (picked != null) {
-      final isEarlier =
-          _timeToMinutes(picked) < _timeToMinutes(_supervisionTime);
-      setState(() => _candidateStartTime = picked);
-      if (isEarlier) {
-        await _showInvalidStartTimeAlert(picked);
-      }
+      setState(() {
+        _candidateStartTime = picked;
+        if (!_finishTimeManuallyEdited) {
+          _candidateFinishTime = _addDuration(picked, _totalExamDuration);
+        }
+      });
     }
   }
 
-  Future<void> _showInvalidStartTimeAlert(TimeOfDay invalidTime) async {
-    final isDark = _isDark;
-    final panelColor = VigiloUiColors.panel(isDark);
-    final lineColor = VigiloUiColors.line(isDark);
-    final textColor = VigiloUiColors.text(isDark);
-    final textSoftColor = VigiloUiColors.textSoft(isDark);
-    final blueColor = VigiloUiColors.blue(isDark);
-    final goldColor = VigiloUiColors.incidentLateArrival(isDark);
-    final goldSoftColor = goldColor.withValues(alpha: 0.18);
-    final buttonTextColor = VigiloUiColors.bg(isDark);
+  Future<void> _selectCandidateFinishTime() async {
+    final picked = await _showLateArrivalThemedTimePicker(_candidateFinishTime);
+    if (picked != null) {
+      setState(() {
+        _candidateFinishTime = picked;
+        _finishTimeManuallyEdited = true;
+      });
+    }
+  }
 
-    await showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.45),
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: panelColor,
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(
-              color: lineColor.withValues(alpha: 0.9),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.45),
-                blurRadius: 28,
-                offset: const Offset(0, 14),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 58,
-                    height: 58,
-                    decoration: BoxDecoration(
-                      color: goldSoftColor,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: goldColor.withValues(alpha: 0.55),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.schedule_rounded,
-                      color: goldColor,
-                      size: 30,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Invalid Start Time',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              height: 1.08,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Candidate actual start time (${_formatTime(invalidTime)}) cannot be earlier than supervision time (${_formatTime(_supervisionTime)}).',
-                            style: TextStyle(
-                              color: isDark
-                                  ? const Color(0xFFD2DCE8)
-                                  : textSoftColor,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              height: 1.42,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Please select a start time at or after ${_formatTime(_supervisionTime)}.',
-                            style: TextStyle(
-                              color: isDark
-                                  ? const Color(0xFFAEBCCC)
-                                  : textSoftColor.withValues(alpha: 0.8),
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              height: 1.42,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-              Row(
-                children: [
-                  AnimatedScaleOnPress(
-                    child: SizedBox(
-                      height: 58,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          ctx.safePop();
-                          _selectCandidateStartTime();
-                        },
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          side: BorderSide(
-                            color: lineColor.withValues(alpha: 0.85),
-                            width: 1.2,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                        ),
-                        child: Text(
-                          'Pick Again',
-                          style: TextStyle(
-                            color: blueColor,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AnimatedScaleOnPress(
-                      child: SizedBox(
-                        height: 58,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              _candidateStartTime = _supervisionTime;
-                            });
-                            ctx.safePop();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: goldColor,
-                            foregroundColor: buttonTextColor,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(22),
-                            ),
-                          ),
-                          child: Text(
-                            'Use Supervision Time',
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: buttonTextColor,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _resetFinishTimeToSuggested() {
+    setState(() {
+      _candidateFinishTime =
+          _addDuration(_candidateStartTime, _totalExamDuration);
+      _finishTimeManuallyEdited = false;
+    });
   }
 
   void _setAdmissionOutcome(bool value) {
@@ -383,6 +256,9 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
         } else {
           _candidateStartTime = _supervisionTime;
         }
+        _candidateFinishTime =
+            _addDuration(_candidateStartTime, _totalExamDuration);
+        _finishTimeManuallyEdited = false;
       }
     });
   }
@@ -391,6 +267,7 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
     return _candidateController.text.trim().isNotEmpty &&
         _admitted != null &&
         _isTimingValid &&
+        (_admitted != true || _warningGiven != null) &&
         _reasonController.text.trim().isNotEmpty &&
         _actionsController.text.trim().isNotEmpty;
   }
@@ -416,7 +293,7 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
       );
       return;
     }
-    if (_admitted == true && !_isTimingValid) {
+    if (_admitted == true && !_isStartTimingValid) {
       NotificationService.show(
         context,
         title: "Invalid Timing",
@@ -427,11 +304,33 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
       );
       return;
     }
+    if (_admitted == true && !_isFinishTimingValid) {
+      NotificationService.show(
+        context,
+        title: "Invalid Timing",
+        subtitle:
+            "Candidate actual finish time must be after actual start time.",
+        icon: Icons.warning_amber_rounded,
+        type: NotificationType.error,
+      );
+      return;
+    }
     if (_reasonController.text.trim().isEmpty) {
       NotificationService.show(
         context,
         title: "Required Field",
         subtitle: "Enter the reason for late arrival before logging.",
+        icon: Icons.warning_amber_rounded,
+        type: NotificationType.error,
+      );
+      return;
+    }
+    if (_admitted == true && _warningGiven == null) {
+      NotificationService.show(
+        context,
+        title: "Required Field",
+        subtitle:
+            "Confirm whether the candidate was warned before logging.",
         icon: Icons.warning_amber_rounded,
         type: NotificationType.error,
       );
@@ -455,7 +354,9 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
       _admitted!,
       _formatTime(_supervisionTime),
       _admitted == true ? _formatTime(_candidateStartTime) : '',
+      _admitted == true ? _formatTime(_candidateFinishTime) : '',
       _reasonController.text.trim(),
+      _admitted == true ? _warningGiven : null,
       _actionsController.text.trim(),
     );
   }
@@ -545,13 +446,18 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
     String value,
     VoidCallback onTap, {
     bool isError = false,
+    bool suggested = false,
   }) {
     final borderColor = isError
         ? VigiloUiColors.red(_isDark)
-        : VigiloUiColors.lineSoft(_isDark);
+        : (suggested
+            ? VigiloUiColors.incidentLateArrival(_isDark).withValues(alpha: 0.60)
+            : VigiloUiColors.lineSoft(_isDark));
     final iconColor = isError
         ? VigiloUiColors.red(_isDark)
-        : VigiloUiColors.incidentLateArrival(_isDark);
+        : (suggested
+            ? VigiloUiColors.incidentLateArrival(_isDark)
+            : VigiloUiColors.textSoft(_isDark));
     final textColor = isError
         ? VigiloUiColors.red(_isDark)
         : VigiloUiColors.text(_isDark);
@@ -567,12 +473,17 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
               ? VigiloUiColors.red(_isDark).withValues(alpha: 0.10)
               : VigiloUiColors.panel2(_isDark).withValues(alpha: 0.30),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: borderColor, width: isError ? 1.5 : 1.0),
+          border: Border.all(
+            color: borderColor,
+            width: (isError || suggested) ? 1.5 : 1.0,
+          ),
         ),
         child: Row(
           children: [
             Icon(
-              Icons.access_time_rounded,
+              (suggested && !isError)
+                  ? Icons.auto_awesome
+                  : Icons.access_time_rounded,
               color: iconColor,
               size: 20,
             ),
@@ -634,6 +545,8 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
       ),
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -853,9 +766,9 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
                                         _timeField(
                                           _formatTime(_candidateStartTime),
                                           _selectCandidateStartTime,
-                                          isError: !_isTimingValid,
+                                          isError: !_isStartTimingValid,
                                         ),
-                                        if (!_isTimingValid) ...[
+                                        if (!_isStartTimingValid) ...[
                                           const SizedBox(height: 10),
                                           Container(
                                             width: double.infinity,
@@ -875,6 +788,8 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
                                               ),
                                             ),
                                             child: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Icon(
                                                   Icons.error_outline_rounded,
@@ -884,15 +799,36 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
                                                 ),
                                                 const SizedBox(width: 8),
                                                 Expanded(
-                                                  child: Text(
-                                                    'Actual start time (${_formatTime(_candidateStartTime)}) cannot be earlier than supervision time (${_formatTime(_supervisionTime)}).',
-                                                    style: TextStyle(
-                                                      color: VigiloUiColors.red(
-                                                          _isDark),
-                                                      fontSize: 12.5,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        'Actual start time (${_formatTime(_candidateStartTime)}) cannot be earlier than supervision time (${_formatTime(_supervisionTime)}).',
+                                                        style: TextStyle(
+                                                          color:
+                                                              VigiloUiColors.red(
+                                                                  _isDark),
+                                                          fontSize: 12.5,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        'Supervision time: ${_formatTime(_supervisionTime)}',
+                                                        style: TextStyle(
+                                                          color: VigiloUiColors.red(
+                                                                  _isDark)
+                                                              .withValues(
+                                                            alpha: 0.85,
+                                                          ),
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
                                                 const SizedBox(width: 8),
@@ -901,27 +837,209 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
                                                     setState(() {
                                                       _candidateStartTime =
                                                           _supervisionTime;
+                                                      if (!_finishTimeManuallyEdited) {
+                                                        _candidateFinishTime =
+                                                            _addDuration(
+                                                          _supervisionTime,
+                                                          _totalExamDuration,
+                                                        );
+                                                      }
                                                     });
                                                   },
                                                   borderRadius:
                                                       BorderRadius.circular(8),
                                                   child: Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4,
+                                                    padding:
+                                                        const EdgeInsets
+                                                            .symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 6,
                                                     ),
                                                     decoration: BoxDecoration(
-                                                      color: VigiloUiColors.red(
-                                                              _isDark)
-                                                          .withValues(
-                                                              alpha: 0.22),
+                                                      color:
+                                                          VigiloUiColors.red(
+                                                                  _isDark)
+                                                              .withValues(
+                                                        alpha: 0.22,
+                                                      ),
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                              8),
+                                                        8,
+                                                      ),
                                                     ),
                                                     child: Text(
-                                                      'Align Time',
+                                                      'Use ${_formatTime(_supervisionTime)}',
+                                                      style: TextStyle(
+                                                        color:
+                                                            VigiloUiColors.red(
+                                                                _isDark),
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                        const SizedBox(height: 20),
+                                        _otSectionLabel(
+                                            'CANDIDATE ACTUAL FINISH TIME'),
+                                        const SizedBox(height: 10),
+                                        _timeField(
+                                          _formatTime(_candidateFinishTime),
+                                          _selectCandidateFinishTime,
+                                          isError: !_isFinishTimingValid,
+                                          suggested: !_finishTimeManuallyEdited,
+                                        ),
+                                        if (!_finishTimeManuallyEdited &&
+                                            _isFinishTimingValid) ...[
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            'Suggested from start time + full duration + extra time. Tap to override.',
+                                            style: TextStyle(
+                                              color: VigiloUiColors.textSoft(
+                                                      _isDark)
+                                                  .withValues(alpha: 0.75),
+                                              fontSize: 12,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          ),
+                                        ],
+                                        if (_finishTimeManuallyEdited &&
+                                            _isFinishTimingValid) ...[
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.edit_note_rounded,
+                                                size: 16,
+                                                color: VigiloUiColors.incidentLateArrival(_isDark),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Expanded(
+                                                child: Text(
+                                                  'Manually edited. Suggested: ${_formatTime(_addDuration(_candidateStartTime, _totalExamDuration))}',
+                                                  style: TextStyle(
+                                                    color: VigiloUiColors.textSoft(_isDark).withValues(alpha: 0.85),
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                              InkWell(
+                                                onTap: _resetFinishTimeToSuggested,
+                                                borderRadius: BorderRadius.circular(6),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                                  child: Text(
+                                                    'Reset',
+                                                    style: TextStyle(
+                                                      color: VigiloUiColors.incidentLateArrival(_isDark),
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.w800,
+                                                      decoration: TextDecoration.underline,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                        if (!_isFinishTimingValid) ...[
+                                          const SizedBox(height: 10),
+                                          Container(
+                                            width: double.infinity,
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 10,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: VigiloUiColors.red(_isDark)
+                                                  .withValues(alpha: 0.12),
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                              border: Border.all(
+                                                color: VigiloUiColors.red(
+                                                        _isDark)
+                                                    .withValues(alpha: 0.45),
+                                              ),
+                                            ),
+                                            child: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Icon(
+                                                  Icons.error_outline_rounded,
+                                                  size: 18,
+                                                  color: VigiloUiColors.red(
+                                                      _isDark),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        'Actual finish time (${_formatTime(_candidateFinishTime)}) must be after actual start time (${_formatTime(_candidateStartTime)}).',
+                                                        style: TextStyle(
+                                                          color:
+                                                              VigiloUiColors.red(
+                                                                  _isDark),
+                                                          fontSize: 12.5,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        'Suggested finish time: ${_formatTime(_addDuration(_candidateStartTime, _totalExamDuration))}',
+                                                        style: TextStyle(
+                                                          color:
+                                                              VigiloUiColors.red(
+                                                                      _isDark)
+                                                                  .withValues(
+                                                            alpha: 0.85,
+                                                          ),
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                InkWell(
+                                                  onTap:
+                                                      _resetFinishTimeToSuggested,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets
+                                                            .symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 6,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          VigiloUiColors.red(
+                                                                  _isDark)
+                                                              .withValues(
+                                                        alpha: 0.22,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        8,
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      'Use ${_formatTime(_addDuration(_candidateStartTime, _totalExamDuration))}',
                                                       style: TextStyle(
                                                         color:
                                                             VigiloUiColors.red(
@@ -989,6 +1107,35 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
                                 ),
                               ),
                             ),
+                            if (_admitted == true) ...[
+                              const SizedBox(height: 20),
+                              _otSectionLabel(
+                                  'CANDIDATE WARNED SCRIPT MAY NOT BE ACCEPTED?'),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _admissionToggleButton(
+                                      label: 'Yes',
+                                      selected: _warningGiven == true,
+                                      color: VigiloUiColors.green(_isDark),
+                                      onTap: () => setState(
+                                          () => _warningGiven = true),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _admissionToggleButton(
+                                      label: 'No',
+                                      selected: _warningGiven == false,
+                                      color: VigiloUiColors.red(_isDark),
+                                      onTap: () => setState(
+                                          () => _warningGiven = false),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                             const SizedBox(height: 20),
                             _otSectionLabel(
                                 'ACTIONS TAKEN / SECURITY ASSURANCE'),

@@ -918,6 +918,64 @@ class CsvExportService {
       }
       if (detail.isNotEmpty) {
         parts.add(detail);
+      } else {
+        final supervision = _readText(incidentMap['supervisionTime']);
+        final startTime = _readText(incidentMap['actualStartTime']).isNotEmpty
+            ? _readText(incidentMap['actualStartTime'])
+            : _readText(incidentMap['candidateActualStartTime']);
+        final finish = _readText(incidentMap['actualFinishTime']).isNotEmpty
+            ? _readText(incidentMap['actualFinishTime'])
+            : _readText(incidentMap['candidateActualFinishTime']);
+        final reason = _readText(incidentMap['reason']);
+        final warning = _readText(
+          incidentMap['candidateWarnedScriptMayNotBeAccepted'],
+        ).isNotEmpty
+            ? _readText(incidentMap['candidateWarnedScriptMayNotBeAccepted'])
+            : (_readText(incidentMap['candidateWarned']).isNotEmpty
+                ? _readText(incidentMap['candidateWarned'])
+                : _readText(incidentMap['warningGiven']));
+        final actions = _readText(incidentMap['actionsTaken']).isNotEmpty
+            ? _readText(incidentMap['actionsTaken'])
+            : _readText(incidentMap['actions']);
+
+        if (supervision.isNotEmpty) {
+          parts.add('Supervision time: $supervision');
+        }
+        if (startTime.isNotEmpty) {
+          parts.add('Actual start: $startTime');
+        }
+        if (finish.isNotEmpty) {
+          parts.add('Candidate actual finish time: $finish');
+        }
+        if (reason.isNotEmpty) {
+          parts.add('Reason: $reason');
+        }
+        if (warning.isNotEmpty) {
+          parts.add('Candidate Warned Script May Not Be Accepted?: $warning');
+        }
+        if (actions.isNotEmpty) {
+          parts.add('Actions: $actions');
+        }
+      }
+      final finishTime = _readText(incidentMap['actualFinishTime']).isNotEmpty
+          ? _readText(incidentMap['actualFinishTime'])
+          : _readText(incidentMap['candidateActualFinishTime']);
+      final warningGiven = _readText(
+        incidentMap['candidateWarnedScriptMayNotBeAccepted'],
+      ).isNotEmpty
+          ? _readText(incidentMap['candidateWarnedScriptMayNotBeAccepted'])
+          : (_readText(incidentMap['candidateWarned']).isNotEmpty
+              ? _readText(incidentMap['candidateWarned'])
+              : _readText(incidentMap['warningGiven']));
+      if (finishTime.isNotEmpty &&
+          !parts.any((p) => p.toLowerCase().contains('finish time'))) {
+        parts.add('Candidate actual finish time: $finishTime');
+      }
+      if (warningGiven.isNotEmpty &&
+          !parts.any((p) => p.toLowerCase().contains('warned script'))) {
+        parts.add(
+          'Candidate Warned Script May Not Be Accepted?: $warningGiven',
+        );
       }
       return parts.join('. ');
     }

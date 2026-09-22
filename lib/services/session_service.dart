@@ -1854,6 +1854,31 @@ class SessionService {
           staffMember: embeddedIncident?.staffMember ?? '',
           action: embeddedIncident?.action ?? '',
           updatedDuration: embeddedIncident?.updatedDuration ?? '',
+          supervisionTime: embeddedIncident?.supervisionTime ??
+              (payload['supervisionTime'] as String?) ??
+              '',
+          actualStartTime: embeddedIncident?.actualStartTime ??
+              (payload['actualStartTime'] as String?) ??
+              (payload['candidateActualStartTime'] as String?) ??
+              '',
+          actualFinishTime: embeddedIncident?.actualFinishTime ??
+              (payload['actualFinishTime'] as String?) ??
+              (payload['candidateActualFinishTime'] as String?) ??
+              '',
+          reason: embeddedIncident?.reason ??
+              (payload['reason'] as String?) ??
+              '',
+          candidateWarnedScriptMayNotBeAccepted:
+              embeddedIncident?.candidateWarnedScriptMayNotBeAccepted ??
+                  (payload['candidateWarnedScriptMayNotBeAccepted']
+                      as String?) ??
+                  (payload['candidateWarned'] as String?) ??
+                  (payload['warningGiven'] as String?) ??
+                  '',
+          actionsTaken: embeddedIncident?.actionsTaken ??
+              (payload['actionsTaken'] as String?) ??
+              (payload['actions'] as String?) ??
+              '',
           detail: detail,
           time: event.occurredAtUtc.toLocal(),
         ),
