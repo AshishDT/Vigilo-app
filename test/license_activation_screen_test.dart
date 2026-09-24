@@ -488,4 +488,24 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('shows the updated Recommended Action text in DATA & EXPORT section', (
+    tester,
+  ) async {
+    await pumpScreen(tester, scrollToActivation: false);
+
+    await tester.scrollUntilVisible(
+      find.text('Recommended Action'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        "Export logs after each exam session, then use Archive (from the exam screen) or Delete Exam Data (in that exam's Privacy tab) to keep your Home Screen showing only relevant, upcoming exams.",
+      ),
+      findsOneWidget,
+    );
+  });
 }

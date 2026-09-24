@@ -20,11 +20,29 @@ class ImportService {
     'dec': 12, 'december': 12,
   };
 
-  /// Parses date string in DD/MM/YYYY, DD-MM-YYYY, or D MMM YYYY formats and returns "DD/MM/YYYY"
+  /// Parses date string in YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, or D MMM YYYY formats and returns "DD/MM/YYYY"
   static String? normalizeDate(String input) {
     try {
       final clean = input.trim().replaceAll(RegExp(r'\s+'), ' ');
       if (clean.isEmpty) return null;
+
+      // Check for hyphens first: try ISO YYYY-MM-DD (e.g. 2026-05-12 or 2026-5-2)
+      if (clean.contains('-')) {
+        final ymdRegex = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})$');
+        final ymdMatch = ymdRegex.firstMatch(clean);
+        if (ymdMatch != null) {
+          final year = int.parse(ymdMatch.group(1)!);
+          final month = int.parse(ymdMatch.group(2)!);
+          final day = int.parse(ymdMatch.group(3)!);
+          if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+            final dt = DateTime(year, month, day);
+            if (dt.year == year && dt.month == month && dt.day == day) {
+              return '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
+            }
+          }
+          return null;
+        }
+      }
 
       // Try DD/MM/YYYY or DD-MM-YYYY
       final dmyRegex = RegExp(r'^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$');
@@ -34,7 +52,13 @@ class ImportService {
         final month = int.parse(match.group(2)!);
         var year = int.parse(match.group(3)!);
         if (year < 100) year += 2000;
-        return '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
+        if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+          final dt = DateTime(year, month, day);
+          if (dt.year == year && dt.month == month && dt.day == day) {
+            return '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
+          }
+        }
+        return null;
       }
 
       // Try D MMM YYYY (e.g. 12 May 2026)
@@ -47,7 +71,12 @@ class ImportService {
 
         if (day != null && month != null && year != null) {
           if (year < 100) year += 2000;
-          return '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
+          if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+            final dt = DateTime(year, month, day);
+            if (dt.year == year && dt.month == month && dt.day == day) {
+              return '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
+            }
+          }
         }
       }
     } catch (_) {}

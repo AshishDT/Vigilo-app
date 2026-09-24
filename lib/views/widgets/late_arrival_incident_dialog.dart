@@ -720,8 +720,7 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            _otSectionLabel(
-                                'TIME CANDIDATE CAME UNDER STAFF SUPERVISION'),
+                            _otSectionLabel('TIME UNDER SUPERVISION'),
                             const SizedBox(height: 10),
                             _timeField(
                               _formatTime(_supervisionTime),
@@ -1109,8 +1108,7 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
                             ),
                             if (_admitted == true) ...[
                               const SizedBox(height: 20),
-                              _otSectionLabel(
-                                  'CANDIDATE WARNED SCRIPT MAY NOT BE ACCEPTED?'),
+                              _otSectionLabel('WARNED SCRIPT MAY NOT BE ACCEPTED?'),
                               const SizedBox(height: 10),
                               Row(
                                 children: [
@@ -1137,8 +1135,7 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
                               ),
                             ],
                             const SizedBox(height: 20),
-                            _otSectionLabel(
-                                'ACTIONS TAKEN / SECURITY ASSURANCE'),
+                            _otSectionLabel('SECURITY ASSURANCE'),
                             const SizedBox(height: 10),
                             Container(
                               width: double.infinity,

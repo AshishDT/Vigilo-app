@@ -67,18 +67,64 @@ String _formatDurationWording(String message) {
   return message;
 }
 
-String _formatStudentID(String s) {
+class _CandidateInfo {
+  final List<String> list;
+  final bool isMultiple;
+  final String joined;
+  final String label;
+  final String idLabel;
+
+  const _CandidateInfo({
+    required this.list,
+    required this.isMultiple,
+    required this.joined,
+    required this.label,
+    required this.idLabel,
+  });
+}
+
+_CandidateInfo _formatCandidates(String s) {
   s = s.trim();
-  if (s.isEmpty) return s;
-  if (s.contains('(') && s.contains(')')) return s;
-  final parts = s.split(' ');
-  if (parts.length > 1) {
-    final last = parts.last;
-    if (RegExp(r'^\d+$').hasMatch(last)) {
-      return '${parts.sublist(0, parts.length - 1).join(' ')} ($last)';
-    }
+  if (s.isEmpty) {
+    return const _CandidateInfo(
+      list: [],
+      isMultiple: false,
+      joined: '',
+      label: 'Student',
+      idLabel: 'Student ID',
+    );
   }
-  return s;
+  final lines = s
+      .split(RegExp(r'[\r\n]+'))
+      .map((part) => part.trim())
+      .where((part) => part.isNotEmpty)
+      .toList();
+
+  List<String> result;
+  if (lines.length > 1) {
+    result = lines;
+  } else if (lines.isNotEmpty && lines.first.contains(',')) {
+    result = lines.first
+        .split(',')
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList();
+  } else {
+    result = lines;
+  }
+
+  final isMulti = result.length > 1;
+  return _CandidateInfo(
+    list: result,
+    isMultiple: isMulti,
+    joined: result.join(', '),
+    label: isMulti ? 'Students' : 'Student',
+    idLabel: isMulti ? 'Students' : 'Student ID',
+  );
+}
+
+String _formatStudentID(String s) {
+  return _formatCandidates(s).joined;
 }
 
 class LogsItemWidget extends StatelessWidget {
@@ -108,21 +154,21 @@ class LogsItemWidget extends StatelessWidget {
     final isDurationAdjustment = _isDurationAdjustmentMessage(message);
 
     if (message == 'Toilet break') {
-      final student = _formatStudentID(incident.studentID);
+      final cand = _formatCandidates(incident.studentID);
       final durationStr = incident.duration.isEmpty ? '' : '\nDuration:\n${incident.duration} min';
-      message = 'Toilet Visit\nStudent: $student$durationStr';
+      message = 'Toilet Visit\n${cand.label}: ${cand.joined}$durationStr';
       icon = Icons.wc;
     } else if (isMalpracticeConcern) {
-      final student = _formatStudentID(incident.studentID);
+      final cand = _formatCandidates(incident.studentID);
       final displayMsg = message == 'Suspected malpractice' 
           ? 'Malpractice' 
           : message;
-      message = '$displayMsg\nStudent: $student';
+      message = '$displayMsg\n${cand.label}: ${cand.joined}';
       icon = Icons.warning_amber;
     } else if (message == 'Medical incident') {
-      final student = _formatStudentID(incident.studentID);
+      final cand = _formatCandidates(incident.studentID);
       final actionStr = incident.action.isEmpty ? '' : '\nAction:\n${incident.action}';
-      message = 'Medical Incident\nStudent: $student$actionStr';
+      message = 'Medical Incident\n${cand.label}: ${cand.joined}$actionStr';
       icon = Icons.medical_services;
     } else if (isDurationAdjustment && incident.updatedDuration.isNotEmpty) {
       message = '$message - ${incident.updatedDuration} min';
@@ -163,7 +209,9 @@ class LogsItemWidget extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text('Room: ${incident.room}'),
                     const SizedBox(height: 4),
-                    Text('Student ID: ${incident.studentID}'),
+                    Text(
+                      '${_formatCandidates(incident.studentID).idLabel}: ${_formatCandidates(incident.studentID).joined}',
+                    ),
                     const SizedBox(height: 4),
                     Text('Duration: ${incident.duration} minutes'),
                   ],
@@ -181,7 +229,9 @@ class LogsItemWidget extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text('Room: ${incident.room}'),
                     const SizedBox(height: 4),
-                    Text('Student ID: ${incident.studentID}'),
+                    Text(
+                      '${_formatCandidates(incident.studentID).idLabel}: ${_formatCandidates(incident.studentID).joined}',
+                    ),
                     const SizedBox(height: 4),
                     Text('Invigilator(s): ${incident.staffMember}'),
                     const SizedBox(height: 4),
@@ -203,7 +253,9 @@ class LogsItemWidget extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text('Room: ${incident.room}'),
                     const SizedBox(height: 4),
-                    Text('Student ID: ${incident.studentID}'),
+                    Text(
+                      '${_formatCandidates(incident.studentID).idLabel}: ${_formatCandidates(incident.studentID).joined}',
+                    ),
                     const SizedBox(height: 4),
                     Text('Invigilator(s): ${incident.staffMember}'),
                     const SizedBox(height: 4),

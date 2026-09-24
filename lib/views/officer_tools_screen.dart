@@ -62,7 +62,21 @@ class OfficerToolsSheet extends StatefulWidget {
   State<OfficerToolsSheet> createState() => _OfficerToolsSheetState();
 }
 
+class _CandidateInfo {
+  final List<String> list;
+  final bool isMultiple;
+  final String joined;
+  final String label;
+  final String idLabel;
 
+  const _CandidateInfo({
+    required this.list,
+    required this.isMultiple,
+    required this.joined,
+    required this.label,
+    required this.idLabel,
+  });
+}
 
 class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     with SingleTickerProviderStateMixin {
@@ -99,6 +113,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   Timer? _updateTimer;
 
   bool get _isExamCompleted => _currentData.phase == ExamPhase.finished;
+
   bool get _isExamNotStarted =>
       !_currentData.running && !_currentData.isPaused && !_isExamCompleted;
 
@@ -293,17 +308,21 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   }
 
   void loadList() {
-    if (widget.data.scheduleList != null && widget.data.scheduleList!.isNotEmpty) {
+    if (widget.data.scheduleList != null &&
+        widget.data.scheduleList!.isNotEmpty) {
       scheduleList = List<ScheduleData>.from(widget.data.scheduleList!);
     } else {
-      final timeRange = "${_setupDisplayTime(widget.data.start)} - ${_setupDisplayTime(widget.data.end)}";
+      final timeRange =
+          "${_setupDisplayTime(widget.data.start)} - ${_setupDisplayTime(widget.data.end)}";
       scheduleList = [
         ScheduleData(
           time: timeRange,
           room: widget.data.roomsSnapshot,
-          invigilators: _parseInvigilatorsInput(widget.data.invigilatorsSnapshot),
+          invigilators: _parseInvigilatorsInput(
+            widget.data.invigilatorsSnapshot,
+          ),
           notes: widget.data.notes,
-        )
+        ),
       ];
     }
     if (widget.data.messages != null) {
@@ -384,7 +403,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
   String _setupDisplayTime(String value) {
     final trimmed = value.trim();
-    final match = RegExp(r'^(\d{1,2}:\d{2})(?::\d{2})$').firstMatch(trimmed);
+    final match = RegExp(r'^(\d{1,2}:\d{2}):\d{2}$').firstMatch(trimmed);
     return match == null ? trimmed : match.group(1)!;
   }
 
@@ -561,7 +580,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       barrierColor: Colors.black.withValues(alpha: 0.42),
       builder: (_) => _ToiletVisitIncidentDialog(
         initialRoom: _scheduleRoomsSummary(),
-        onSave: (room, student, duration, notes, action) {
+        onSave: (room, student, duration, timeReturned, notes, action) {
           widget.onLog(
             Incident(
               "Toilet break",
@@ -570,6 +589,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               room: room,
               studentID: student,
               duration: duration,
+              actualFinishTime: timeReturned,
               detail: notes,
               action: action,
             ),
@@ -614,71 +634,72 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         initialRoom: _scheduleRoomsSummary(),
         examDuration: _currentExamDuration,
         extraTime: _currentExtraTimeDuration,
-        onSave: (
-          room,
-          candidateRef,
-          admitted,
-          supervisionTime,
-          startTime,
-          finishTime,
-          reason,
-          candidateWarned,
-          actions,
-        ) {
-          final outcome = admitted ? 'Admitted' : 'Not Admitted';
-          final detailParts = <String>[];
-          detailParts.add('Supervision time: $supervisionTime');
-          if (admitted && startTime.isNotEmpty) {
-            detailParts.add('Actual start: $startTime');
-          }
-          if (admitted && finishTime.isNotEmpty) {
-            detailParts.add('Candidate actual finish time: $finishTime');
-          }
-          if (reason.isNotEmpty) {
-            detailParts.add('Reason: $reason');
-          }
-          if (admitted && candidateWarned != null) {
-            final warningStr = candidateWarned ? 'Yes' : 'No';
-            detailParts.add(
-              'Candidate Warned Script May Not Be Accepted?: $warningStr',
-            );
-          }
-          if (actions.isNotEmpty) {
-            detailParts.add('Actions: $actions');
-          }
-          final detail = detailParts.join('. ');
+        onSave:
+            (
+              room,
+              candidateRef,
+              admitted,
+              supervisionTime,
+              startTime,
+              finishTime,
+              reason,
+              candidateWarned,
+              actions,
+            ) {
+              final outcome = admitted ? 'Admitted' : 'Not Admitted';
+              final detailParts = <String>[];
+              detailParts.add('Supervision time: $supervisionTime');
+              if (admitted && startTime.isNotEmpty) {
+                detailParts.add('Actual start: $startTime');
+              }
+              if (admitted && finishTime.isNotEmpty) {
+                detailParts.add('Candidate actual finish time: $finishTime');
+              }
+              if (reason.isNotEmpty) {
+                detailParts.add('Reason: $reason');
+              }
+              if (admitted && candidateWarned != null) {
+                final warningStr = candidateWarned ? 'Yes' : 'No';
+                detailParts.add(
+                  'Warned script may not be accepted: $warningStr',
+                );
+              }
+              if (actions.isNotEmpty) {
+                detailParts.add('Actions: $actions');
+              }
+              final detail = detailParts.join('. ');
 
-          widget.onLog(
-            Incident(
-              "Late arrival",
-              eventType: "incident",
-              incidentType: "late_arrival",
-              room: room,
-              studentID: candidateRef,
-              staffMember: "",
-              detail: detail,
-              action: outcome,
-              supervisionTime: supervisionTime,
-              actualStartTime: admitted ? startTime : '',
-              actualFinishTime: admitted ? finishTime : '',
-              reason: reason,
-              candidateWarnedScriptMayNotBeAccepted:
-                  admitted && candidateWarned != null
+              widget.onLog(
+                Incident(
+                  "Late arrival",
+                  eventType: "incident",
+                  incidentType: "late_arrival",
+                  room: room,
+                  studentID: candidateRef,
+                  staffMember: "",
+                  detail: detail,
+                  action: outcome,
+                  supervisionTime: supervisionTime,
+                  actualStartTime: admitted ? startTime : '',
+                  actualFinishTime: admitted ? finishTime : '',
+                  reason: reason,
+                  candidateWarnedScriptMayNotBeAccepted:
+                      admitted && candidateWarned != null
                       ? (candidateWarned ? 'Yes' : 'No')
                       : '',
-              actionsTaken: actions,
-            ),
-          );
-          _showBanner(
-            "Incident Logged",
-            admitted
-                ? "Late arrival (Admitted) logged"
-                : "Late arrival (Not Admitted) logged",
-            Icons.schedule_rounded,
-            NotificationType.success,
-          );
-          context.safePop();
-        },
+                  actionsTaken: actions,
+                ),
+              );
+              _showBanner(
+                "Incident Logged",
+                admitted
+                    ? "Late arrival (Admitted) logged"
+                    : "Late arrival (Not Admitted) logged",
+                Icons.schedule_rounded,
+                NotificationType.success,
+              );
+              context.safePop();
+            },
       ),
     );
   }
@@ -885,7 +906,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           children: [
             Icon(
               icon,
-              color: isActive ? VigiloUiColors.blue(_isDark) : VigiloUiColors.textSoft(_isDark),
+              color: isActive
+                  ? VigiloUiColors.blue(_isDark)
+                  : VigiloUiColors.textSoft(_isDark),
               size: 25,
             ),
             const SizedBox(height: 8),
@@ -976,7 +999,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       ),
       child: child,
     );
-  }  Widget _otControlItem({
+  }
+
+  Widget _otControlItem({
     required String title,
     required String subtitle,
     required IconData icon,
@@ -1057,10 +1082,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 ),
               ),
               if (isLoading)
-                CupertinoActivityIndicator(
-                  color: iconColor,
-                  radius: 10,
-                ),
+                CupertinoActivityIndicator(color: iconColor, radius: 10),
             ],
           ),
         ),
@@ -1213,7 +1235,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: VigiloUiColors.lineSoft(_isDark)),
-            backgroundColor: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
+            backgroundColor: VigiloUiColors.panel2(
+              _isDark,
+            ).withValues(alpha: 0.62),
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
@@ -1275,7 +1299,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           decoration: BoxDecoration(
             color: backgroundColor ?? VigiloUiColors.panel2(_isDark),
             borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(color: borderColor ?? VigiloUiColors.line(_isDark)),
+            border: Border.all(
+              color: borderColor ?? VigiloUiColors.line(_isDark),
+            ),
           ),
           child: Icon(icon, size: iconSize),
         ),
@@ -1306,7 +1332,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   color: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.72),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: VigiloUiColors.lineSoft(_isDark).withValues(alpha: 0.70),
+                    color: VigiloUiColors.lineSoft(
+                      _isDark,
+                    ).withValues(alpha: 0.70),
                   ),
                 ),
                 child: Icon(
@@ -1373,8 +1401,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     data.phase == ExamPhase.extra
                         ? VigiloUiColors.amber(_isDark)
                         : data.phase == ExamPhase.finished
-                            ? VigiloUiColors.green(_isDark)
-                            : VigiloUiColors.blue(_isDark),
+                        ? VigiloUiColors.green(_isDark)
+                        : VigiloUiColors.blue(_isDark),
                   ),
                 ),
               ],
@@ -1567,7 +1595,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   minLines: 1,
                   maxLines: 2,
                   style: TextStyle(
-                    color: disabled ? Colors.grey : VigiloUiColors.text(_isDark),
+                    color: disabled
+                        ? Colors.grey
+                        : VigiloUiColors.text(_isDark),
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                     height: 1.25,
@@ -2020,7 +2050,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           decoration: BoxDecoration(
             color: VigiloUiColors.panel2(_isDark),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: VigiloUiColors.lineSoft(_isDark), width: 0.7),
+            border: Border.all(
+              color: VigiloUiColors.lineSoft(_isDark),
+              width: 0.7,
+            ),
           ),
           child: Row(
             children: [
@@ -2028,10 +2061,14 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: VigiloUiColors.blueSoft(_isDark).withValues(alpha: 0.15),
+                  color: VigiloUiColors.blueSoft(
+                    _isDark,
+                  ).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: VigiloUiColors.blueSoft(_isDark).withValues(alpha: 0.3),
+                    color: VigiloUiColors.blueSoft(
+                      _isDark,
+                    ).withValues(alpha: 0.3),
                   ),
                 ),
                 child: Icon(
@@ -2419,7 +2456,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: VigiloUiColors.textSoft(_isDark).withValues(alpha: 0.65),
+                      color: VigiloUiColors.textSoft(
+                        _isDark,
+                      ).withValues(alpha: 0.65),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -2534,18 +2573,48 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     );
   }
 
-  String _formatStudentID(String s) {
+  _CandidateInfo _formatCandidates(String s) {
     s = s.trim();
-    // if (s.isEmpty) return s;
-    // if (s.contains('(') && s.contains(')')) return s;
-    // final parts = s.split(' ');
-    // if (parts.length > 1) {
-    //   final last = parts.last;
-    //   if (RegExp(r'^\d+$').hasMatch(last)) {
-    //     return '${parts.sublist(0, parts.length - 1).join(' ')} ($last)';
-    //   }
-    // }
-    return s;
+    if (s.isEmpty) {
+      return const _CandidateInfo(
+        list: [],
+        isMultiple: false,
+        joined: '',
+        label: 'Student',
+        idLabel: 'Student ID',
+      );
+    }
+    final lines = s
+        .split(RegExp(r'[\r\n]+'))
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList();
+
+    List<String> result;
+    if (lines.length > 1) {
+      result = lines;
+    } else if (lines.isNotEmpty && lines.first.contains(',')) {
+      result = lines.first
+          .split(',')
+          .map((part) => part.trim())
+          .where((part) => part.isNotEmpty)
+          .toList();
+    } else {
+      result = lines;
+    }
+
+    final isMulti = result.length > 1;
+    return _CandidateInfo(
+      list: result,
+      isMultiple: isMulti,
+      joined: result.join(', '),
+      label: isMulti ? 'Students' : 'Student',
+      idLabel: isMulti ? 'Students' : 'Student ID',
+    );
+  }
+
+  String _formatStudentID(String s) {
+    return _formatCandidates(s).joined;
   }
 
   String _formatMinutesDescription(int minutes) {
@@ -2604,38 +2673,53 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     return message;
   }
 
-  String _logTitle(Incident incident) {
+  ({String title, String? candidate}) _logTitleParts(Incident incident) {
     final formattedMessage = _formatDurationWording(incident.message);
     final isDurationAdjustment = _isDurationAdjustmentMessage(formattedMessage);
 
     if (incident.message == 'Toilet break') {
       final student = _formatStudentID(incident.studentID);
       final isDeclined = incident.action.toLowerCase() == 'declined';
-      final title = isDeclined ? 'Toilet Visit (Declined)' : 'Toilet Visit (Approved)';
-      if (student.isEmpty) return title;
-      return '$title\n$student';
+      final title = isDeclined
+          ? 'Toilet Visit (Declined)'
+          : 'Toilet Visit (Approved)';
+      return (
+        title: title,
+        candidate: student.isEmpty ? null : student,
+      );
     }
     if (_isMalpracticeConcern(incident)) {
       final student = _formatStudentID(incident.studentID);
-      if (student.isEmpty) return formattedMessage;
-      return '$formattedMessage\n$student';
+      return (
+        title: formattedMessage,
+        candidate: student.isEmpty ? null : student,
+      );
     }
     if (incident.message == 'Medical incident') {
       final student = _formatStudentID(incident.studentID);
-      if (student.isEmpty) return 'Medical Incident';
-      return 'Medical Incident\n$student';
+      return (
+        title: 'Medical Incident',
+        candidate: student.isEmpty ? null : student,
+      );
     }
     if (_isLateArrival(incident)) {
       final student = _formatStudentID(incident.studentID);
       final isAdmitted = incident.action.toLowerCase() == 'admitted';
-      final title = isAdmitted ? 'Late Arrival (Admitted)' : 'Late Arrival (Not Admitted)';
-      if (student.isEmpty) return title;
-      return '$title\n$student';
+      final title = isAdmitted
+          ? 'Late Arrival (Admitted)'
+          : 'Late Arrival (Not Admitted)';
+      return (
+        title: title,
+        candidate: student.isEmpty ? null : student,
+      );
     }
     if (isDurationAdjustment && incident.updatedDuration.isNotEmpty) {
-      return '$formattedMessage - ${incident.updatedDuration} min';
+      return (
+        title: '$formattedMessage - ${incident.updatedDuration} min',
+        candidate: null,
+      );
     }
-    return formattedMessage;
+    return (title: formattedMessage, candidate: null);
   }
 
   void _addLogDetail(List<String> details, String label, String value) {
@@ -2649,7 +2733,6 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
 
     if (incident.message == 'Toilet break') {
       _addLogDetail(details, 'Room', incident.room);
-      _addLogDetail(details, 'Student ID', incident.studentID);
       final isDeclined = incident.action.toLowerCase() == 'declined';
       _addLogDetail(details, 'Outcome', isDeclined ? 'Declined' : 'Approved');
       if (isDeclined) {
@@ -2660,6 +2743,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           'Duration',
           incident.duration.isEmpty ? '' : '${incident.duration} minutes',
         );
+        _addLogDetail(details, 'Time returned', incident.actualFinishTime);
         _addLogDetail(details, 'Notes', incident.detail);
         _addLogDetail(details, 'Action taken', incident.action);
       }
@@ -2667,8 +2751,13 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     }
 
     if (_isLateArrival(incident)) {
+      final cand = _formatCandidates(incident.studentID);
       _addLogDetail(details, 'Room', incident.room);
-      _addLogDetail(details, 'Candidate Reference', incident.studentID);
+      _addLogDetail(
+        details,
+        cand.isMultiple ? 'Candidates' : 'Candidate Reference',
+        cand.joined,
+      );
       _addLogDetail(details, 'Outcome', incident.action);
       bool hasFinishTime = false;
       bool hasWarning = false;
@@ -2677,19 +2766,16 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         for (final p in parts) {
           final colonIdx = p.indexOf(':');
           if (colonIdx > 0 && colonIdx < p.length - 1) {
-            final key = p.substring(0, colonIdx).trim();
+            var key = p.substring(0, colonIdx).trim();
             final value = p.substring(colonIdx + 1).trim();
             if (key.toLowerCase().contains('finish time')) {
               hasFinishTime = true;
             }
             if (key.toLowerCase().contains('warned script')) {
               hasWarning = true;
+              key = 'Warned script may not be accepted';
             }
-            _addLogDetail(
-              details,
-              key,
-              value,
-            );
+            _addLogDetail(details, key, value);
           } else {
             _addLogDetail(details, 'Details', p.trim());
           }
@@ -2706,7 +2792,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           incident.candidateWarnedScriptMayNotBeAccepted.isNotEmpty) {
         _addLogDetail(
           details,
-          'Candidate Warned Script May Not Be Accepted?',
+          'Warned script may not be accepted',
           incident.candidateWarnedScriptMayNotBeAccepted,
         );
       }
@@ -2716,7 +2802,6 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     if (_isMalpracticeConcern(incident) ||
         incident.message == 'Medical incident') {
       _addLogDetail(details, 'Room', incident.room);
-      _addLogDetail(details, 'Student ID', incident.studentID);
       _addLogDetail(details, 'Invigilator(s)', incident.staffMember);
       _addLogDetail(details, 'Details', incident.detail);
       _addLogDetail(details, 'Action taken', incident.action);
@@ -2736,7 +2821,6 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     }
 
     _addLogDetail(details, 'Room', incident.room);
-    _addLogDetail(details, 'Student ID', incident.studentID);
     _addLogDetail(details, 'Duration', incident.duration);
     _addLogDetail(details, 'Invigilator(s)', incident.staffMember);
     _addLogDetail(details, 'Details', incident.detail);
@@ -2756,6 +2840,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     final category = _logCategory(incident);
     final isIncident = category == 'Incident';
     final isExpanded = isIncident && expanded;
+    final titleParts = _logTitleParts(incident);
 
     const double badgeWidth = 74;
     const double badgeSpacing = 10;
@@ -2786,46 +2871,97 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                       width: .7,
                     )
                   : (showBottomDivider
-                      ? Border(
-                          bottom: BorderSide(
-                            color: VigiloUiColors.line(_isDark).withValues(alpha: 0.72),
-                            width: 1,
-                          ),
-                        )
-                      : null),
+                        ? Border(
+                            bottom: BorderSide(
+                              color: VigiloUiColors.line(
+                                _isDark,
+                              ).withValues(alpha: 0.72),
+                              width: 1,
+                            ),
+                          )
+                        : null),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _otCategoryBadge(category, width: badgeWidth),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2.0),
+                      child: _otCategoryBadge(category, width: badgeWidth),
+                    ),
                     const SizedBox(width: badgeSpacing),
                     Expanded(
+                      child: titleParts.candidate != null &&
+                              titleParts.candidate!.isNotEmpty
+                          ? Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: titleParts.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const TextSpan(text: '\n'),
+                                  TextSpan(
+                                    text: titleParts.candidate!,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              style: const TextStyle(
+                                fontSize: 15.4,
+                                height: 1.35,
+                              ),
+                            )
+                          : Text(
+                              titleParts.title,
+                              style: const TextStyle(
+                                fontSize: 15.4,
+                                fontWeight: FontWeight.w600,
+                                height: 1.35,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 10),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2.0),
                       child: Text(
-                        _logTitle(incident),
-                        style: const TextStyle(
-                          fontSize: 15.4,
+                        time,
+                        style: TextStyle(
+                          color: VigiloUiColors.textSoft(_isDark),
+                          fontSize: 13.2,
                           fontWeight: FontWeight.w600,
-                          height: 1.35,
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Text(
-                      time,
-                      style: TextStyle(
-                        color: VigiloUiColors.textSoft(_isDark),
-                        fontSize: 13.2,
-                        fontWeight: FontWeight.w600,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1.0),
+                      child: Builder(
+                        builder: (_) {
+                          final isToilet = incident.message == 'Toilet break';
+                          final isDeclined =
+                              incident.action.toLowerCase() == 'declined';
+                          Color iconColor;
+                          if (isToilet) {
+                            iconColor = isDeclined
+                                ? VigiloUiColors.amber(_isDark)
+                                : VigiloUiColors.green(_isDark);
+                          } else {
+                            iconColor = VigiloUiColors.blackWhite(_isDark);
+                          }
+                          return Icon(
+                            _logIcon(incident),
+                            color: iconColor,
+                            size: 22,
+                          );
+                        },
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Icon(
-                      _logIcon(incident),
-                      color: VigiloUiColors.blackWhite(_isDark),
-                      size: 22,
                     ),
                   ],
                 ),
@@ -3207,7 +3343,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     icon: data.isPaused
                                         ? Icons.play_arrow_rounded
                                         : Icons.pause_rounded,
-                                    color: _setupPhaseLabel(data.phase) ==
+                                    color:
+                                        _setupPhaseLabel(data.phase) ==
                                             'Extra Time'
                                         ? VigiloUiColors.amber(_isDark)
                                         : VigiloUiColors.blue(_isDark),
@@ -3219,7 +3356,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                       });
                                       widget.onPause();
                                     },
-                                    disabled: _isExamCompleted || _isExamNotStarted,
+                                    disabled:
+                                        _isExamCompleted || _isExamNotStarted,
                                   ),
                                   _otControlItem(
                                     title: "Restart Exam",
@@ -3248,7 +3386,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                         }
                                       }
                                     },
-                                    disabled: _isExamCompleted || data.isPaused || _isExamNotStarted,
+                                    disabled:
+                                        _isExamCompleted ||
+                                        data.isPaused ||
+                                        _isExamNotStarted,
                                   ),
                                   _otControlItem(
                                     title: "End Exam",
@@ -3296,9 +3437,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   vertical: 16,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: VigiloUiColors.panel2(_isDark).withValues(
-                                    alpha: 0.7,
-                                  ),
+                                  color: VigiloUiColors.panel2(
+                                    _isDark,
+                                  ).withValues(alpha: 0.7),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: VigiloUiColors.lineSoft(_isDark),
@@ -3317,9 +3458,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                             "Auto-start exam",
                                             style: TextStyle(
                                               color: _isExamCompleted
-                                                  ? VigiloUiColors.textFaint(_isDark)
-                                                        .withValues(alpha: 0.58)
-                                                  : VigiloUiColors.text(_isDark),
+                                                  ? VigiloUiColors.textFaint(
+                                                      _isDark,
+                                                    ).withValues(alpha: 0.58)
+                                                  : VigiloUiColors.text(
+                                                      _isDark,
+                                                    ),
                                               fontSize: 16,
                                               fontWeight: FontWeight.w900,
                                             ),
@@ -3329,9 +3473,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                             "Automatically start the exam at the scheduled time",
                                             style: TextStyle(
                                               color: _isExamCompleted
-                                                  ? VigiloUiColors.textFaint(_isDark)
-                                                        .withValues(alpha: 0.4)
-                                                  : VigiloUiColors.textSoft(_isDark),
+                                                  ? VigiloUiColors.textFaint(
+                                                      _isDark,
+                                                    ).withValues(alpha: 0.4)
+                                                  : VigiloUiColors.textSoft(
+                                                      _isDark,
+                                                    ),
                                               fontSize: 13,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -3342,9 +3489,14 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     Switch(
                                       value: autoStart,
                                       activeThumbColor: Colors.white,
-                                      activeTrackColor: VigiloUiColors.blue(_isDark),
-                                      inactiveTrackColor: VigiloUiColors.panel(_isDark),
-                                      inactiveThumbColor: VigiloUiColors.finished(_isDark),
+                                      activeTrackColor: VigiloUiColors.blue(
+                                        _isDark,
+                                      ),
+                                      inactiveTrackColor: VigiloUiColors.panel(
+                                        _isDark,
+                                      ),
+                                      inactiveThumbColor:
+                                          VigiloUiColors.finished(_isDark),
                                       trackOutlineColor:
                                           WidgetStateProperty.resolveWith((
                                             states,
@@ -3354,7 +3506,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                             )) {
                                               return Colors.transparent;
                                             }
-                                            return VigiloUiColors.lineSoft(_isDark);
+                                            return VigiloUiColors.lineSoft(
+                                              _isDark,
+                                            );
                                           }),
                                       onChanged: _isExamCompleted
                                           ? null
@@ -3416,7 +3570,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                       child: Text(
                                         "QUICK MESSAGES",
                                         style: TextStyle(
-                                          color: VigiloUiColors.blueSoft(_isDark),
+                                          color: VigiloUiColors.blueSoft(
+                                            _isDark,
+                                          ),
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 1.3,
@@ -3527,7 +3683,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     title: "Toilet Visit",
                                     subtitle: "Record a toilet visit",
                                     icon: Icons.wc,
-                                    color: VigiloUiColors.incidentToilet(_isDark),
+                                    color: VigiloUiColors.incidentToilet(
+                                      _isDark,
+                                    ),
                                     onTap: _showToiletVisitIncidentDialog,
                                     disabled: _isExamCompleted,
                                   ),
@@ -3535,7 +3693,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     title: "Medical",
                                     subtitle: "Record a medical incident",
                                     icon: Icons.medical_services_outlined,
-                                    color: VigiloUiColors.incidentMedical(_isDark),
+                                    color: VigiloUiColors.incidentMedical(
+                                      _isDark,
+                                    ),
                                     onTap: _showMedicalIncidentDialog,
                                     disabled: _isExamCompleted,
                                   ),
@@ -3543,7 +3703,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     title: "Malpractice",
                                     subtitle: "Record a malpractice concern",
                                     icon: Icons.warning_amber_rounded,
-                                    color: VigiloUiColors.incidentMalpractice(_isDark),
+                                    color: VigiloUiColors.incidentMalpractice(
+                                      _isDark,
+                                    ),
                                     onTap: _showMalpracticeIncidentDialog,
                                     disabled: _isExamCompleted,
                                   ),
@@ -3551,7 +3713,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     title: "Late Arrival",
                                     subtitle: "Record a late arrival",
                                     icon: Icons.schedule_rounded,
-                                    color: VigiloUiColors.incidentLateArrival(_isDark),
+                                    color: VigiloUiColors.incidentLateArrival(
+                                      _isDark,
+                                    ),
                                     onTap: _showLateArrivalIncidentDialog,
                                     disabled: _isExamCompleted,
                                   ),
@@ -3585,12 +3749,14 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                         vertical: 20,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: VigiloUiColors.panel2(_isDark).withValues(
-                                          alpha: 0.7,
-                                        ),
+                                        color: VigiloUiColors.panel2(
+                                          _isDark,
+                                        ).withValues(alpha: 0.7),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
-                                          color: VigiloUiColors.lineSoft(_isDark),
+                                          color: VigiloUiColors.lineSoft(
+                                            _isDark,
+                                          ),
                                           width: .7,
                                         ),
                                       ),
@@ -3598,7 +3764,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                         child: Text(
                                           "No recent incidents logged",
                                           style: TextStyle(
-                                            color: VigiloUiColors.textSoft(_isDark),
+                                            color: VigiloUiColors.textSoft(
+                                              _isDark,
+                                            ),
                                             fontSize: 14,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -3625,36 +3793,50 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                       if (incident.message == 'Toilet break') {
                                         visualTitle = "Toilet Visit";
                                         visualIcon = Icons.wc;
-                                        visualColor = VigiloUiColors.incidentToilet(_isDark);
+                                        visualColor =
+                                            VigiloUiColors.incidentToilet(
+                                              _isDark,
+                                            );
                                       } else if (incident.message ==
                                           'Medical incident') {
                                         visualTitle = "Medical";
-                                        visualIcon = Icons.medical_services_outlined;
-                                        visualColor = VigiloUiColors.incidentMedical(_isDark);
+                                        visualIcon =
+                                            Icons.medical_services_outlined;
+                                        visualColor =
+                                            VigiloUiColors.incidentMedical(
+                                              _isDark,
+                                            );
                                       } else if (_isLateArrival(incident)) {
-                                        visualTitle = incident.studentID.trim().isNotEmpty
-                                            ? "Late Arrival ${incident.studentID.trim()}"
-                                            : "Late Arrival";
+                                        visualTitle = "Late Arrival";
                                         visualIcon = Icons.schedule_rounded;
-                                        visualColor = VigiloUiColors.incidentLateArrival(_isDark);
+                                        visualColor =
+                                            VigiloUiColors.incidentLateArrival(
+                                              _isDark,
+                                            );
                                       } else {
                                         visualTitle = "Malpractice";
                                         visualIcon =
                                             Icons.warning_amber_rounded;
-                                        visualColor = VigiloUiColors.incidentMalpractice(_isDark);
+                                        visualColor =
+                                            VigiloUiColors.incidentMalpractice(
+                                              _isDark,
+                                            );
                                       }
 
                                       return Container(
                                         width: double.infinity,
                                         clipBehavior: Clip.antiAlias,
                                         decoration: BoxDecoration(
-                                          color: VigiloUiColors.panel2(_isDark)
-                                              .withValues(alpha: 0.7),
+                                          color: VigiloUiColors.panel2(
+                                            _isDark,
+                                          ).withValues(alpha: 0.7),
                                           borderRadius: BorderRadius.circular(
                                             20,
                                           ),
                                           border: Border.all(
-                                            color: VigiloUiColors.lineSoft(_isDark),
+                                            color: VigiloUiColors.lineSoft(
+                                              _isDark,
+                                            ),
                                             width: .7,
                                           ),
                                         ),
@@ -3696,7 +3878,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                       Text(
                                                         timeStr,
                                                         style: TextStyle(
-                                                          color: VigiloUiColors.text(_isDark),
+                                                          color:
+                                                              VigiloUiColors.text(
+                                                                _isDark,
+                                                              ),
                                                           fontSize: 15.5,
                                                           fontWeight:
                                                               FontWeight.w900,
@@ -3724,14 +3909,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                               height: 3,
                                                             ),
                                                             Text(
-                                                              _isLateArrival(incident)
-                                                                  ? (incident.action.toLowerCase() == 'admitted'
-                                                                      ? 'Admitted -- full duration required'
-                                                                      : 'Not admitted')
-                                                                  : "Student: ${incident.studentID.trim()}",
+                                                              "${_formatCandidates(incident.studentID).label}: ${_formatCandidates(incident.studentID).joined}",
                                                               style: TextStyle(
                                                                 color:
-                                                                    VigiloUiColors.textSoft(_isDark),
+                                                                    VigiloUiColors.textSoft(
+                                                                      _isDark,
+                                                                    ),
                                                                 fontSize: 13.8,
                                                                 fontWeight:
                                                                     FontWeight
@@ -3759,13 +3942,59 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                                       Text(
                                                                         "Room: ${incident.room}",
                                                                         style: TextStyle(
-                                                                          color:
-                                                                              VigiloUiColors.textSoft(_isDark),
+                                                                          color: VigiloUiColors.textSoft(
+                                                                            _isDark,
+                                                                          ),
                                                                           fontSize:
                                                                               13.8,
                                                                           fontWeight:
                                                                               FontWeight.w600,
                                                                         ),
+                                                                      ),
+                                                                    // Toilet visit: outcome badge
+                                                                    if (incident
+                                                                            .message ==
+                                                                        'Toilet break')
+                                                                      Row(
+                                                                        children: [
+                                                                          Icon(
+                                                                            incident.action.toLowerCase() ==
+                                                                                    'declined'
+                                                                                ? Icons.cancel_outlined
+                                                                                : Icons.check_circle_outline,
+                                                                            size:
+                                                                                15,
+                                                                            color:
+                                                                                incident.action.toLowerCase() ==
+                                                                                    'declined'
+                                                                                ? VigiloUiColors.amber(
+                                                                                    _isDark,
+                                                                                  )
+                                                                                : VigiloUiColors.green(
+                                                                                    _isDark,
+                                                                                  ),
+                                                                          ),
+                                                                          const SizedBox(
+                                                                            width:
+                                                                                6,
+                                                                          ),
+                                                                          Text(
+                                                                            "Outcome: ${incident.action.toLowerCase() == 'declined' ? 'Declined' : 'Approved'}",
+                                                                            style: TextStyle(
+                                                                              color:
+                                                                                  incident.action.toLowerCase() ==
+                                                                                      'declined'
+                                                                                  ? VigiloUiColors.amber(
+                                                                                      _isDark,
+                                                                                    )
+                                                                                  : VigiloUiColors.green(
+                                                                                      _isDark,
+                                                                                    ),
+                                                                              fontSize: 13.8,
+                                                                              fontWeight: FontWeight.w700,
+                                                                            ),
+                                                                          ),
+                                                                        ],
                                                                       ),
                                                                     if (incident
                                                                         .duration
@@ -3773,8 +4002,45 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                                       Text(
                                                                         "Duration: ${incident.duration} minutes",
                                                                         style: TextStyle(
-                                                                          color:
-                                                                              VigiloUiColors.textSoft(_isDark),
+                                                                          color: VigiloUiColors.textSoft(
+                                                                            _isDark,
+                                                                          ),
+                                                                          fontSize:
+                                                                              13.8,
+                                                                          fontWeight:
+                                                                              FontWeight.w600,
+                                                                        ),
+                                                                      ),
+                                                                    // Toilet visit: time returned
+                                                                    if (incident.message ==
+                                                                            'Toilet break' &&
+                                                                        incident
+                                                                            .actualFinishTime
+                                                                            .isNotEmpty)
+                                                                      Text(
+                                                                        "Time returned: ${incident.actualFinishTime}",
+                                                                        style: TextStyle(
+                                                                          color: VigiloUiColors.textSoft(
+                                                                            _isDark,
+                                                                          ),
+                                                                          fontSize:
+                                                                              13.8,
+                                                                          fontWeight:
+                                                                              FontWeight.w600,
+                                                                        ),
+                                                                      ),
+                                                                    if (_isLateArrival(
+                                                                      incident,
+                                                                    ))
+                                                                      Text(
+                                                                        incident.action.toLowerCase() ==
+                                                                                'admitted'
+                                                                            ? "Outcome: Admitted -- full duration required"
+                                                                            : "Outcome: Not admitted",
+                                                                        style: TextStyle(
+                                                                          color: VigiloUiColors.textSoft(
+                                                                            _isDark,
+                                                                          ),
                                                                           fontSize:
                                                                               13.8,
                                                                           fontWeight:
@@ -3785,24 +4051,59 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                                         .detail
                                                                         .isNotEmpty)
                                                                       Text(
-                                                                        "Details: ${incident.detail}",
+                                                                        // Use "Notes" label for toilet visits, "Reason" for declined toilet, "Details" for others
+                                                                        incident.message ==
+                                                                                'Toilet break'
+                                                                            ? (incident.action.toLowerCase() ==
+                                                                                      'declined'
+                                                                                  ? "Reason: ${incident.detail}"
+                                                                                  : "Notes: ${incident.detail}")
+                                                                            : "Details: ${incident.detail}",
                                                                         style: TextStyle(
-                                                                          color:
-                                                                              VigiloUiColors.textSoft(_isDark),
+                                                                          color: VigiloUiColors.textSoft(
+                                                                            _isDark,
+                                                                          ),
                                                                           fontSize:
                                                                               13.8,
                                                                           fontWeight:
                                                                               FontWeight.w600,
                                                                         ),
                                                                       ),
-                                                                    if (incident
-                                                                        .action
-                                                                        .isNotEmpty)
+                                                                    // Show action for non-toilet, non-late-arrival incidents; for toilet visits the outcome badge handles it
+                                                                    if (!_isLateArrival(
+                                                                          incident,
+                                                                        ) &&
+                                                                        incident.message !=
+                                                                            'Toilet break' &&
+                                                                        incident
+                                                                            .action
+                                                                            .isNotEmpty)
                                                                       Text(
                                                                         "Action: ${incident.action}",
                                                                         style: TextStyle(
-                                                                          color:
-                                                                              VigiloUiColors.textSoft(_isDark),
+                                                                          color: VigiloUiColors.textSoft(
+                                                                            _isDark,
+                                                                          ),
+                                                                          fontSize:
+                                                                              13.8,
+                                                                          fontWeight:
+                                                                              FontWeight.w600,
+                                                                        ),
+                                                                      ),
+                                                                    // For approved toilet visits, show the action taken (e.g. "Escorted by staff")
+                                                                    if (incident.message ==
+                                                                            'Toilet break' &&
+                                                                        incident.action.toLowerCase() !=
+                                                                            'declined' &&
+                                                                        incident
+                                                                            .action
+                                                                            .isNotEmpty)
+                                                                      Text(
+                                                                        "Action taken: ${incident.action}",
+                                                                        style: TextStyle(
+                                                                          color: VigiloUiColors.textSoft(
+                                                                            _isDark,
+                                                                          ),
                                                                           fontSize:
                                                                               13.8,
                                                                           fontWeight:
@@ -3848,7 +4149,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                             Icons
                                                                 .keyboard_arrow_right_rounded,
                                                             color:
-                                                                VigiloUiColors.textSoft(_isDark),
+                                                                VigiloUiColors.textSoft(
+                                                                  _isDark,
+                                                                ),
                                                             size: 24,
                                                           ),
                                                         ),
@@ -3951,14 +4254,20 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               else
                                 ...List.generate(_currentData.logs.length, (i) {
                                   final incident = _currentData.logs[i];
-                                  final isThisExpanded = _expandedLogIndex == i &&
+                                  final isThisExpanded =
+                                      _expandedLogIndex == i &&
                                       _logCategory(incident) == 'Incident';
-                                  final isNextExpanded = i + 1 < _currentData.logs.length &&
+                                  final isNextExpanded =
+                                      i + 1 < _currentData.logs.length &&
                                       _expandedLogIndex == i + 1 &&
-                                      _logCategory(_currentData.logs[i + 1]) == 'Incident';
-                                  final isLast = i == _currentData.logs.length - 1;
+                                      _logCategory(_currentData.logs[i + 1]) ==
+                                          'Incident';
+                                  final isLast =
+                                      i == _currentData.logs.length - 1;
                                   final showBottomDivider =
-                                      !isThisExpanded && !isNextExpanded && !isLast;
+                                      !isThisExpanded &&
+                                      !isNextExpanded &&
+                                      !isLast;
 
                                   return _timelineLogRow(
                                     incident: incident,
@@ -3999,9 +4308,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: VigiloUiColors.panel2(_isDark).withValues(
-                                    alpha: 0.7,
-                                  ),
+                                  color: VigiloUiColors.panel2(
+                                    _isDark,
+                                  ).withValues(alpha: 0.7),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: VigiloUiColors.lineSoft(_isDark),
@@ -4052,9 +4361,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: VigiloUiColors.panel2(_isDark).withValues(
-                                    alpha: 0.7,
-                                  ),
+                                  color: VigiloUiColors.panel2(
+                                    _isDark,
+                                  ).withValues(alpha: 0.7),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: VigiloUiColors.lineSoft(_isDark),
@@ -4103,14 +4412,14 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                               Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: VigiloUiColors.red(_isDark).withValues(
-                                    alpha: 0.03,
-                                  ),
+                                  color: VigiloUiColors.red(
+                                    _isDark,
+                                  ).withValues(alpha: 0.03),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: VigiloUiColors.red(_isDark).withValues(
-                                      alpha: 0.4,
-                                    ),
+                                    color: VigiloUiColors.red(
+                                      _isDark,
+                                    ).withValues(alpha: 0.4),
                                     width: .7,
                                   ),
                                 ),
@@ -4275,7 +4584,9 @@ class _InvigilatorSelectorDialogState
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: selected ? VigiloUiColors.blue(_isDark) : VigiloUiColors.panel3(_isDark),
+                color: selected
+                    ? VigiloUiColors.blue(_isDark)
+                    : VigiloUiColors.panel3(_isDark),
               ),
               alignment: Alignment.center,
               child: isSelectAll
@@ -4313,11 +4624,15 @@ class _InvigilatorSelectorDialogState
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: selected ? VigiloUiColors.blueSoft(_isDark) : Colors.transparent,
+                color: selected
+                    ? VigiloUiColors.blueSoft(_isDark)
+                    : Colors.transparent,
                 border: selected
                     ? null
                     : Border.all(
-                        color: VigiloUiColors.textSoft(_isDark).withValues(alpha: 0.5),
+                        color: VigiloUiColors.textSoft(
+                          _isDark,
+                        ).withValues(alpha: 0.5),
                         width: 2.0,
                       ),
               ),
@@ -4375,10 +4690,14 @@ class _InvigilatorSelectorDialogState
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: VigiloUiColors.blue(_isDark).withValues(alpha: 0.15),
+                          color: VigiloUiColors.blue(
+                            _isDark,
+                          ).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: VigiloUiColors.blue(_isDark).withValues(alpha: 0.70),
+                            color: VigiloUiColors.blue(
+                              _isDark,
+                            ).withValues(alpha: 0.70),
                             width: .7,
                           ),
                         ),
@@ -4587,7 +4906,9 @@ class _InvigilatorSelectorDialogState
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: VigiloUiColors.lineSoft(_isDark)),
-            backgroundColor: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
+            backgroundColor: VigiloUiColors.panel2(
+              _isDark,
+            ).withValues(alpha: 0.62),
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
@@ -4739,14 +5060,14 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                             width: 58,
                             height: 58,
                             decoration: BoxDecoration(
-                              color: VigiloUiColors.blue(_isDark).withValues(
-                                alpha: 0.12,
-                              ),
+                              color: VigiloUiColors.blue(
+                                _isDark,
+                              ).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(
-                                color: VigiloUiColors.blue(_isDark).withValues(
-                                  alpha: 0.5,
-                                ),
+                                color: VigiloUiColors.blue(
+                                  _isDark,
+                                ).withValues(alpha: 0.5),
                               ),
                             ),
                             child: Icon(
@@ -4804,13 +5125,14 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                                       horizontal: 16,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: VigiloUiColors.panel2(_isDark).withValues(
-                                        alpha: 0.58,
-                                      ),
+                                      color: VigiloUiColors.panel2(
+                                        _isDark,
+                                      ).withValues(alpha: 0.58),
                                       borderRadius: BorderRadius.circular(18),
                                       border: Border.all(
-                                        color: VigiloUiColors.lineSoft(_isDark)
-                                            .withValues(alpha: 0.28),
+                                        color: VigiloUiColors.lineSoft(
+                                          _isDark,
+                                        ).withValues(alpha: 0.28),
                                       ),
                                     ),
                                     child: TextField(
@@ -4852,7 +5174,9 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
 
                       Container(
                         height: 1,
-                        color: VigiloUiColors.line(_isDark).withValues(alpha: 0.18),
+                        color: VigiloUiColors.line(
+                          _isDark,
+                        ).withValues(alpha: 0.18),
                       ),
 
                       const SizedBox(height: 22),
@@ -4878,9 +5202,9 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                           color: VigiloUiColors.panel2(_isDark),
                           borderRadius: BorderRadius.circular(22),
                           border: Border.all(
-                            color: VigiloUiColors.lineSoft(_isDark).withValues(
-                              alpha: 0.45,
-                            ),
+                            color: VigiloUiColors.lineSoft(
+                              _isDark,
+                            ).withValues(alpha: 0.45),
                           ),
                         ),
                         child: TextField(
@@ -4939,8 +5263,9 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                                     side: BorderSide(
                                       color: VigiloUiColors.lineSoft(_isDark),
                                     ),
-                                    backgroundColor: VigiloUiColors.panel2(_isDark)
-                                        .withValues(alpha: 0.62),
+                                    backgroundColor: VigiloUiColors.panel2(
+                                      _isDark,
+                                    ).withValues(alpha: 0.62),
                                     shape: const StadiumBorder(),
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 10,
@@ -4951,7 +5276,9 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                                     child: Text(
                                       'Close',
                                       style: TextStyle(
-                                        color: VigiloUiColors.blackWhite(_isDark),
+                                        color: VigiloUiColors.blackWhite(
+                                          _isDark,
+                                        ),
                                         fontSize: 14,
                                         fontWeight: FontWeight.w900,
                                       ),
@@ -4976,9 +5303,13 @@ class _PresetMessagesDialogState extends State<_PresetMessagesDialog> {
                                     child: FilledButton(
                                       onPressed: isEnabled ? _addPreset : null,
                                       style: FilledButton.styleFrom(
-                                        backgroundColor: VigiloUiColors.blue(_isDark),
-                                        disabledBackgroundColor: VigiloUiColors.blue(_isDark)
-                                            .withValues(alpha: 0.45),
+                                        backgroundColor: VigiloUiColors.blue(
+                                          _isDark,
+                                        ),
+                                        disabledBackgroundColor:
+                                            VigiloUiColors.blue(
+                                              _isDark,
+                                            ).withValues(alpha: 0.45),
                                         foregroundColor: Colors.white,
                                         disabledForegroundColor: Colors.white
                                             .withValues(alpha: 0.6),
@@ -5088,9 +5419,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
         child: FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: VigiloUiColors.blue(_isDark),
-            disabledBackgroundColor: VigiloUiColors.blue(_isDark).withValues(
-              alpha: 0.45,
-            ),
+            disabledBackgroundColor: VigiloUiColors.blue(
+              _isDark,
+            ).withValues(alpha: 0.45),
             foregroundColor: Colors.white,
             disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
             shape: const StadiumBorder(),
@@ -5123,7 +5454,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: VigiloUiColors.lineSoft(_isDark)),
-            backgroundColor: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
+            backgroundColor: VigiloUiColors.panel2(
+              _isDark,
+            ).withValues(alpha: 0.62),
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
@@ -5192,14 +5525,14 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: VigiloUiColors.blue(_isDark).withValues(
-                                alpha: 0.15,
-                              ),
+                              color: VigiloUiColors.blue(
+                                _isDark,
+                              ).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: VigiloUiColors.blue(_isDark).withValues(
-                                  alpha: 0.70,
-                                ),
+                                color: VigiloUiColors.blue(
+                                  _isDark,
+                                ).withValues(alpha: 0.70),
                                 width: .7,
                               ),
                             ),
@@ -5277,9 +5610,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: VigiloUiColors.panel2(_isDark).withValues(
-                                  alpha: 0.30,
-                                ),
+                                color: VigiloUiColors.panel2(
+                                  _isDark,
+                                ).withValues(alpha: 0.30),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: VigiloUiColors.lineSoft(_isDark),
@@ -5304,9 +5637,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 decoration: InputDecoration(
                                   hintText: 'Additional papers / materials',
                                   hintStyle: TextStyle(
-                                    color: VigiloUiColors.textSoft(_isDark).withValues(
-                                      alpha: 0.60,
-                                    ),
+                                    color: VigiloUiColors.textSoft(
+                                      _isDark,
+                                    ).withValues(alpha: 0.60),
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -5338,21 +5671,21 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                       height: 44,
                                       decoration: BoxDecoration(
                                         color: _priority == 'Normal'
-                                            ? VigiloUiColors.blue(_isDark).withValues(
-                                                alpha: 0.15,
-                                              )
-                                            : VigiloUiColors.panel2(_isDark).withValues(
-                                                alpha: 0.30,
-                                              ),
+                                            ? VigiloUiColors.blue(
+                                                _isDark,
+                                              ).withValues(alpha: 0.15)
+                                            : VigiloUiColors.panel2(
+                                                _isDark,
+                                              ).withValues(alpha: 0.30),
                                         borderRadius: BorderRadius.circular(24),
                                         border: Border.all(
                                           color: _priority == 'Normal'
-                                              ? VigiloUiColors.blue(_isDark).withValues(
-                                                  alpha: .7,
-                                                )
-                                              : VigiloUiColors.line(_isDark).withValues(
-                                                  alpha: 0.3,
-                                                ),
+                                              ? VigiloUiColors.blue(
+                                                  _isDark,
+                                                ).withValues(alpha: .7)
+                                              : VigiloUiColors.line(
+                                                  _isDark,
+                                                ).withValues(alpha: 0.3),
                                           width: .7,
                                         ),
                                       ),
@@ -5362,7 +5695,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                         style: TextStyle(
                                           color: _priority == 'Normal'
                                               ? VigiloUiColors.blue(_isDark)
-                                              : VigiloUiColors.textSoft(_isDark),
+                                              : VigiloUiColors.textSoft(
+                                                  _isDark,
+                                                ),
                                           fontSize: 15.5,
                                           fontWeight: FontWeight.w900,
                                         ),
@@ -5384,20 +5719,21 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                       height: 44,
                                       decoration: BoxDecoration(
                                         color: _priority == 'Urgent'
-                                            ? VigiloUiColors.amber(_isDark).withValues(
-                                                alpha: 0.15,
-                                              )
-                                            : VigiloUiColors.panel2(_isDark).withValues(
-                                                alpha: 0.30,
-                                              ),
+                                            ? VigiloUiColors.amber(
+                                                _isDark,
+                                              ).withValues(alpha: 0.15)
+                                            : VigiloUiColors.panel2(
+                                                _isDark,
+                                              ).withValues(alpha: 0.30),
                                         borderRadius: BorderRadius.circular(24),
                                         border: Border.all(
                                           color: _priority == 'Urgent'
-                                              ? VigiloUiColors.amber(_isDark)
-                                                    .withValues(alpha: .7)
-                                              : VigiloUiColors.line(_isDark).withValues(
-                                                  alpha: 0.3,
-                                                ),
+                                              ? VigiloUiColors.amber(
+                                                  _isDark,
+                                                ).withValues(alpha: .7)
+                                              : VigiloUiColors.line(
+                                                  _isDark,
+                                                ).withValues(alpha: 0.3),
                                           width: .7,
                                         ),
                                       ),
@@ -5407,7 +5743,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                         style: TextStyle(
                                           color: _priority == 'Urgent'
                                               ? VigiloUiColors.amber(_isDark)
-                                              : VigiloUiColors.textSoft(_isDark),
+                                              : VigiloUiColors.textSoft(
+                                                  _isDark,
+                                                ),
                                           fontSize: 15.5,
                                           fontWeight: FontWeight.w900,
                                         ),
@@ -5427,9 +5765,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: VigiloUiColors.panel2(_isDark).withValues(
-                                  alpha: 0.30,
-                                ),
+                                color: VigiloUiColors.panel2(
+                                  _isDark,
+                                ).withValues(alpha: 0.30),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: VigiloUiColors.lineSoft(_isDark),
@@ -5453,9 +5791,9 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 decoration: InputDecoration(
                                   hintText: 'Add details for the runner...',
                                   hintStyle: TextStyle(
-                                    color: VigiloUiColors.textSoft(_isDark).withValues(
-                                      alpha: 0.60,
-                                    ),
+                                    color: VigiloUiColors.textSoft(
+                                      _isDark,
+                                    ).withValues(alpha: 0.60),
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -5476,14 +5814,14 @@ class _RequestRunnerDialogState extends State<_RequestRunnerDialog> {
                                 vertical: 14,
                               ),
                               decoration: BoxDecoration(
-                                color: VigiloUiColors.blue(_isDark).withValues(
-                                  alpha: .05,
-                                ),
+                                color: VigiloUiColors.blue(
+                                  _isDark,
+                                ).withValues(alpha: .05),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: VigiloUiColors.blue(_isDark).withValues(
-                                    alpha: 0.7,
-                                  ),
+                                  color: VigiloUiColors.blue(
+                                    _isDark,
+                                  ).withValues(alpha: 0.7),
                                   width: .7,
                                 ),
                               ),
@@ -5626,9 +5964,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
         child: FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: VigiloUiColors.incidentMedical(_isDark),
-            disabledBackgroundColor: VigiloUiColors.incidentMedical(_isDark).withValues(
-              alpha: 0.45,
-            ),
+            disabledBackgroundColor: VigiloUiColors.incidentMedical(
+              _isDark,
+            ).withValues(alpha: 0.45),
             foregroundColor: Colors.white,
             disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
             shape: const StadiumBorder(),
@@ -5661,7 +5999,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: VigiloUiColors.lineSoft(_isDark)),
-            backgroundColor: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
+            backgroundColor: VigiloUiColors.panel2(
+              _isDark,
+            ).withValues(alpha: 0.62),
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
@@ -5730,14 +6070,14 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: VigiloUiColors.incidentMedical(_isDark).withValues(
-                                alpha: 0.15,
-                              ),
+                              color: VigiloUiColors.incidentMedical(
+                                _isDark,
+                              ).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: VigiloUiColors.incidentMedical(_isDark).withValues(
-                                  alpha: 0.70,
-                                ),
+                                color: VigiloUiColors.incidentMedical(
+                                  _isDark,
+                                ).withValues(alpha: 0.70),
                                 width: .7,
                               ),
                             ),
@@ -5820,9 +6160,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: VigiloUiColors.panel2(_isDark).withValues(
-                                  alpha: 0.30,
-                                ),
+                                color: VigiloUiColors.panel2(
+                                  _isDark,
+                                ).withValues(alpha: 0.30),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: VigiloUiColors.lineSoft(_isDark),
@@ -5835,7 +6175,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 onSubmitted: (_) {
                                   _detailsFocus.requestFocus();
                                 },
-                                cursorColor: VigiloUiColors.incidentMedical(_isDark),
+                                cursorColor: VigiloUiColors.incidentMedical(
+                                  _isDark,
+                                ),
                                 style: TextStyle(
                                   color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
@@ -5843,11 +6185,12 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 ),
                                 onChanged: (_) => setState(() {}),
                                 decoration: InputDecoration(
-                                  hintText: 'Enter candidate reference, e.g. DR654',
+                                  hintText:
+                                      'Enter candidate reference, e.g. DR654',
                                   hintStyle: TextStyle(
-                                    color: VigiloUiColors.textSoft(_isDark).withValues(
-                                      alpha: 0.60,
-                                    ),
+                                    color: VigiloUiColors.textSoft(
+                                      _isDark,
+                                    ).withValues(alpha: 0.60),
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -5869,9 +6212,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: VigiloUiColors.panel2(_isDark).withValues(
-                                  alpha: 0.30,
-                                ),
+                                color: VigiloUiColors.panel2(
+                                  _isDark,
+                                ).withValues(alpha: 0.30),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: VigiloUiColors.lineSoft(_isDark),
@@ -5897,9 +6240,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                   hintText:
                                       'Describe the incident detail and symptoms...',
                                   hintStyle: TextStyle(
-                                    color: VigiloUiColors.textSoft(_isDark).withValues(
-                                      alpha: 0.60,
-                                    ),
+                                    color: VigiloUiColors.textSoft(
+                                      _isDark,
+                                    ).withValues(alpha: 0.60),
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -5921,9 +6264,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: VigiloUiColors.panel2(_isDark).withValues(
-                                  alpha: 0.30,
-                                ),
+                                color: VigiloUiColors.panel2(
+                                  _isDark,
+                                ).withValues(alpha: 0.30),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: VigiloUiColors.lineSoft(_isDark),
@@ -5943,9 +6286,9 @@ class _MedicalIncidentDialogState extends State<_MedicalIncidentDialog> {
                                 decoration: InputDecoration(
                                   hintText: 'First aid / support / escalation',
                                   hintStyle: TextStyle(
-                                    color: VigiloUiColors.textSoft(_isDark).withValues(
-                                      alpha: 0.60,
-                                    ),
+                                    color: VigiloUiColors.textSoft(
+                                      _isDark,
+                                    ).withValues(alpha: 0.60),
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -6076,9 +6419,9 @@ class _MalpracticeIncidentDialogState
         child: FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: VigiloUiColors.incidentMalpractice(_isDark),
-            disabledBackgroundColor: VigiloUiColors.incidentMalpractice(_isDark).withValues(
-              alpha: 0.45,
-            ),
+            disabledBackgroundColor: VigiloUiColors.incidentMalpractice(
+              _isDark,
+            ).withValues(alpha: 0.45),
             foregroundColor: Colors.white,
             disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
             shape: const StadiumBorder(),
@@ -6111,7 +6454,9 @@ class _MalpracticeIncidentDialogState
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: VigiloUiColors.lineSoft(_isDark)),
-            backgroundColor: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
+            backgroundColor: VigiloUiColors.panel2(
+              _isDark,
+            ).withValues(alpha: 0.62),
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
@@ -6180,21 +6525,23 @@ class _MalpracticeIncidentDialogState
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: VigiloUiColors.incidentMalpractice(_isDark).withValues(
-                                alpha: 0.15,
-                              ),
+                              color: VigiloUiColors.incidentMalpractice(
+                                _isDark,
+                              ).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: VigiloUiColors.incidentMalpractice(_isDark).withValues(
-                                  alpha: 0.7,
-                                ),
+                                color: VigiloUiColors.incidentMalpractice(
+                                  _isDark,
+                                ).withValues(alpha: 0.7),
                                 width: .7,
                               ),
                             ),
                             alignment: Alignment.center,
                             child: Icon(
                               Icons.warning_amber_rounded,
-                              color: VigiloUiColors.incidentMalpractice(_isDark),
+                              color: VigiloUiColors.incidentMalpractice(
+                                _isDark,
+                              ),
                               size: 26,
                             ),
                           ),
@@ -6268,21 +6615,23 @@ class _MalpracticeIncidentDialogState
                                 vertical: 14,
                               ),
                               decoration: BoxDecoration(
-                                color: VigiloUiColors.incidentMalpractice(_isDark).withValues(
-                                  alpha: .10,
-                                ),
+                                color: VigiloUiColors.incidentMalpractice(
+                                  _isDark,
+                                ).withValues(alpha: .10),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: VigiloUiColors.incidentMalpractice(_isDark).withValues(
-                                    alpha: 0.6,
-                                  ),
+                                  color: VigiloUiColors.incidentMalpractice(
+                                    _isDark,
+                                  ).withValues(alpha: 0.6),
                                   width: .7,
                                 ),
                               ),
                               child: Text(
                                 'Use factual wording only. This records malpractice, not a confirmed outcome.',
                                 style: TextStyle(
-                                  color: VigiloUiColors.incidentMalpractice(_isDark),
+                                  color: VigiloUiColors.incidentMalpractice(
+                                    _isDark,
+                                  ),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   height: 1.45,
@@ -6299,9 +6648,9 @@ class _MalpracticeIncidentDialogState
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: VigiloUiColors.panel2(_isDark).withValues(
-                                  alpha: 0.30,
-                                ),
+                                color: VigiloUiColors.panel2(
+                                  _isDark,
+                                ).withValues(alpha: 0.30),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: VigiloUiColors.lineSoft(_isDark),
@@ -6324,9 +6673,9 @@ class _MalpracticeIncidentDialogState
                                   hintText:
                                       'Name and candidate number\nIf more than one candidate is involved, list one per line',
                                   hintStyle: TextStyle(
-                                    color: VigiloUiColors.textSoft(_isDark).withValues(
-                                      alpha: 0.60,
-                                    ),
+                                    color: VigiloUiColors.textSoft(
+                                      _isDark,
+                                    ).withValues(alpha: 0.60),
                                     fontSize: 14.5,
                                     fontWeight: FontWeight.w600,
                                     height: 1.35,
@@ -6349,9 +6698,9 @@ class _MalpracticeIncidentDialogState
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: VigiloUiColors.panel2(_isDark).withValues(
-                                  alpha: 0.30,
-                                ),
+                                color: VigiloUiColors.panel2(
+                                  _isDark,
+                                ).withValues(alpha: 0.30),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: VigiloUiColors.lineSoft(_isDark),
@@ -6375,13 +6724,12 @@ class _MalpracticeIncidentDialogState
                                 onChanged: (_) => setState(() {}),
                                 decoration: InputDecoration(
                                   hintText:
-                                      'Describe the observed behaviour factually...\n\n'
-                                      'e.g. Mobile phone rang from Candidate A\'s bag at 10:42. '
-                                      'Statements taken from Candidates A, B and C, who were seated nearby.',
+                                      'Describe the observed behaviour factually.\n\n'
+                                      'e.g. Mobile phone rang from Candidate A\'s bag at 10:42.',
                                   hintStyle: TextStyle(
-                                    color: VigiloUiColors.textSoft(_isDark).withValues(
-                                      alpha: 0.60,
-                                    ),
+                                    color: VigiloUiColors.textSoft(
+                                      _isDark,
+                                    ).withValues(alpha: 0.60),
                                     fontSize: 14.5,
                                     fontWeight: FontWeight.w600,
                                     height: 1.35,
@@ -6404,9 +6752,9 @@ class _MalpracticeIncidentDialogState
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: VigiloUiColors.panel2(_isDark).withValues(
-                                  alpha: 0.30,
-                                ),
+                                color: VigiloUiColors.panel2(
+                                  _isDark,
+                                ).withValues(alpha: 0.30),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: VigiloUiColors.lineSoft(_isDark),
@@ -6427,9 +6775,9 @@ class _MalpracticeIncidentDialogState
                                   hintText:
                                       'Reported to EO / evidence retained',
                                   hintStyle: TextStyle(
-                                    color: VigiloUiColors.textSoft(_isDark).withValues(
-                                      alpha: 0.60,
-                                    ),
+                                    color: VigiloUiColors.textSoft(
+                                      _isDark,
+                                    ).withValues(alpha: 0.60),
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -6491,6 +6839,7 @@ class _ToiletVisitIncidentDialog extends StatefulWidget {
     String room,
     String student,
     String duration,
+    String timeReturned,
     String notes,
     String actionTaken,
   )
@@ -6507,6 +6856,7 @@ class _ToiletVisitIncidentDialogState
   bool get _isDark => Theme.of(context).brightness == Brightness.dark;
 
   VisitStatus _status = VisitStatus.approved;
+
   bool get _isDeclined => _status == VisitStatus.declined;
 
   final TextEditingController _studentController = TextEditingController();
@@ -6520,6 +6870,7 @@ class _ToiletVisitIncidentDialogState
   late final FocusNode _reasonFocus = FocusNode();
 
   int _durationMinutes = 5;
+  TimeOfDay? _timeReturned;
 
   @override
   void dispose() {
@@ -6534,15 +6885,113 @@ class _ToiletVisitIncidentDialogState
     super.dispose();
   }
 
+  String _formatTime(TimeOfDay t) {
+    final hour = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
+    final hh = hour.toString().padLeft(2, '0');
+    final mm = t.minute.toString().padLeft(2, '0');
+    final period = t.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hh:$mm $period';
+  }
+
+  Future<void> _selectTimeReturned() async {
+    final picked = await _showToiletThemedTimePicker(
+      _timeReturned ?? TimeOfDay.now(),
+    );
+    if (picked != null && mounted) {
+      setState(() => _timeReturned = picked);
+    }
+  }
+
+  Future<TimeOfDay?> _showToiletThemedTimePicker(TimeOfDay initialTime) {
+    final accent = VigiloUiColors.incidentToilet(_isDark);
+    final panelBg = VigiloUiColors.panel(_isDark);
+    final panel2Bg = VigiloUiColors.panel2(_isDark);
+    final textColor = VigiloUiColors.text(_isDark);
+    final textSoftColor = VigiloUiColors.textSoft(_isDark);
+    final lineSoftColor = VigiloUiColors.lineSoft(_isDark);
+
+    return showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (BuildContext ctx, Widget? child) {
+        return Theme(
+          data: Theme.of(ctx).copyWith(
+            colorScheme:
+                (_isDark ? const ColorScheme.dark() : const ColorScheme.light())
+                    .copyWith(
+                      primary: accent,
+                      onPrimary: VigiloUiColors.bg(_isDark),
+                      surface: panelBg,
+                      onSurface: textColor,
+                      surfaceContainerHighest: panel2Bg,
+                      outline: lineSoftColor,
+                    ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: panelBg,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+                side: BorderSide(color: lineSoftColor),
+              ),
+              hourMinuteShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: BorderSide(color: lineSoftColor),
+              ),
+              dayPeriodShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: BorderSide(color: lineSoftColor),
+              ),
+              dialHandColor: accent,
+              dialBackgroundColor: panel2Bg.withValues(alpha: 0.50),
+              dialTextColor: textColor,
+              entryModeIconColor: accent,
+              hourMinuteColor: WidgetStateColor.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return accent.withValues(alpha: 0.22);
+                }
+                return panel2Bg.withValues(alpha: 0.45);
+              }),
+              hourMinuteTextColor: WidgetStateColor.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) return accent;
+                return textColor;
+              }),
+              dayPeriodColor: WidgetStateColor.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return accent.withValues(alpha: 0.22);
+                }
+                return panel2Bg.withValues(alpha: 0.45);
+              }),
+              dayPeriodTextColor: WidgetStateColor.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) return accent;
+                return textSoftColor;
+              }),
+              confirmButtonStyle: ButtonStyle(
+                foregroundColor: WidgetStateProperty.all(accent),
+                textStyle: WidgetStateProperty.all(
+                  const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+              cancelButtonStyle: ButtonStyle(
+                foregroundColor: WidgetStateProperty.all(textSoftColor),
+                textStyle: WidgetStateProperty.all(
+                  const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+    );
+  }
+
   bool get _isFormValid {
     final String student = _studentController.text.trim();
     if (student.isEmpty) return false;
     if (_isDeclined) {
       return _reasonController.text.trim().isNotEmpty;
     }
-    final String notes = _notesController.text.trim();
-    final String action = _actionController.text.trim();
-    return notes.isNotEmpty && action.isNotEmpty;
+    // For approved visits, only action taken is required; time returned and notes are optional.
+    return _actionController.text.trim().isNotEmpty;
   }
 
   void _saveEntry() {
@@ -6553,6 +7002,7 @@ class _ToiletVisitIncidentDialogState
         widget.initialRoom,
         _studentController.text.trim(),
         '',
+        '', // no timeReturned for declined
         _reasonController.text.trim(),
         'Declined',
       );
@@ -6561,6 +7011,7 @@ class _ToiletVisitIncidentDialogState
         widget.initialRoom,
         _studentController.text.trim(),
         _durationMinutes.toString(),
+        _timeReturned != null ? _formatTime(_timeReturned!) : '',
         _notesController.text.trim(),
         _actionController.text.trim(),
       );
@@ -6663,7 +7114,9 @@ class _ToiletVisitIncidentDialogState
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: selected
-                  ? VigiloUiColors.incidentToilet(_isDark).withValues(alpha: 0.70)
+                  ? VigiloUiColors.incidentToilet(
+                      _isDark,
+                    ).withValues(alpha: 0.70)
                   : VigiloUiColors.lineSoft(_isDark),
               width: .7,
             ),
@@ -6672,7 +7125,9 @@ class _ToiletVisitIncidentDialogState
           child: Text(
             '$mins min',
             style: TextStyle(
-              color: selected ? VigiloUiColors.incidentToilet(_isDark) : VigiloUiColors.textSoft(_isDark),
+              color: selected
+                  ? VigiloUiColors.incidentToilet(_isDark)
+                  : VigiloUiColors.textSoft(_isDark),
               fontSize: 15.5,
               fontWeight: FontWeight.w900,
             ),
@@ -6746,7 +7201,9 @@ class _ToiletVisitIncidentDialogState
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: VigiloUiColors.lineSoft(_isDark)),
-            backgroundColor: VigiloUiColors.panel2(_isDark).withValues(alpha: 0.62),
+            backgroundColor: VigiloUiColors.panel2(
+              _isDark,
+            ).withValues(alpha: 0.62),
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
@@ -6815,14 +7272,14 @@ class _ToiletVisitIncidentDialogState
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: VigiloUiColors.incidentToilet(_isDark).withValues(
-                                alpha: 0.15,
-                              ),
+                              color: VigiloUiColors.incidentToilet(
+                                _isDark,
+                              ).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: VigiloUiColors.incidentToilet(_isDark).withValues(
-                                  alpha: 0.70,
-                                ),
+                                color: VigiloUiColors.incidentToilet(
+                                  _isDark,
+                                ).withValues(alpha: 0.70),
                                 width: .7,
                               ),
                             ),
@@ -6906,7 +7363,9 @@ class _ToiletVisitIncidentDialogState
                                     icon: Icons.check_circle_outline,
                                     selected: !_isDeclined,
                                     color: VigiloUiColors.green(_isDark),
-                                    onTap: () => setState(() => _status = VisitStatus.approved),
+                                    onTap: () => setState(
+                                      () => _status = VisitStatus.approved,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -6916,7 +7375,9 @@ class _ToiletVisitIncidentDialogState
                                     icon: Icons.cancel_outlined,
                                     selected: _isDeclined,
                                     color: VigiloUiColors.red(_isDark),
-                                    onTap: () => setState(() => _status = VisitStatus.declined),
+                                    onTap: () => setState(
+                                      () => _status = VisitStatus.declined,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -6931,9 +7392,9 @@ class _ToiletVisitIncidentDialogState
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: VigiloUiColors.panel2(_isDark).withValues(
-                                  alpha: 0.30,
-                                ),
+                                color: VigiloUiColors.panel2(
+                                  _isDark,
+                                ).withValues(alpha: 0.30),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: VigiloUiColors.lineSoft(_isDark),
@@ -6950,7 +7411,9 @@ class _ToiletVisitIncidentDialogState
                                     _notesFocus.requestFocus();
                                   }
                                 },
-                                cursorColor: VigiloUiColors.incidentToilet(_isDark),
+                                cursorColor: VigiloUiColors.incidentToilet(
+                                  _isDark,
+                                ),
                                 style: TextStyle(
                                   color: VigiloUiColors.text(_isDark),
                                   fontSize: 16,
@@ -6958,11 +7421,12 @@ class _ToiletVisitIncidentDialogState
                                 ),
                                 onChanged: (_) => setState(() {}),
                                 decoration: InputDecoration(
-                                  hintText: 'Enter candidate reference, e.g. DR654',
+                                  hintText:
+                                      'Enter candidate reference, e.g. DR654',
                                   hintStyle: TextStyle(
-                                    color: VigiloUiColors.textSoft(_isDark).withValues(
-                                      alpha: 0.60,
-                                    ),
+                                    color: VigiloUiColors.textSoft(
+                                      _isDark,
+                                    ).withValues(alpha: 0.60),
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -6985,14 +7449,21 @@ class _ToiletVisitIncidentDialogState
                                 switchOutCurve: Curves.easeInCubic,
                                 transitionBuilder: (child, animation) {
                                   final isApproved =
-                                      child.key == const ValueKey('approved_fields');
-                                  final offsetAnimation = Tween<Offset>(
-                                    begin: Offset(isApproved ? -0.05 : 0.05, 0),
-                                    end: Offset.zero,
-                                  ).animate(CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOutCubic,
-                                  ));
+                                      child.key ==
+                                      const ValueKey('approved_fields');
+                                  final offsetAnimation =
+                                      Tween<Offset>(
+                                        begin: Offset(
+                                          isApproved ? -0.05 : 0.05,
+                                          0,
+                                        ),
+                                        end: Offset.zero,
+                                      ).animate(
+                                        CurvedAnimation(
+                                          parent: animation,
+                                          curve: Curves.easeOutCubic,
+                                        ),
+                                      );
                                   return FadeTransition(
                                     opacity: animation,
                                     child: SlideTransition(
@@ -7018,23 +7489,150 @@ class _ToiletVisitIncidentDialogState
                                                 _otDurationOptionButton(15),
                                               ],
                                             ),
+                                            const SizedBox(height: 20),
+                                            _otSectionLabel(
+                                              'TIME RETURNED (OPTIONAL)',
+                                            ),
+                                            const SizedBox(height: 10),
+                                            // ── Time Returned (optional time picker) ──
+                                            InkWell(
+                                              onTap: _selectTimeReturned,
+                                              borderRadius:
+                                                  BorderRadius.circular(18),
+                                              child: AnimatedContainer(
+                                                duration: const Duration(
+                                                  milliseconds: 180,
+                                                ),
+                                                width: double.infinity,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 14,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: _timeReturned != null
+                                                      ? VigiloUiColors.incidentToilet(
+                                                          _isDark,
+                                                        ).withValues(
+                                                          alpha: 0.08,
+                                                        )
+                                                      : VigiloUiColors.panel2(
+                                                          _isDark,
+                                                        ).withValues(
+                                                          alpha: 0.30,
+                                                        ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(18),
+                                                  border: Border.all(
+                                                    color: _timeReturned != null
+                                                        ? VigiloUiColors.incidentToilet(
+                                                            _isDark,
+                                                          ).withValues(
+                                                            alpha: 0.60,
+                                                          )
+                                                        : VigiloUiColors.lineSoft(
+                                                            _isDark,
+                                                          ),
+                                                    width: _timeReturned != null
+                                                        ? 1.5
+                                                        : 1.0,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      _timeReturned != null
+                                                          ? Icons
+                                                                .access_time_rounded
+                                                          : Icons
+                                                                .access_time_outlined,
+                                                      color:
+                                                          _timeReturned != null
+                                                          ? VigiloUiColors.incidentToilet(
+                                                              _isDark,
+                                                            )
+                                                          : VigiloUiColors.textSoft(
+                                                              _isDark,
+                                                            ),
+                                                      size: 20,
+                                                    ),
+                                                    const SizedBox(width: 10),
+                                                    Text(
+                                                      _timeReturned != null
+                                                          ? _formatTime(
+                                                              _timeReturned!,
+                                                            )
+                                                          : 'Tap to record',
+                                                      style: TextStyle(
+                                                        color:
+                                                            _timeReturned !=
+                                                                null
+                                                            ? VigiloUiColors.text(
+                                                                _isDark,
+                                                              )
+                                                            : VigiloUiColors.textSoft(
+                                                                _isDark,
+                                                              ).withValues(
+                                                                alpha: 0.60,
+                                                              ),
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            _timeReturned !=
+                                                                null
+                                                            ? FontWeight.w700
+                                                            : FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    const Spacer(),
+                                                    if (_timeReturned != null)
+                                                      GestureDetector(
+                                                        onTap: () => setState(
+                                                          () => _timeReturned =
+                                                              null,
+                                                        ),
+                                                        child: Icon(
+                                                          Icons.close_rounded,
+                                                          color:
+                                                              VigiloUiColors.textSoft(
+                                                                _isDark,
+                                                              ),
+                                                          size: 18,
+                                                        ),
+                                                      )
+                                                    else
+                                                      Icon(
+                                                        Icons.edit_outlined,
+                                                        color:
+                                                            VigiloUiColors.textSoft(
+                                                              _isDark,
+                                                            ),
+                                                        size: 18,
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            _otSectionLabel('NOTES (OPTIONAL)'),
                                             const SizedBox(height: 10),
                                             Container(
                                               width: double.infinity,
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                horizontal: 16,
-                                                vertical: 4,
-                                              ),
+                                                    horizontal: 16,
+                                                    vertical: 4,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: VigiloUiColors.panel2(
-                                                        _isDark)
-                                                    .withValues(alpha: 0.30),
+                                                  _isDark,
+                                                ).withValues(alpha: 0.30),
                                                 borderRadius:
                                                     BorderRadius.circular(18),
                                                 border: Border.all(
-                                                  color: VigiloUiColors.lineSoft(
-                                                      _isDark),
+                                                  color:
+                                                      VigiloUiColors.lineSoft(
+                                                        _isDark,
+                                                      ),
                                                 ),
                                               ),
                                               child: TextField(
@@ -7045,14 +7643,16 @@ class _ToiletVisitIncidentDialogState
                                                 onSubmitted: (_) {
                                                   _actionFocus.requestFocus();
                                                 },
-                                                minLines: 3,
-                                                maxLines: 5,
+                                                minLines: 2,
+                                                maxLines: 4,
                                                 cursorColor:
                                                     VigiloUiColors.incidentToilet(
-                                                        _isDark),
+                                                      _isDark,
+                                                    ),
                                                 style: TextStyle(
                                                   color: VigiloUiColors.text(
-                                                      _isDark),
+                                                    _isDark,
+                                                  ),
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w700,
                                                 ),
@@ -7060,23 +7660,23 @@ class _ToiletVisitIncidentDialogState
                                                     setState(() {}),
                                                 decoration: InputDecoration(
                                                   hintText:
-                                                      'Time returned / notes',
+                                                      'Any additional notes (optional)',
                                                   hintStyle: TextStyle(
-                                                    color: VigiloUiColors
-                                                            .textSoft(_isDark)
-                                                        .withValues(
-                                                      alpha: 0.60,
-                                                    ),
+                                                    color:
+                                                        VigiloUiColors.textSoft(
+                                                          _isDark,
+                                                        ).withValues(
+                                                          alpha: 0.60,
+                                                        ),
                                                     fontSize: 15,
                                                     fontWeight: FontWeight.w600,
                                                   ),
                                                   border: InputBorder.none,
                                                   isDense: true,
                                                   contentPadding:
-                                                      const EdgeInsets
-                                                          .symmetric(
-                                                    vertical: 12,
-                                                  ),
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 12,
+                                                      ),
                                                 ),
                                               ),
                                             ),
@@ -7087,18 +7687,20 @@ class _ToiletVisitIncidentDialogState
                                               width: double.infinity,
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                horizontal: 16,
-                                                vertical: 4,
-                                              ),
+                                                    horizontal: 16,
+                                                    vertical: 4,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: VigiloUiColors.panel2(
-                                                        _isDark)
-                                                    .withValues(alpha: 0.30),
+                                                  _isDark,
+                                                ).withValues(alpha: 0.30),
                                                 borderRadius:
                                                     BorderRadius.circular(18),
                                                 border: Border.all(
-                                                  color: VigiloUiColors.lineSoft(
-                                                      _isDark),
+                                                  color:
+                                                      VigiloUiColors.lineSoft(
+                                                        _isDark,
+                                                      ),
                                                 ),
                                               ),
                                               child: TextField(
@@ -7108,10 +7710,12 @@ class _ToiletVisitIncidentDialogState
                                                     TextInputAction.done,
                                                 cursorColor:
                                                     VigiloUiColors.incidentToilet(
-                                                        _isDark),
+                                                      _isDark,
+                                                    ),
                                                 style: TextStyle(
                                                   color: VigiloUiColors.text(
-                                                      _isDark),
+                                                    _isDark,
+                                                  ),
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w700,
                                                 ),
@@ -7121,21 +7725,21 @@ class _ToiletVisitIncidentDialogState
                                                   hintText:
                                                       'Student escorted / returned',
                                                   hintStyle: TextStyle(
-                                                    color: VigiloUiColors
-                                                            .textSoft(_isDark)
-                                                        .withValues(
-                                                      alpha: 0.60,
-                                                    ),
+                                                    color:
+                                                        VigiloUiColors.textSoft(
+                                                          _isDark,
+                                                        ).withValues(
+                                                          alpha: 0.60,
+                                                        ),
                                                     fontSize: 15,
                                                     fontWeight: FontWeight.w600,
                                                   ),
                                                   border: InputBorder.none,
                                                   isDense: true,
                                                   contentPadding:
-                                                      const EdgeInsets
-                                                          .symmetric(
-                                                    vertical: 12,
-                                                  ),
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 12,
+                                                      ),
                                                 ),
                                               ),
                                             ),
@@ -7149,24 +7753,27 @@ class _ToiletVisitIncidentDialogState
                                               CrossAxisAlignment.start,
                                           children: [
                                             _otSectionLabel(
-                                                'REASON FOR DECLINE'),
+                                              'REASON FOR DECLINE',
+                                            ),
                                             const SizedBox(height: 10),
                                             Container(
                                               width: double.infinity,
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                horizontal: 16,
-                                                vertical: 4,
-                                              ),
+                                                    horizontal: 16,
+                                                    vertical: 4,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: VigiloUiColors.panel2(
-                                                        _isDark)
-                                                    .withValues(alpha: 0.30),
+                                                  _isDark,
+                                                ).withValues(alpha: 0.30),
                                                 borderRadius:
                                                     BorderRadius.circular(18),
                                                 border: Border.all(
-                                                  color: VigiloUiColors.lineSoft(
-                                                      _isDark),
+                                                  color:
+                                                      VigiloUiColors.lineSoft(
+                                                        _isDark,
+                                                      ),
                                                 ),
                                               ),
                                               child: TextField(
@@ -7176,11 +7783,13 @@ class _ToiletVisitIncidentDialogState
                                                     TextInputAction.done,
                                                 minLines: 3,
                                                 maxLines: 5,
-                                                cursorColor:
-                                                    VigiloUiColors.red(_isDark),
+                                                cursorColor: VigiloUiColors.red(
+                                                  _isDark,
+                                                ),
                                                 style: TextStyle(
                                                   color: VigiloUiColors.text(
-                                                      _isDark),
+                                                    _isDark,
+                                                  ),
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w700,
                                                 ),
@@ -7190,21 +7799,21 @@ class _ToiletVisitIncidentDialogState
                                                   hintText:
                                                       'e.g. Within final 30 minutes of exam – board rules do not permit a break at this stage',
                                                   hintStyle: TextStyle(
-                                                    color: VigiloUiColors
-                                                            .textSoft(_isDark)
-                                                        .withValues(
-                                                      alpha: 0.60,
-                                                    ),
+                                                    color:
+                                                        VigiloUiColors.textSoft(
+                                                          _isDark,
+                                                        ).withValues(
+                                                          alpha: 0.60,
+                                                        ),
                                                     fontSize: 15,
                                                     fontWeight: FontWeight.w600,
                                                   ),
                                                   border: InputBorder.none,
                                                   isDense: true,
                                                   contentPadding:
-                                                      const EdgeInsets
-                                                          .symmetric(
-                                                    vertical: 12,
-                                                  ),
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 12,
+                                                      ),
                                                 ),
                                               ),
                                             ),
@@ -7315,7 +7924,9 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: selected ? VigiloUiColors.blueSoft(_isDark) : Colors.transparent,
+                color: selected
+                    ? VigiloUiColors.blueSoft(_isDark)
+                    : Colors.transparent,
               ),
               alignment: Alignment.center,
               child: selected
@@ -7366,10 +7977,14 @@ class _RoleSelectorDialogState extends State<_RoleSelectorDialog> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: VigiloUiColors.blue(_isDark).withValues(alpha: 0.15),
+                          color: VigiloUiColors.blue(
+                            _isDark,
+                          ).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: VigiloUiColors.blue(_isDark).withValues(alpha: 0.3),
+                            color: VigiloUiColors.blue(
+                              _isDark,
+                            ).withValues(alpha: 0.3),
                           ),
                         ),
                         child: Icon(

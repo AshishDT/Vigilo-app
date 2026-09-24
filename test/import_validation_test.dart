@@ -224,5 +224,74 @@ void main() {
       expect(find.text('Invalid Date ("InvalidDate")'), findsOneWidget);
       expect(find.text('Invalid Start Time ("InvalidTime")'), findsOneWidget);
     });
+
+    testWidgets('accepts YYYY-MM-DD dates without flagging Invalid Date', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ImportFlowSheet(
+              dark: false,
+              onToggleTheme: () {},
+              initialCentreNumber: '12345',
+              onImportSessions: (sessions) async {},
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final stateFinder = find.byType(ImportFlowSheet);
+      final dynamic state = tester.state(stateFinder);
+
+      final nextYear = DateTime.now().year + 1;
+      final mockRows = [
+        {
+          'subject': 'Biology Paper 1',
+          'level': 'GCSE',
+          'board': 'AQA',
+          'date': '$nextYear-05-12',
+          'time': '09:00',
+          'duration': '01:30',
+        },
+      ];
+
+      state.setParsedRowsForTesting(mockRows);
+      await tester.pump();
+
+      expect(find.textContaining('Invalid Date'), findsNothing);
+    });
+  });
+
+  group('ImportService Date Normalization Tests', () {
+    test('normalizeDate - accepts ISO YYYY-MM-DD formats', () {
+      expect(ImportService.normalizeDate('2026-05-12'), '12/05/2026');
+      expect(ImportService.normalizeDate('2026-5-2'), '02/05/2026');
+      expect(ImportService.normalizeDate('2024-02-29'), '29/02/2024'); // leap year
+    });
+
+    test('normalizeDate - accepts DD/MM/YYYY and DD-MM-YYYY formats', () {
+      expect(ImportService.normalizeDate('12/05/2026'), '12/05/2026');
+      expect(ImportService.normalizeDate('2/5/2026'), '02/05/2026');
+      expect(ImportService.normalizeDate('12/05/26'), '12/05/2026');
+      expect(ImportService.normalizeDate('12-05-2026'), '12/05/2026');
+      expect(ImportService.normalizeDate('2-5-2026'), '02/05/2026');
+    });
+
+    test('normalizeDate - accepts D MMM YYYY format', () {
+      expect(ImportService.normalizeDate('12 May 2026'), '12/05/2026');
+      expect(ImportService.normalizeDate('2 Jan 2026'), '02/01/2026');
+      expect(ImportService.normalizeDate('15 October 2026'), '15/10/2026');
+    });
+
+    test('normalizeDate - rejects invalid dates', () {
+      expect(ImportService.normalizeDate(''), isNull);
+      expect(ImportService.normalizeDate('   '), isNull);
+      expect(ImportService.normalizeDate('InvalidDate'), isNull);
+      expect(ImportService.normalizeDate('2026-02-31'), isNull); // Feb 31 does not exist
+      expect(ImportService.normalizeDate('2026-13-01'), isNull); // Month 13 invalid
+      expect(ImportService.normalizeDate('31/02/2026'), isNull); // Feb 31 does not exist in DMY
+      expect(ImportService.normalizeDate('00/05/2026'), isNull); // Day 0 invalid
+    });
   });
 }

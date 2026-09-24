@@ -72,7 +72,7 @@ flutter_launcher_icons:
   background_color: "#0F131F"
   adaptive_icon_background: "#0F131F"
   adaptive_icon_foreground: "assets/logo.png"
-  adaptive_icon_foreground_inset: 22
+  adaptive_icon_foreground_inset: 17
 
 flutter_native_splash:
   color: "#0F131F"

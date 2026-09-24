@@ -102,9 +102,10 @@ class Incident {
         if (match != null) reason = match.group(1)?.trim() ?? '';
       }
       if (candidateWarnedScriptMayNotBeAccepted.isEmpty &&
-          detail.contains('Warned Script May Not Be Accepted?:')) {
+          (detail.contains('Warned Script May Not Be Accepted?:') ||
+              detail.toLowerCase().contains('warned script may not be accepted'))) {
         final match = RegExp(
-          r'Warned Script May Not Be Accepted\?:\s*([^.]+?)(?=\.\s*[A-Z]|\.?$)',
+          r'(?:Candidate )?[Ww]arned [Ss]cript [Mm]ay [Nn]ot [Bb]e [Aa]ccepted\??:\s*([^.]+?)(?=\.\s*[A-Z]|\.?$)',
         ).firstMatch(detail);
         if (match != null) {
           candidateWarnedScriptMayNotBeAccepted = match.group(1)?.trim() ?? '';

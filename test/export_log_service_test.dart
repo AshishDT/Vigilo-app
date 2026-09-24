@@ -748,11 +748,10 @@ void main() {
         examRecordId: recordId,
       );
 
-      // Verify approved visit details contains duration, notes, and action
       expect(
         text,
         contains(
-          '2026-03-06 09:15:00,Incident,Normal Time,Toilet visit (Approved),H1,DR654,,Duration: 5 minutes. Accompanied by staff. Returned safely',
+          '2026-03-06 09:15:00,Incident,Normal Time,Toilet visit (Approved),H1,DR654,,Duration: 5 minutes. Notes: Accompanied by staff. Returned safely',
         ),
       );
 
@@ -760,7 +759,7 @@ void main() {
       expect(
         text,
         contains(
-          '2026-03-06 09:50:00,Incident,Normal Time,Toilet visit (Declined),H1,AB123,,Final 15 minutes of exam. Declined',
+          '2026-03-06 09:50:00,Incident,Normal Time,Toilet visit (Declined),H1,AB123,,Notes: Final 15 minutes of exam. Declined',
         ),
       );
     });
@@ -911,7 +910,7 @@ void main() {
       expect(
         text,
         contains(
-          '2026-03-06 13:10:00,Incident,Normal Time,Late arrival,H2,GH102,,Outcome: Admitted. Supervision time: 01:10 PM. Actual start: 01:15 PM. Candidate actual finish time: 03:00 PM. Reason: Severe train delay. Candidate Warned Script May Not Be Accepted?: Yes. Actions: Monitored in separate room',
+          '2026-03-06 13:10:00,Incident,Normal Time,Late arrival,H2,GH102,,Outcome: Admitted. Supervision time: 01:10 PM. Actual start: 01:15 PM. Candidate actual finish time: 03:00 PM. Reason: Severe train delay. Warned script may not be accepted: Yes. Actions: Monitored in separate room',
         ),
       );
     });

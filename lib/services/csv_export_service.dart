@@ -917,7 +917,16 @@ class CsvExportService {
         parts.add(outcome);
       }
       if (detail.isNotEmpty) {
-        parts.add(detail);
+        final normalizedDetail = detail
+            .replaceAll(
+              'Candidate Warned Script May Not Be Accepted?:',
+              'Warned script may not be accepted:',
+            )
+            .replaceAll(
+              'Candidate Warned Script May Not Be Accepted:',
+              'Warned script may not be accepted:',
+            );
+        parts.add(normalizedDetail);
       } else {
         final supervision = _readText(incidentMap['supervisionTime']);
         final startTime = _readText(incidentMap['actualStartTime']).isNotEmpty
@@ -951,7 +960,7 @@ class CsvExportService {
           parts.add('Reason: $reason');
         }
         if (warning.isNotEmpty) {
-          parts.add('Candidate Warned Script May Not Be Accepted?: $warning');
+          parts.add('Warned script may not be accepted: $warning');
         }
         if (actions.isNotEmpty) {
           parts.add('Actions: $actions');
@@ -974,8 +983,33 @@ class CsvExportService {
       if (warningGiven.isNotEmpty &&
           !parts.any((p) => p.toLowerCase().contains('warned script'))) {
         parts.add(
-          'Candidate Warned Script May Not Be Accepted?: $warningGiven',
+          'Warned script may not be accepted: $warningGiven',
         );
+      }
+      return parts.join('. ');
+    }
+
+    // Toilet break — render Time returned and Notes explicitly.
+    final isToilet = incidentType == 'toilet' ||
+        normalizedMessage == 'toilet break';
+    if (isToilet) {
+      final parts = <String>[];
+      if (duration.isNotEmpty) {
+        final normalizedDuration = _normalizeAuditMessage(duration);
+        final durationText = normalizedDuration.contains('minute')
+            ? duration
+            : '$duration minutes';
+        parts.add('Duration: $durationText');
+      }
+      final timeReturned = _readText(incidentMap['actualFinishTime']);
+      if (timeReturned.isNotEmpty) {
+        parts.add('Time returned: $timeReturned');
+      }
+      if (detail.isNotEmpty) {
+        parts.add('Notes: $detail');
+      }
+      if (action.isNotEmpty && action.toLowerCase() != 'approved') {
+        parts.add(action);
       }
       return parts.join('. ');
     }
