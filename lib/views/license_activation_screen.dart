@@ -8,6 +8,7 @@ import '../utils/app_config.dart';
 import '../utils/notifications.dart';
 import '../services/license_key_codec.dart';
 import '../services/license_service.dart';
+import 'widgets/animated_scale_on_press.dart';
 
 class LicenseActivationScreen extends StatefulWidget {
   const LicenseActivationScreen({super.key});
@@ -1091,27 +1092,30 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                               value: _licencePreviewValue,
                             ),
                             const SizedBox(height: 14),
-                            SizedBox(
-                              width: double.infinity,
-                              child: FilledButton(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: VigiloUiColors.blue(isDark),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 15,
+                            AnimatedScaleOnPress(
+                              isDisabled: !_canActivate,
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: FilledButton(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: VigiloUiColors.blue(isDark),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 15,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                  ),
-                                ),
-                                onPressed: _canActivate
-                                    ? _activateLicence
-                                    : null,
-                                child: const Text(
-                                  'Activate Licence',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
+                                  onPressed: _canActivate
+                                      ? _activateLicence
+                                      : null,
+                                  child: const Text(
+                                    'Activate Licence',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
                                 ),
                               ),

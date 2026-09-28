@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vigilo/services/license_service.dart';
 import 'package:vigilo/views/license_activation_screen.dart';
+import 'package:vigilo/views/widgets/animated_scale_on_press.dart';
 
 void main() {
   Future<void> pumpScreen(
@@ -507,5 +508,18 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('wraps Activate Licence button with AnimatedScaleOnPress for visual tap feedback', (tester) async {
+    await pumpScreen(tester);
+
+    final buttonFinder = find.widgetWithText(FilledButton, 'Activate Licence');
+    expect(buttonFinder, findsOneWidget);
+
+    final animatedScaleFinder = find.ancestor(
+      of: buttonFinder,
+      matching: find.byType(AnimatedScaleOnPress),
+    );
+    expect(animatedScaleFinder, findsOneWidget);
   });
 }

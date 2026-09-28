@@ -184,10 +184,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Summary row shows title and comma-separated candidates on second line
-      expect(find.text('Malpractice\nGY876, HL332, FT333, DV987'), findsOneWidget);
+      expect(find.text('Malpractice\nStudents: GY876, HL332, FT333, DV987'), findsOneWidget);
 
       // Tap the row to expand details
-      await tester.tap(find.text('Malpractice\nGY876, HL332, FT333, DV987'));
+      await tester.tap(find.text('Malpractice\nStudents: GY876, HL332, FT333, DV987'));
       await tester.pumpAndSettle();
 
       // Candidates are shown ONLY in the summary header row, not duplicated in the expanded drawer.

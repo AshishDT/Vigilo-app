@@ -2584,6 +2584,20 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         idLabel: 'Student ID',
       );
     }
+    // Clean any redundant prefix like "Student:", "Students :", "Candidate Reference:", etc.
+    s = s.replaceAll(
+      RegExp(r'^(?:(?:students?|candidates?)(?:\s+(?:id|reference))?\s*:\s*)+', caseSensitive: false),
+      '',
+    ).trim();
+    if (s.isEmpty) {
+      return const _CandidateInfo(
+        list: [],
+        isMultiple: false,
+        joined: '',
+        label: 'Student',
+        idLabel: 'Student ID',
+      );
+    }
     final lines = s
         .split(RegExp(r'[\r\n]+'))
         .map((part) => part.trim())
@@ -2614,7 +2628,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   }
 
   String _formatStudentID(String s) {
-    return _formatCandidates(s).joined;
+    final cand = _formatCandidates(s);
+    if (cand.joined.isEmpty) return '';
+    return '${cand.label}: ${cand.joined}';
   }
 
   String _formatMinutesDescription(int minutes) {
@@ -2842,8 +2858,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     final isExpanded = isIncident && expanded;
     final titleParts = _logTitleParts(incident);
 
-    const double badgeWidth = 74;
-    const double badgeSpacing = 10;
+    const double badgeWidth = 64;
+    const double badgeSpacing = 8;
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: isExpanded ? 4 : 0),
@@ -2901,7 +2917,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   TextSpan(
                                     text: titleParts.title,
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                   const TextSpan(text: '\n'),
@@ -2914,32 +2930,32 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                 ],
                               ),
                               style: const TextStyle(
-                                fontSize: 15.4,
+                                fontSize: 14.2,
                                 height: 1.35,
                               ),
                             )
                           : Text(
                               titleParts.title,
                               style: const TextStyle(
-                                fontSize: 15.4,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 14.2,
+                                fontWeight: FontWeight.w700,
                                 height: 1.35,
                               ),
                             ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     Padding(
                       padding: const EdgeInsets.only(top: 2.0),
                       child: Text(
                         time,
                         style: TextStyle(
                           color: VigiloUiColors.textSoft(_isDark),
-                          fontSize: 13.2,
+                          fontSize: 13.0,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     Padding(
                       padding: const EdgeInsets.only(top: 1.0),
                       child: Builder(
@@ -4032,20 +4048,45 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                                     if (_isLateArrival(
                                                                       incident,
                                                                     ))
-                                                                      Text(
-                                                                        incident.action.toLowerCase() ==
-                                                                                'admitted'
-                                                                            ? "Outcome: Admitted -- full duration required"
-                                                                            : "Outcome: Not admitted",
-                                                                        style: TextStyle(
-                                                                          color: VigiloUiColors.textSoft(
-                                                                            _isDark,
+                                                                      Row(
+                                                                        children: [
+                                                                          Icon(
+                                                                            incident.action.toLowerCase() ==
+                                                                                    "admitted"
+                                                                                ? Icons.check_circle_outline
+                                                                                : Icons.cancel_outlined,
+                                                                            size: 15,
+                                                                            color: incident.action.toLowerCase() ==
+                                                                                    "admitted"
+                                                                                ? VigiloUiColors.green(
+                                                                                    _isDark,
+                                                                                  )
+                                                                                : VigiloUiColors.amber(
+                                                                                    _isDark,
+                                                                                  ),
                                                                           ),
-                                                                          fontSize:
-                                                                              13.8,
-                                                                          fontWeight:
-                                                                              FontWeight.w600,
-                                                                        ),
+                                                                          const SizedBox(
+                                                                            width: 6,
+                                                                          ),
+                                                                          Text(
+                                                                            incident.action.toLowerCase() ==
+                                                                                    "admitted"
+                                                                                ? "Outcome: Admitted"
+                                                                                : "Outcome: Not Admitted",
+                                                                            style: TextStyle(
+                                                                              color: incident.action.toLowerCase() ==
+                                                                                      "admitted"
+                                                                                  ? VigiloUiColors.green(
+                                                                                      _isDark,
+                                                                                    )
+                                                                                  : VigiloUiColors.amber(
+                                                                                      _isDark,
+                                                                                    ),
+                                                                              fontSize: 13.8,
+                                                                              fontWeight: FontWeight.w700,
+                                                                            ),
+                                                                          ),
+                                                                        ],
                                                                       ),
                                                                     if (incident
                                                                         .detail

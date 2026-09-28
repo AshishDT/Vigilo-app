@@ -309,7 +309,7 @@ void main() {
       expect(find.text('Student: VG987'), findsOneWidget);
 
       // Outcome detail is in the expanded details view
-      expect(find.text('Outcome: Admitted -- full duration required'), findsOneWidget);
+      expect(find.text('Outcome: Admitted'), findsOneWidget);
     });
   });
 }
