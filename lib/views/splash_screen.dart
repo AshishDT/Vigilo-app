@@ -62,7 +62,7 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Container(color: const Color(0xFF0F131F)),
+        Container(color: const Color(0xFF071A2B)),
         Center(
           child: AnimatedOpacity(
             opacity: _opacity,
