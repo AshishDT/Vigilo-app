@@ -646,7 +646,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               candidateWarned,
               actions,
             ) {
-              final outcome = admitted ? 'Admitted' : 'Not Admitted';
+              final outcome = admitted ? 'Admitted' : 'Declined';
               final detailParts = <String>[];
               detailParts.add('Supervision time: $supervisionTime');
               if (admitted && startTime.isNotEmpty) {
@@ -665,7 +665,11 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 );
               }
               if (actions.isNotEmpty) {
-                detailParts.add('Actions: $actions');
+                detailParts.add(
+                  admitted
+                      ? 'Security assurance: $actions'
+                      : 'Action taken: $actions',
+                );
               }
               final detail = detailParts.join('. ');
 
@@ -694,7 +698,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                 "Incident Logged",
                 admitted
                     ? "Late arrival (Admitted) logged"
-                    : "Late arrival (Not Admitted) logged",
+                    : "Late arrival (Declined) logged",
                 Icons.schedule_rounded,
                 NotificationType.success,
               );
@@ -2723,7 +2727,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       final isAdmitted = incident.action.toLowerCase() == 'admitted';
       final title = isAdmitted
           ? 'Late Arrival (Admitted)'
-          : 'Late Arrival (Not Admitted)';
+          : 'Late Arrival (Declined)';
       return (
         title: title,
         candidate: student.isEmpty ? null : student,
@@ -2774,7 +2778,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         cand.isMultiple ? 'Candidates' : 'Candidate Reference',
         cand.joined,
       );
-      _addLogDetail(details, 'Outcome', incident.action);
+      final outcomeDisplay =
+          incident.action.toLowerCase() == 'not admitted' ||
+                  incident.action.toLowerCase() == 'declined'
+              ? 'Declined'
+              : incident.action;
+      _addLogDetail(details, 'Outcome', outcomeDisplay);
       bool hasFinishTime = false;
       bool hasWarning = false;
       if (incident.detail.isNotEmpty) {
@@ -2790,6 +2799,14 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             if (key.toLowerCase().contains('warned script')) {
               hasWarning = true;
               key = 'Warned script may not be accepted';
+            }
+            if (key.toLowerCase() == 'actions' ||
+                key.toLowerCase() == 'actions taken' ||
+                key.toLowerCase() == 'action taken' ||
+                key.toLowerCase() == 'security assurance') {
+              key = incident.action.toLowerCase() == 'admitted'
+                  ? 'Security assurance'
+                  : 'Action taken';
             }
             _addLogDetail(details, key, value);
           } else {
@@ -2843,6 +2860,83 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     _addLogDetail(details, 'Action taken', incident.action);
     _addLogDetail(details, 'Updated Duration', incident.updatedDuration);
     return details;
+  }
+
+  List<String> _lateArrivalDetailLines(Incident incident) {
+    final lines = <String>[];
+    bool hasSupervision = false;
+    bool hasStart = false;
+    bool hasFinish = false;
+    bool hasReason = false;
+    bool hasWarning = false;
+    bool hasActions = false;
+
+    if (incident.detail.isNotEmpty) {
+      final parts = incident.detail.split('. ');
+      for (final p in parts) {
+        final colonIdx = p.indexOf(':');
+        if (colonIdx > 0 && colonIdx < p.length - 1) {
+          var key = p.substring(0, colonIdx).trim();
+          final value = p.substring(colonIdx + 1).trim();
+          if (value.isEmpty) continue;
+
+          final lowerKey = key.toLowerCase();
+          if (lowerKey == 'outcome') {
+            continue;
+          } else if (lowerKey.contains('supervision')) {
+            hasSupervision = true;
+            key = 'Supervision time';
+          } else if (lowerKey.contains('actual start') || lowerKey == 'start time') {
+            hasStart = true;
+            key = 'Actual start';
+          } else if (lowerKey.contains('finish time')) {
+            hasFinish = true;
+            key = 'Candidate actual finish time';
+          } else if (lowerKey == 'reason') {
+            hasReason = true;
+            key = 'Reason';
+          } else if (lowerKey.contains('warned script')) {
+            hasWarning = true;
+            key = 'Warned script may not be accepted';
+          } else if (lowerKey == 'actions' ||
+              lowerKey == 'actions taken' ||
+              lowerKey == 'action taken' ||
+              lowerKey == 'security assurance') {
+            hasActions = true;
+            key = incident.action.toLowerCase() == 'admitted'
+                ? 'Security assurance'
+                : 'Action taken';
+          }
+          lines.add('$key: $value');
+        } else if (p.trim().isNotEmpty) {
+          lines.add(p.trim());
+        }
+      }
+    }
+
+    if (!hasSupervision && incident.supervisionTime.isNotEmpty) {
+      lines.add('Supervision time: ${incident.supervisionTime}');
+    }
+    if (!hasStart && incident.actualStartTime.isNotEmpty) {
+      lines.add('Actual start: ${incident.actualStartTime}');
+    }
+    if (!hasFinish && incident.actualFinishTime.isNotEmpty) {
+      lines.add('Candidate actual finish time: ${incident.actualFinishTime}');
+    }
+    if (!hasReason && incident.reason.isNotEmpty) {
+      lines.add('Reason: ${incident.reason}');
+    }
+    if (!hasWarning && incident.candidateWarnedScriptMayNotBeAccepted.isNotEmpty) {
+      lines.add('Warned script may not be accepted: ${incident.candidateWarnedScriptMayNotBeAccepted}');
+    }
+    if (!hasActions && incident.actionsTaken.isNotEmpty) {
+      final key = incident.action.toLowerCase() == 'admitted'
+          ? 'Security assurance'
+          : 'Action taken';
+      lines.add('$key: ${incident.actionsTaken}');
+    }
+
+    return lines;
   }
 
   Widget _timelineLogRow({
@@ -2958,25 +3052,10 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     const SizedBox(width: 8),
                     Padding(
                       padding: const EdgeInsets.only(top: 1.0),
-                      child: Builder(
-                        builder: (_) {
-                          final isToilet = incident.message == 'Toilet break';
-                          final isDeclined =
-                              incident.action.toLowerCase() == 'declined';
-                          Color iconColor;
-                          if (isToilet) {
-                            iconColor = isDeclined
-                                ? VigiloUiColors.amber(_isDark)
-                                : VigiloUiColors.green(_isDark);
-                          } else {
-                            iconColor = VigiloUiColors.blackWhite(_isDark);
-                          }
-                          return Icon(
-                            _logIcon(incident),
-                            color: iconColor,
-                            size: 22,
-                          );
-                        },
+                      child: Icon(
+                        _logIcon(incident),
+                        color: VigiloUiColors.blackWhite(_isDark),
+                        size: 22,
                       ),
                     ),
                   ],
@@ -4047,7 +4126,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                                       ),
                                                                     if (_isLateArrival(
                                                                       incident,
-                                                                    ))
+                                                                    )) ...[
                                                                       Row(
                                                                         children: [
                                                                           Icon(
@@ -4072,7 +4151,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                                             incident.action.toLowerCase() ==
                                                                                     "admitted"
                                                                                 ? "Outcome: Admitted"
-                                                                                : "Outcome: Not Admitted",
+                                                                                : "Outcome: Declined",
                                                                             style: TextStyle(
                                                                               color: incident.action.toLowerCase() ==
                                                                                       "admitted"
@@ -4088,7 +4167,20 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                                                           ),
                                                                         ],
                                                                       ),
-                                                                    if (incident
+                                                                      for (final line in _lateArrivalDetailLines(incident))
+                                                                        Text(
+                                                                          line,
+                                                                          style: TextStyle(
+                                                                            color: VigiloUiColors.textSoft(
+                                                                              _isDark,
+                                                                            ),
+                                                                            fontSize:
+                                                                                13.8,
+                                                                            fontWeight:
+                                                                                FontWeight.w600,
+                                                                          ),
+                                                                        ),
+                                                                    ] else if (incident
                                                                         .detail
                                                                         .isNotEmpty)
                                                                       Text(

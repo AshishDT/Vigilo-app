@@ -310,6 +310,58 @@ void main() {
 
       // Outcome detail is in the expanded details view
       expect(find.text('Outcome: Admitted'), findsOneWidget);
+
+      // Verify each detail line is rendered separately one by one
+      expect(find.text('Supervision time: 09:15 AM'), findsOneWidget);
+      expect(find.text('Actual start: 09:30 AM'), findsOneWidget);
+      expect(find.text('Candidate actual finish time: 11:00 AM'), findsOneWidget);
+      expect(find.text('Reason: Bus breakdown'), findsOneWidget);
+      expect(find.text('Warned script may not be accepted: Yes'), findsOneWidget);
+      expect(find.text('Security assurance: Monitored'), findsOneWidget);
+      expect(find.textContaining('Details: Supervision time:'), findsNothing);
+    });
+
+    testWidgets('bottom text field switches between Security Assurance and Action Taken based on toggle', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: LateArrivalIncidentDialog(
+              initialRoom: 'Hall A',
+              onSave: (_, __, ___, ____, _____, ______, _______, ________, _________) {},
+            ),
+          ),
+        ),
+      );
+
+      // Initially / Admitted defaults to SECURITY ASSURANCE
+      expect(find.text('SECURITY ASSURANCE'), findsOneWidget);
+      expect(find.text('Record supervision and any assurance given.'), findsOneWidget);
+      expect(find.text('REASON FOR LATE ARRIVAL'), findsOneWidget);
+
+      // Tap Declined
+      await tester.tap(find.text('Declined'));
+      await tester.pumpAndSettle();
+
+      // Label switches to ACTION TAKEN and hint updates
+      expect(find.text('ACTION TAKEN'), findsOneWidget);
+      expect(find.text('SECURITY ASSURANCE'), findsNothing);
+      expect(
+        find.text('Record what action was taken as a result of the candidate not being admitted.'),
+        findsOneWidget,
+      );
+      // Reason stays as-is
+      expect(find.text('REASON FOR LATE ARRIVAL'), findsOneWidget);
+
+      // Tap Admitted
+      await tester.tap(find.text('Admitted'));
+      await tester.pumpAndSettle();
+
+      // Label switches back to SECURITY ASSURANCE and hint updates
+      expect(find.text('SECURITY ASSURANCE'), findsOneWidget);
+      expect(find.text('ACTION TAKEN'), findsNothing);
+      expect(find.text('Record supervision and any assurance given.'), findsOneWidget);
+      // Reason stays as-is
+      expect(find.text('REASON FOR LATE ARRIVAL'), findsOneWidget);
     });
   });
 }

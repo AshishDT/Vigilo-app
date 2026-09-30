@@ -911,9 +911,15 @@ class CsvExportService {
         normalizedMessage == 'late arrival') {
       final parts = <String>[];
       if (action.isNotEmpty) {
-        final outcome = action.toLowerCase().startsWith('outcome:')
-            ? action
-            : 'Outcome: $action';
+        var rawOutcome = action;
+        if (rawOutcome.toLowerCase() == 'not admitted') {
+          rawOutcome = 'Declined';
+        } else if (rawOutcome.toLowerCase() == 'outcome: not admitted') {
+          rawOutcome = 'Outcome: Declined';
+        }
+        final outcome = rawOutcome.toLowerCase().startsWith('outcome:')
+            ? rawOutcome
+            : 'Outcome: $rawOutcome';
         parts.add(outcome);
       }
       if (detail.isNotEmpty) {
@@ -925,7 +931,11 @@ class CsvExportService {
             .replaceAll(
               'Candidate Warned Script May Not Be Accepted:',
               'Warned script may not be accepted:',
-            );
+            )
+            .replaceAll('Outcome: Not Admitted', 'Outcome: Declined')
+            .replaceAll('Outcome: not admitted', 'Outcome: Declined')
+            .replaceAll('Not Admitted', 'Declined')
+            .replaceAll('not admitted', 'Declined');
         parts.add(normalizedDetail);
       } else {
         final supervision = _readText(incidentMap['supervisionTime']);
@@ -963,7 +973,9 @@ class CsvExportService {
           parts.add('Warned script may not be accepted: $warning');
         }
         if (actions.isNotEmpty) {
-          parts.add('Actions: $actions');
+          final isAdmitted = action.toLowerCase() == 'admitted';
+          final label = isAdmitted ? 'Security assurance' : 'Action taken';
+          parts.add('$label: $actions');
         }
       }
       final finishTime = _readText(incidentMap['actualFinishTime']).isNotEmpty

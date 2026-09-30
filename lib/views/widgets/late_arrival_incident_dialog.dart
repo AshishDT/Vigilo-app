@@ -287,7 +287,7 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
       NotificationService.show(
         context,
         title: "Required Field",
-        subtitle: "Select Admitted or Not Admitted before logging.",
+        subtitle: "Select Admitted or Declined before logging.",
         icon: Icons.warning_amber_rounded,
         type: NotificationType.error,
       );
@@ -340,8 +340,9 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
       NotificationService.show(
         context,
         title: "Required Field",
-        subtitle:
-            "Record actions taken / security assurance before logging.",
+        subtitle: _admitted == false
+            ? "Record action taken before logging."
+            : "Record security assurance before logging.",
         icon: Icons.warning_amber_rounded,
         type: NotificationType.error,
       );
@@ -742,7 +743,7 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: _admissionToggleButton(
-                                    label: 'Not Admitted',
+                                    label: 'Declined',
                                     selected: _admitted == false,
                                     color: VigiloUiColors.red(_isDark),
                                     onTap: () => _setAdmissionOutcome(false),
@@ -1135,7 +1136,9 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
                               ),
                             ],
                             const SizedBox(height: 20),
-                            _otSectionLabel('SECURITY ASSURANCE'),
+                            _otSectionLabel(_admitted == false
+                                ? 'ACTION TAKEN'
+                                : 'SECURITY ASSURANCE'),
                             const SizedBox(height: 10),
                             Container(
                               width: double.infinity,
@@ -1166,8 +1169,9 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
                                 ),
                                 onChanged: (_) => setState(() {}),
                                 decoration: InputDecoration(
-                                  hintText:
-                                      'Record supervision and any assurance given.',
+                                  hintText: _admitted == false
+                                      ? 'Record what action was taken as a result of the candidate not being admitted.'
+                                      : 'Record supervision and any assurance given.',
                                   hintStyle: TextStyle(
                                     color: VigiloUiColors.textSoft(_isDark)
                                         .withValues(alpha: 0.60),

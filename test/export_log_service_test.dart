@@ -764,7 +764,7 @@ void main() {
       );
     });
 
-    test('exports late arrival incident for admitted and not admitted candidates', () async {
+    test('exports late arrival incident for admitted and declined candidates', () async {
       const recordId = 'record-late-arrival-test';
       final card = ExamCardData(
         recordId: recordId,
@@ -814,7 +814,7 @@ void main() {
         ),
       );
 
-      // 2. Late arrival - Not Admitted
+      // 2. Late arrival - Declined
       await sessionService.appendIncident(
         examRecordId: recordId,
         incident: Incident(
@@ -823,7 +823,7 @@ void main() {
           incidentType: 'late_arrival',
           room: 'H1',
           studentID: 'EF789',
-          action: 'Not Admitted',
+          action: 'Declined',
           detail:
               'Supervision time: 09:45. Reason: Arrived too late. Actions: Escorted to reception',
           time: DateTime(2026, 3, 6, 9, 45, 0),
@@ -842,11 +842,11 @@ void main() {
         ),
       );
 
-      // Verify Late Arrival - Not Admitted row in CSV
+      // Verify Late Arrival - Declined row in CSV
       expect(
         text,
         contains(
-          '2026-03-06 09:45:00,Incident,Normal Time,Late arrival,H1,EF789,,Outcome: Not Admitted. Supervision time: 09:45. Reason: Arrived too late. Actions: Escorted to reception',
+          '2026-03-06 09:45:00,Incident,Normal Time,Late arrival,H1,EF789,,Outcome: Declined. Supervision time: 09:45. Reason: Arrived too late. Actions: Escorted to reception',
         ),
       );
     });
