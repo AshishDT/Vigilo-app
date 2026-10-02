@@ -264,7 +264,7 @@ class CsvExportService {
     buffer.writeln('Event Log');
     buffer.writeln();
     buffer.writeln(
-      'Date/Time,Category,Phase,Description,Room,Student ID,Invigilator(s),Details',
+      'Date/Time,Category,Phase,Description,Room,Candidate Reference,Invigilator(s),Details',
     );
 
     for (final row in logRows) {
@@ -868,9 +868,11 @@ class CsvExportService {
     final normalizedType = _normalizeAuditMessage(incidentType);
     final normalizedMessage = _normalizeAuditMessage(message);
 
-    if (normalizedType == 'toilet' || normalizedMessage == 'toilet break') {
+    if (normalizedType == 'toilet' ||
+        normalizedMessage == 'toilet break' ||
+        normalizedMessage == 'toilet visit') {
       final isDeclined = _normalizeAuditMessage(action) == 'declined';
-      return isDeclined ? 'Toilet visit (Declined)' : 'Toilet visit (Approved)';
+      return isDeclined ? 'Toilet Visit (Declined)' : 'Toilet Visit (Approved)';
     }
 
     switch (normalizedType) {
@@ -878,14 +880,15 @@ class CsvExportService {
       case 'cheating':
         return 'Malpractice';
       case 'medical':
-        return 'Medical incident';
+        return 'Medical Incident';
       case 'latearrival':
       case 'late arrival':
       case 'late_arrival':
-        return 'Late arrival';
+        return 'Late Arrival';
     }
 
-    if (normalizedMessage == 'late arrival') return 'Late arrival';
+    if (normalizedMessage == 'late arrival') return 'Late Arrival';
+    if (normalizedMessage == 'toilet visit') return 'Toilet Visit';
     if (normalizedMessage == 'malpractice' ||
         normalizedMessage == 'malpractice concern' ||
         normalizedMessage == 'suspected malpractice' ||
@@ -893,7 +896,7 @@ class CsvExportService {
         normalizedMessage == 'suspected cheating') {
       return 'Malpractice';
     }
-    if (normalizedMessage == 'medical incident') return 'Medical incident';
+    if (normalizedMessage == 'medical incident') return 'Medical Incident';
     if (message.trim().isNotEmpty) return message.trim();
     return fallback;
   }
@@ -922,41 +925,69 @@ class CsvExportService {
             : 'Outcome: $rawOutcome';
         parts.add(outcome);
       }
-      if (detail.isNotEmpty) {
-        final normalizedDetail = detail
-            .replaceAll(
-              'Candidate Warned Script May Not Be Accepted?:',
-              'Warned script may not be accepted:',
-            )
-            .replaceAll(
-              'Candidate Warned Script May Not Be Accepted:',
-              'Warned script may not be accepted:',
-            )
-            .replaceAll('Outcome: Not Admitted', 'Outcome: Declined')
-            .replaceAll('Outcome: not admitted', 'Outcome: Declined')
-            .replaceAll('Not Admitted', 'Declined')
-            .replaceAll('not admitted', 'Declined');
-        parts.add(normalizedDetail);
-      } else {
-        final supervision = _readText(incidentMap['supervisionTime']);
-        final startTime = _readText(incidentMap['actualStartTime']).isNotEmpty
-            ? _readText(incidentMap['actualStartTime'])
-            : _readText(incidentMap['candidateActualStartTime']);
-        final finish = _readText(incidentMap['actualFinishTime']).isNotEmpty
-            ? _readText(incidentMap['actualFinishTime'])
-            : _readText(incidentMap['candidateActualFinishTime']);
-        final reason = _readText(incidentMap['reason']);
-        final warning = _readText(
-          incidentMap['candidateWarnedScriptMayNotBeAccepted'],
-        ).isNotEmpty
-            ? _readText(incidentMap['candidateWarnedScriptMayNotBeAccepted'])
-            : (_readText(incidentMap['candidateWarned']).isNotEmpty
-                ? _readText(incidentMap['candidateWarned'])
-                : _readText(incidentMap['warningGiven']));
-        final actions = _readText(incidentMap['actionsTaken']).isNotEmpty
-            ? _readText(incidentMap['actionsTaken'])
-            : _readText(incidentMap['actions']);
 
+      var supervision = _readText(incidentMap['supervisionTime']);
+      var startTime = _readText(incidentMap['actualStartTime']).isNotEmpty
+          ? _readText(incidentMap['actualStartTime'])
+          : _readText(incidentMap['candidateActualStartTime']);
+      var finish = _readText(incidentMap['actualFinishTime']).isNotEmpty
+          ? _readText(incidentMap['actualFinishTime'])
+          : _readText(incidentMap['candidateActualFinishTime']);
+      var reason = _readText(incidentMap['reason']);
+      var warning = _readText(
+        incidentMap['candidateWarnedScriptMayNotBeAccepted'],
+      ).isNotEmpty
+          ? _readText(incidentMap['candidateWarnedScriptMayNotBeAccepted'])
+          : (_readText(incidentMap['candidateWarned']).isNotEmpty
+              ? _readText(incidentMap['candidateWarned'])
+              : _readText(incidentMap['warningGiven']));
+      var actions = _readText(incidentMap['actionsTaken']).isNotEmpty
+          ? _readText(incidentMap['actionsTaken'])
+          : _readText(incidentMap['actions']);
+
+      if (detail.isNotEmpty) {
+        if (supervision.isEmpty && detail.contains('Supervision time:')) {
+          final m = RegExp(r'Supervision time:\s*([^.]+?)(?=\.\s*[A-Z]|\.?$)').firstMatch(detail);
+          if (m != null) supervision = m.group(1)?.trim() ?? '';
+        }
+        if (startTime.isEmpty && detail.contains('Actual start:')) {
+          final m = RegExp(r'Actual start:\s*([^.]+?)(?=\.\s*[A-Z]|\.?$)').firstMatch(detail);
+          if (m != null) startTime = m.group(1)?.trim() ?? '';
+        }
+        if (finish.isEmpty && (detail.contains('finish time:') || detail.contains('Finish time:'))) {
+          final m = RegExp(r'(?:Candidate actual )?[Ff]inish time:\s*([^.]+?)(?=\.\s*[A-Z]|\.?$)').firstMatch(detail);
+          if (m != null) finish = m.group(1)?.trim() ?? '';
+        }
+        if (reason.isEmpty && detail.contains('Reason:')) {
+          final m = RegExp(r'Reason:\s*([^.]+?)(?=\.\s*[A-Z]|\.?$)').firstMatch(detail);
+          if (m != null) reason = m.group(1)?.trim() ?? '';
+        }
+        if (warning.isEmpty && detail.toLowerCase().contains('warned script')) {
+          final m = RegExp(r'(?:Candidate )?[Ww]arned [Ss]cript [Mm]ay [Nn]ot [Bb]e [Aa]ccepted\??:\s*([^.]+?)(?=\.\s*[A-Z]|\.?$)').firstMatch(detail);
+          if (m != null) warning = m.group(1)?.trim() ?? '';
+        }
+        if (actions.isEmpty) {
+          if (detail.contains('Security assurance:')) {
+            final m = RegExp(r'Security assurance:\s*([^.]+?)(?=\.\s*[A-Z]|\.?$)').firstMatch(detail);
+            if (m != null) actions = m.group(1)?.trim() ?? '';
+          } else if (detail.contains('Action taken:')) {
+            final m = RegExp(r'Action taken:\s*([^.]+?)(?=\.\s*[A-Z]|\.?$)').firstMatch(detail);
+            if (m != null) actions = m.group(1)?.trim() ?? '';
+          } else if (detail.contains('Actions:')) {
+            final m = RegExp(r'Actions:\s*(.*)$').firstMatch(detail);
+            if (m != null) actions = m.group(1)?.trim() ?? '';
+          }
+        }
+      }
+
+      final hasStructuredFields = supervision.isNotEmpty ||
+          startTime.isNotEmpty ||
+          finish.isNotEmpty ||
+          reason.isNotEmpty ||
+          warning.isNotEmpty ||
+          actions.isNotEmpty;
+
+      if (hasStructuredFields) {
         if (supervision.isNotEmpty) {
           parts.add('Supervision time: $supervision');
         }
@@ -973,37 +1004,43 @@ class CsvExportService {
           parts.add('Warned script may not be accepted: $warning');
         }
         if (actions.isNotEmpty) {
-          final isAdmitted = action.toLowerCase() == 'admitted';
-          final label = isAdmitted ? 'Security assurance' : 'Action taken';
-          parts.add('$label: $actions');
+          final isAdmitted = action.toLowerCase() == 'admitted' ||
+              action.toLowerCase() == 'outcome: admitted' ||
+              (action.isEmpty && !detail.toLowerCase().contains('declined') && !detail.toLowerCase().contains('not admitted'));
+          if (actions.toLowerCase().startsWith('actions:')) {
+            parts.add(actions);
+          } else if (actions.toLowerCase().startsWith('security assurance:') ||
+              actions.toLowerCase().startsWith('action taken:')) {
+            parts.add(actions);
+          } else {
+            final label = isAdmitted ? 'Security assurance' : 'Action taken';
+            parts.add('$label: $actions');
+          }
         }
+      } else if (detail.isNotEmpty) {
+        final normalizedDetail = detail
+            .replaceAll(
+              'Candidate Warned Script May Not Be Accepted?:',
+              'Warned script may not be accepted:',
+            )
+            .replaceAll(
+              'Candidate Warned Script May Not Be Accepted:',
+              'Warned script may not be accepted:',
+            )
+            .replaceAll('Outcome: Not Admitted', 'Outcome: Declined')
+            .replaceAll('Outcome: not admitted', 'Outcome: Declined')
+            .replaceAll('Not Admitted', 'Declined')
+            .replaceAll('not admitted', 'Declined');
+        parts.add(normalizedDetail);
       }
-      final finishTime = _readText(incidentMap['actualFinishTime']).isNotEmpty
-          ? _readText(incidentMap['actualFinishTime'])
-          : _readText(incidentMap['candidateActualFinishTime']);
-      final warningGiven = _readText(
-        incidentMap['candidateWarnedScriptMayNotBeAccepted'],
-      ).isNotEmpty
-          ? _readText(incidentMap['candidateWarnedScriptMayNotBeAccepted'])
-          : (_readText(incidentMap['candidateWarned']).isNotEmpty
-              ? _readText(incidentMap['candidateWarned'])
-              : _readText(incidentMap['warningGiven']));
-      if (finishTime.isNotEmpty &&
-          !parts.any((p) => p.toLowerCase().contains('finish time'))) {
-        parts.add('Candidate actual finish time: $finishTime');
-      }
-      if (warningGiven.isNotEmpty &&
-          !parts.any((p) => p.toLowerCase().contains('warned script'))) {
-        parts.add(
-          'Warned script may not be accepted: $warningGiven',
-        );
-      }
+
       return parts.join('. ');
     }
 
     // Toilet break — render Time returned and Notes explicitly.
     final isToilet = incidentType == 'toilet' ||
-        normalizedMessage == 'toilet break';
+        normalizedMessage == 'toilet break' ||
+        normalizedMessage == 'toilet visit';
     if (isToilet) {
       final parts = <String>[];
       if (duration.isNotEmpty) {
@@ -1018,10 +1055,44 @@ class CsvExportService {
         parts.add('Time returned: $timeReturned');
       }
       if (detail.isNotEmpty) {
-        parts.add('Notes: $detail');
+        if (action.toLowerCase() == 'declined') {
+          parts.add(detail.toLowerCase().startsWith('reason:') ? detail : 'Notes: $detail');
+        } else {
+          final normalizedDetail = detail.toLowerCase().startsWith('notes:')
+              ? detail
+              : 'Notes: $detail';
+          parts.add(normalizedDetail);
+        }
       }
       if (action.isNotEmpty && action.toLowerCase() != 'approved') {
         parts.add(action);
+      }
+      return parts.join('. ');
+    }
+
+    // Malpractice — labelled format: Details: [description]. Action taken: [action]
+    final isMalpractice = incidentType == 'malpractice' ||
+        incidentType == 'cheating' ||
+        normalizedMessage == 'malpractice' ||
+        normalizedMessage == 'malpractice concern' ||
+        normalizedMessage == 'suspected malpractice' ||
+        normalizedMessage == 'cheating concern' ||
+        normalizedMessage == 'suspected cheating';
+    if (isMalpractice) {
+      final parts = <String>[];
+      if (detail.isNotEmpty) {
+        final formattedDetail = detail.toLowerCase().startsWith('details:')
+            ? detail
+            : 'Details: $detail';
+        parts.add(formattedDetail);
+      }
+      if (action.isNotEmpty) {
+        final formattedAction = action.toLowerCase().startsWith('action taken:')
+            ? action
+            : (action.toLowerCase().startsWith('action:')
+                ? 'Action taken: ${action.substring(7).trim()}'
+                : 'Action taken: $action');
+        parts.add(formattedAction);
       }
       return parts.join('. ');
     }

@@ -482,9 +482,7 @@ class _LateArrivalIncidentDialogState extends State<LateArrivalIncidentDialog> {
         child: Row(
           children: [
             Icon(
-              (suggested && !isError)
-                  ? Icons.auto_awesome
-                  : Icons.access_time_rounded,
+              Icons.access_time_rounded,
               color: iconColor,
               size: 20,
             ),

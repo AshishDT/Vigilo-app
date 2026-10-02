@@ -118,7 +118,7 @@ void main() {
       expect(
         text,
         contains(
-          'Event Log\n\nDate/Time,Category,Phase,Description,Room,Student ID,Invigilator(s),Details',
+          'Event Log\n\nDate/Time,Category,Phase,Description,Room,Candidate Reference,Invigilator(s),Details',
         ),
       );
       expect(
@@ -152,7 +152,7 @@ void main() {
       expect(
         text,
         contains(
-          'Date/Time,Category,Phase,Description,Room,Student ID,Invigilator(s),Details',
+          'Date/Time,Category,Phase,Description,Room,Candidate Reference,Invigilator(s),Details',
         ),
       );
       expect(
@@ -164,7 +164,7 @@ void main() {
       expect(
         text,
         contains(
-          '2026-03-06 22:43:00,Incident,Normal Time,Toilet visit (Approved),H1,123,Angela,Duration: 5 minutes',
+          '2026-03-06 22:43:00,Incident,Normal Time,Toilet Visit (Approved),H1,123,Angela,Duration: 5 minutes',
         ),
       );
       expect(
@@ -624,10 +624,10 @@ void main() {
       
       // Verify Event Log contains ALL events (original, restart, incidents, restarts)
       expect(text, contains('09:00:00,Core,Normal Time,Exam started'));
-      expect(text, contains('09:02:00,Incident,Normal Time,Toilet visit'));
+      expect(text, contains('09:02:00,Incident,Normal Time,Toilet Visit'));
       expect(text, contains('09:10:00,Control,Normal Time,Exam restarted'));
       expect(text, contains('09:10:00,Core,Normal Time,Exam started'));
-      expect(text, contains('09:12:00,Incident,Normal Time,Medical incident'));
+      expect(text, contains('09:12:00,Incident,Normal Time,Medical Incident'));
       expect(text, contains(',Core,Normal Time,Exam ended'));
     });
 
@@ -751,7 +751,7 @@ void main() {
       expect(
         text,
         contains(
-          '2026-03-06 09:15:00,Incident,Normal Time,Toilet visit (Approved),H1,DR654,,Duration: 5 minutes. Notes: Accompanied by staff. Returned safely',
+          '2026-03-06 09:15:00,Incident,Normal Time,Toilet Visit (Approved),H1,DR654,,Duration: 5 minutes. Notes: Accompanied by staff. Returned safely',
         ),
       );
 
@@ -759,7 +759,7 @@ void main() {
       expect(
         text,
         contains(
-          '2026-03-06 09:50:00,Incident,Normal Time,Toilet visit (Declined),H1,AB123,,Notes: Final 15 minutes of exam. Declined',
+          '2026-03-06 09:50:00,Incident,Normal Time,Toilet Visit (Declined),H1,AB123,,Notes: Final 15 minutes of exam. Declined',
         ),
       );
     });
@@ -838,7 +838,7 @@ void main() {
       expect(
         text,
         contains(
-          '2026-03-06 09:15:00,Incident,Normal Time,Late arrival,H1,CD341,,Outcome: Admitted. Supervision time: 09:15. Actual start: 09:20. Reason: Bus breakdown. Actions: Supervised throughout',
+          '2026-03-06 09:15:00,Incident,Normal Time,Late Arrival,H1,CD341,,Outcome: Admitted. Supervision time: 09:15. Actual start: 09:20. Reason: Bus breakdown. Security assurance: Supervised throughout',
         ),
       );
 
@@ -846,7 +846,7 @@ void main() {
       expect(
         text,
         contains(
-          '2026-03-06 09:45:00,Incident,Normal Time,Late arrival,H1,EF789,,Outcome: Declined. Supervision time: 09:45. Reason: Arrived too late. Actions: Escorted to reception',
+          '2026-03-06 09:45:00,Incident,Normal Time,Late Arrival,H1,EF789,,Outcome: Declined. Supervision time: 09:45. Reason: Arrived too late. Action taken: Escorted to reception',
         ),
       );
     });
@@ -910,7 +910,67 @@ void main() {
       expect(
         text,
         contains(
-          '2026-03-06 13:10:00,Incident,Normal Time,Late arrival,H2,GH102,,Outcome: Admitted. Supervision time: 01:10 PM. Actual start: 01:15 PM. Candidate actual finish time: 03:00 PM. Reason: Severe train delay. Warned script may not be accepted: Yes. Actions: Monitored in separate room',
+          '2026-03-06 13:10:00,Incident,Normal Time,Late Arrival,H2,GH102,,Outcome: Admitted. Supervision time: 01:10 PM. Actual start: 01:15 PM. Candidate actual finish time: 03:00 PM. Reason: Severe train delay. Warned script may not be accepted: Yes. Security assurance: Monitored in separate room',
+        ),
+      );
+    });
+
+    test('exports malpractice incident with labelled Details and Action taken format', () async {
+      const recordId = 'record-malpractice-test';
+      final card = ExamCardData(
+        recordId: recordId,
+        school: 'Bramwell Academy',
+        centreNumber: '68214',
+        date: '30/09/2026',
+        subject: 'Geography',
+        start: '14:38',
+        duration: '01:30',
+        end: '16:08',
+        normalStart: '14:38',
+        normalDuration: '01:30',
+        normalEnd: '16:08',
+        extraTime: '00:40',
+        totalDuration: '02:10',
+        extraEnd: '16:48',
+        roomsSnapshot: 'Hall A',
+        invigilatorsSnapshot: 'Anthony, Basil, Bev',
+        setUpBy: 'Will Quote',
+        setUpRole: 'Exam Officer',
+      );
+
+      await sessionService.persistHomeState(
+        cards: [card],
+        archiveCards: const [],
+        lastUsed: _emptyLastUsed(),
+      );
+
+      await sessionService.startSession(
+        examRecordId: recordId,
+        startedAt: DateTime(2026, 9, 30, 14, 38, 36).toUtc(),
+      );
+
+      await sessionService.appendIncident(
+        examRecordId: recordId,
+        incident: Incident(
+          'Malpractice',
+          eventType: 'incident',
+          incidentType: 'malpractice',
+          room: 'Hall A',
+          studentID: 'SD432, FR765',
+          detail: 'Students seen talking to each other',
+          action: 'Both reported to the Exams Officer',
+          time: DateTime(2026, 9, 30, 15, 54, 59),
+        ),
+      );
+
+      final text = await exportService.buildRecordCsvText(
+        examRecordId: recordId,
+      );
+
+      expect(
+        text,
+        contains(
+          '2026-09-30 15:54:59,Incident,Normal Time,Malpractice,Hall A,"SD432, FR765",,Details: Students seen talking to each other. Action taken: Both reported to the Exams Officer',
         ),
       );
     });
