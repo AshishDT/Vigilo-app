@@ -129,8 +129,11 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
     }
   }
 
+  final ScrollController _dotsScrollController = ScrollController();
+
   @override
   void dispose() {
+    _dotsScrollController.dispose();
     _centreController.removeListener(_onCentreChanged);
     _orgNameController.removeListener(_onOrgNameChanged);
     _centreController.dispose();
@@ -543,6 +546,32 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
 
   @visibleForTesting
   int get previewPageForTesting => _previewPage;
+
+  @visibleForTesting
+  ScrollController get dotsScrollControllerForTesting => _dotsScrollController;
+
+  void _goToPage(int page, int totalPages) {
+    if (page < 0 || page >= totalPages) return;
+    setState(() => _previewPage = page);
+    _scrollToActiveDot(page);
+  }
+
+  void _scrollToActiveDot(int page) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_dotsScrollController.hasClients) return;
+      if (!_dotsScrollController.position.hasContentDimensions) return;
+      final maxExtent = _dotsScrollController.position.maxScrollExtent;
+      if (maxExtent <= 0) return;
+      final viewport = _dotsScrollController.position.viewportDimension;
+      final centerOfPill = page * 13.0 + 13.0;
+      final target = (centerOfPill - viewport / 2).clamp(0.0, maxExtent);
+      _dotsScrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
 
   String? _getMappedValue(Map<String, dynamic> row, String field) {
     final col = _mappings[field];
@@ -1444,8 +1473,8 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                   child: Container(
                     color: colors.bg,
                     child: Container(
-                      margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      margin: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: colors.panel,
                         borderRadius: BorderRadius.circular(10),
@@ -1453,24 +1482,24 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.check_circle, color: colors.green, size: 15),
-                          const SizedBox(width: 6),
+                          Icon(Icons.check_circle, color: colors.green, size: 14),
+                          const SizedBox(width: 5),
                           Text(
                             '$validCount valid',
                             style: TextStyle(
                               color: colors.green,
-                              fontSize: 12.5,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Icon(Icons.error, color: colors.red, size: 15),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 12),
+                          Icon(Icons.error, color: colors.red, size: 14),
+                          const SizedBox(width: 5),
                           Text(
                             '$flaggedCount flagged',
                             style: TextStyle(
                               color: colors.red,
-                              fontSize: 12.5,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -1554,33 +1583,64 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildPageBtn(
                   colors: colors,
                   icon: Icons.chevron_left,
                   label: 'Previous',
                   enabled: _previewPage > 0,
-                  onTap: () => setState(() => _previewPage--),
+                  onTap: () => _goToPage(_previewPage - 1, totalPages),
                 ),
-                const SizedBox(width: 16),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(
-                      totalPages,
-                      (i) => _buildPageDot(i, colors),
-                    ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final bool canScroll =
+                          (totalPages * 13.0 + 13.0) > constraints.maxWidth;
+                      Widget dotList = SingleChildScrollView(
+                        controller: _dotsScrollController,
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(
+                            totalPages,
+                            (i) => _buildPageDot(i, totalPages, colors),
+                          ),
+                        ),
+                      );
+
+                      if (canScroll) {
+                        dotList = ShaderMask(
+                          shaderCallback: (Rect bounds) {
+                            return const LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                Colors.transparent,
+                                Colors.white,
+                                Colors.white,
+                                Colors.transparent,
+                              ],
+                              stops: [0.0, 0.12, 0.88, 1.0],
+                            ).createShader(bounds);
+                          },
+                          blendMode: BlendMode.dstIn,
+                          child: dotList,
+                        );
+                      }
+
+                      return Center(child: dotList);
+                    },
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 8),
                 _buildPageBtn(
                   colors: colors,
                   icon: Icons.chevron_right,
                   label: 'Next',
                   enabled: _previewPage < totalPages - 1,
-                  onTap: () => setState(() => _previewPage++),
+                  onTap: () => _goToPage(_previewPage + 1, totalPages),
                   iconTrailing: true,
                 ),
               ],
@@ -2074,17 +2134,21 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
     );
   }
 
-  Widget _buildPageDot(int i, _FlowColors colors) {
+  Widget _buildPageDot(int i, int totalPages, _FlowColors colors) {
     final selected = i == _previewPage;
     return GestureDetector(
-      onTap: () => setState(() => _previewPage = i),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 3),
-        width: selected ? 20 : 7,
-        height: 7,
-        decoration: BoxDecoration(
-          color: selected ? colors.blue : colors.line,
-          borderRadius: BorderRadius.circular(4),
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _goToPage(i, totalPages),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: selected ? 20 : 7,
+          height: 7,
+          decoration: BoxDecoration(
+            color: selected ? colors.blue : colors.line,
+            borderRadius: BorderRadius.circular(4),
+          ),
         ),
       ),
     );
