@@ -45,5 +45,41 @@ void main() {
 
       expect(parsed.invigilators, equals(['B. Smith', 'Ba. Jones', 'Dr. Bob', 'Jane Doe']));
     });
+
+    test('preserves user-entered order without alphabetical sorting', () {
+      // User types non-alphabetical names line by line (e.g. Lead invigilator first)
+      const input = "James Bond\nDonald Duck\nMickey Mouse\nAllan Key";
+      final parsed = ScheduleData.fromJson({
+        'time': '09:00 - 11:00',
+        'room': 'Hall A',
+        'notes': '',
+        'invigilators': input,
+      });
+
+      // Must strictly preserve typed order, never sorted alphabetically
+      expect(
+        parsed.invigilators,
+        equals(['James Bond', 'Donald Duck', 'Mickey Mouse', 'Allan Key']),
+      );
+
+      // Comma-separated single line conversion
+      final singleLine = parsed.invigilators.join(', ');
+      expect(
+        singleLine,
+        equals('James Bond, Donald Duck, Mickey Mouse, Allan Key'),
+      );
+
+      // Deserialization from comma-separated string preserves the exact same order
+      final reloaded = ScheduleData.fromJson({
+        'time': '09:00 - 11:00',
+        'room': 'Hall A',
+        'notes': '',
+        'invigilators': singleLine,
+      });
+      expect(
+        reloaded.invigilators,
+        equals(['James Bond', 'Donald Duck', 'Mickey Mouse', 'Allan Key']),
+      );
+    });
   });
 }

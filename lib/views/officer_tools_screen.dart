@@ -198,7 +198,6 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         .where((name) => name.isNotEmpty)
         .toSet()
         .toList();
-    names.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     return names;
   }
 
@@ -380,8 +379,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             .map((s) => s.trim())
             .where((s) => s.isNotEmpty)
             .toSet()
-            .toList()
-          ..sort();
+            .toList();
     if (invigilators.isNotEmpty) {
       selectedInvigilators.retainWhere(invigilators.contains);
     }
@@ -435,15 +433,19 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   }
 
   void _saveAllSetupChanges() {
+    final parsedInvigilators = _parseInvigilatorsInput(
+      _setupInvigilatorsController.text,
+    );
     final entry = ScheduleData(
       time: _setupTimeRange(),
       room: _setupRoomController.text.trim(),
-      invigilators: _parseInvigilatorsInput(_setupInvigilatorsController.text),
+      invigilators: parsedInvigilators,
       notes: _setupNotesController.text.trim(),
     );
 
     setState(() {
       scheduleList = [entry];
+      _setupInvigilatorsController.text = parsedInvigilators.join(", ");
     });
 
     final rooms =
@@ -459,8 +461,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             .map((s) => s.trim())
             .where((s) => s.isNotEmpty)
             .toSet()
-            .toList()
-          ..sort();
+            .toList();
     if (invigilators.isNotEmpty) {
       selectedInvigilators.retainWhere(invigilators.contains);
     }
@@ -512,8 +513,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
             .map((s) => s.trim())
             .where((s) => s.isNotEmpty)
             .toSet()
-            .toList()
-          ..sort();
+            .toList();
     final nextSetUpBy = _setUpByController.text.trim();
     final nextSetUpRole = normalizeSetUpRole(_setUpRole);
     final updated = _currentData.copyWith(

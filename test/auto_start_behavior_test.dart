@@ -396,5 +396,57 @@ void main() {
         await disposeHomeScreen(tester);
       });
     });
+
+    testWidgets('Idle manual-start exam automatically displays READY TO START when scheduled time arrives', (tester) async {
+      await tester.runAsync(() async {
+        await activatePilotLicence();
+        await pumpHomeScreen(tester);
+
+        final now = DateTime.now();
+        final todayStr = "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+        final hh = now.hour.toString().padLeft(2, '0');
+        final mm = now.minute.toString().padLeft(2, '0');
+        final startTimeStr = "$hh:$mm";
+
+        final card = ExamCardData(
+          recordId: 'record_manual_ready_to_start',
+          school: 'Battersea Academy',
+          centreNumber: '12345',
+          date: todayStr,
+          subject: 'Economics',
+          start: startTimeStr,
+          duration: '01:00',
+          end: '12:00',
+          normalStart: startTimeStr,
+          normalDuration: '01:00',
+          normalEnd: '12:00',
+          extraTime: '00:00',
+          totalDuration: '01:00',
+          extraEnd: '12:00',
+          autoStart: false,
+          progress: 0.0,
+        );
+
+        await sessionService.importSessions([card]);
+        await sessionService.persistHomeState(
+          cards: [card],
+          archiveCards: [],
+          lastUsed: {},
+        );
+
+        await disposeHomeScreen(tester);
+        await pumpHomeScreen(tester);
+
+        // When the ticker fires for the unstarted card whose scheduled time has arrived:
+        await Future.delayed(const Duration(seconds: 2));
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pump();
+
+        // Card must automatically display READY TO START without user tapping
+        expect(find.text('READY TO START'), findsOneWidget);
+
+        await disposeHomeScreen(tester);
+      });
+    });
   });
 }

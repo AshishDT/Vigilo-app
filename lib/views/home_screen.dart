@@ -60,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen>
   final SessionService _sessionService = SessionService();
   final Set<String> _normalTimeWarningVibrationSent = <String>{};
   final Set<String> _extraTimeWarningVibrationSent = <String>{};
+  final Set<String> _scheduledReadyNotifiedIds = <String>{};
   bool _tickInFlight = false;
   bool _isAdjustingProgress = false;
   final ScrollController _homeScrollController = ScrollController();
@@ -72,7 +73,6 @@ class _HomeScreenState extends State<HomeScreen>
           .where((name) => name.isNotEmpty)
           .toSet()
           .toList();
-      names.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
       return names;
     }
     if (s.invigilatorsSnapshot.trim().isNotEmpty) {
@@ -83,7 +83,6 @@ class _HomeScreenState extends State<HomeScreen>
           .where((name) => name.isNotEmpty)
           .toSet()
           .toList();
-      names.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
       return names;
     }
     return const [];
@@ -246,6 +245,7 @@ class _HomeScreenState extends State<HomeScreen>
         .toSet();
     _normalTimeWarningVibrationSent.retainAll(activeIds);
     _extraTimeWarningVibrationSent.retainAll(activeIds);
+    _scheduledReadyNotifiedIds.retainAll(activeIds);
     if (!mounted) return;
     setState(() {
       _isSessionsLoaded = true;
@@ -428,6 +428,7 @@ class _HomeScreenState extends State<HomeScreen>
       notifier.dispose();
     }
     _cardNotifiers.clear();
+    _scheduledReadyNotifiedIds.clear();
     _pulse.dispose();
     _fabDialCtrl.dispose();
     _homeScrollController.dispose();
@@ -645,6 +646,8 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   DateTime? _scheduledDateTime(ExamCardData c) {
+    final sched = c.scheduledDateTime;
+    if (sched != null) return sched;
     try {
       final dp = c.date.split('/');
       final tp = c.normalStart.split(':');
@@ -682,11 +685,33 @@ class _HomeScreenState extends State<HomeScreen>
       if (card.running || card.isPaused || card.phase == ExamPhase.finished) {
         continue;
       }
-      if (!card.autoStart || card.progress != 0.0) continue;
 
       final sched = _scheduledDateTime(card);
-      if (sched == null || now.isBefore(sched)) continue;
       final recordId = card.recordId;
+
+      if (!card.autoStart || card.progress != 0.0) {
+        // Redraw idle manual-start cards the exact second their scheduled time arrives
+        if (sched != null && recordId != null) {
+          if (!now.isBefore(sched)) {
+            if (!_scheduledReadyNotifiedIds.contains(recordId)) {
+              _scheduledReadyNotifiedIds.add(recordId);
+              final idx = _cards.indexWhere((c) => c.recordId == recordId);
+              if (idx != -1) {
+                final updated = _cards[idx].copyWith();
+                _cards[idx] = updated;
+                if (_cardNotifiers.containsKey(recordId)) {
+                  _cardNotifiers[recordId]!.value = updated;
+                }
+              }
+            }
+          } else {
+            _scheduledReadyNotifiedIds.remove(recordId);
+          }
+        }
+        continue;
+      }
+
+      if (sched == null || now.isBefore(sched)) continue;
       if (recordId == null) continue;
       final totalSeconds = card.totalSeconds;
       DateTime effectiveStart = now;

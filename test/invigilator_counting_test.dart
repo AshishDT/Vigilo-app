@@ -40,11 +40,11 @@ void main() {
       expect(schedule.invigilators, equals(['Allan', 'Basil', 'Steve']));
     });
 
-    test('Should parse dot-separated', () {
+    test('Should preserve names with dots and initials without splitting on period', () {
       final schedule = ScheduleData.fromJson({
-        'invigilators': 'Allan.Basil.Steve',
+        'invigilators': 'B. Smith, Ba. Jones, Dr. Bob',
       });
-      expect(schedule.invigilators, equals(['Allan', 'Basil', 'Steve']));
+      expect(schedule.invigilators, equals(['B. Smith', 'Ba. Jones', 'Dr. Bob']));
     });
 
     test('Should parse mixed separators and trim spaces', () {
