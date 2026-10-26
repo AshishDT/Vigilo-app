@@ -1,8 +1,12 @@
-import 'dart:ui';
+import 'package:flutter/animation.dart';
+import 'package:flutter/painting.dart';
 
 const double kFabGuardInset = 56.0;
 const int vibrate10Min = 10; //minutes before end time
 const int vibrate5Min = 5; //minutes before end time
+
+const Duration kThemeFadeDuration = Duration(milliseconds: 250);
+const Curve kThemeFadeCurve = Curves.easeInOut;
 
 class VigiloUiColors {
   static Color bg(bool dark) => dark ? const Color(0xFF071A2B) : const Color(0xFFEAF1F8);

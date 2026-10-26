@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
 
 class LicenseRequiredView extends StatelessWidget {
-  const LicenseRequiredView({super.key});
+  const LicenseRequiredView({super.key, this.dark});
+
+  /// Optional explicit dark mode flag to ensure immediate, synchronous theme switching
+  /// without Flutter's ThemeData.lerp thresholding delay.
+  final bool? dark;
 
   @override
   Widget build(BuildContext context) {
-    final colors = _LicenseRequiredColors(context);
+    final isDark = dark ?? (Theme.of(context).brightness == Brightness.dark);
+    final colors = _LicenseRequiredColors(context, isDark);
+    final textTheme = Theme.of(context).textTheme;
+
     return _BlueprintGateScaffold(
       child: SafeArea(
         top: false,
@@ -16,47 +23,56 @@ class LicenseRequiredView extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: _BlueprintGatePanel(
+                isDark: isDark,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Container(
+                        AnimatedContainer(
+                          duration: kThemeFadeDuration,
+                          curve: kThemeFadeCurve,
                           width: 56,
                           height: 56,
                           decoration: BoxDecoration(
-                            color: colors.red.withValues(
-                              alpha: 0.12,
-                            ),
+                            color: colors.red.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: colors.red.withValues(
-                                alpha: 0.35,
-                              ),
+                              color: colors.red.withValues(alpha: 0.35),
                             ),
                           ),
-                          child: Icon(
-                            Icons.lock_outline_rounded,
-                            color: colors.red,
-                            size: 30,
+                          child: TweenAnimationBuilder<Color?>(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
+                            tween: ColorTween(end: colors.red),
+                            builder: (_, iconColor, _) => Icon(
+                              Icons.lock_outline_rounded,
+                              color: iconColor,
+                              size: 30,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
-                          child: Text(
-                            'Licence Required',
+                          child: AnimatedDefaultTextStyle(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
                             style: TextStyle(
                               color: colors.text,
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
+                              fontFamily: textTheme.bodyMedium?.fontFamily,
                             ),
+                            child: const Text('Licence Required'),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 18),
-                    Container(
+                    AnimatedContainer(
+                      duration: kThemeFadeDuration,
+                      curve: kThemeFadeCurve,
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -69,45 +85,69 @@ class LicenseRequiredView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'No active licence is installed.',
+                          AnimatedDefaultTextStyle(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
                             style: TextStyle(
                               color: colors.text,
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
+                              fontFamily: textTheme.bodyMedium?.fontFamily,
                             ),
+                            child: const Text('No active licence is installed.'),
                           ),
                           const SizedBox(height: 10),
-                          Text(
-                            'A valid Pilot, Core, or Pro licence is required to continue.',
+                          AnimatedDefaultTextStyle(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
                             style: TextStyle(
                               color: colors.textSoft,
                               fontSize: 16,
                               height: 1.5,
                               fontWeight: FontWeight.w600,
+                              fontFamily: textTheme.bodyMedium?.fontFamily,
+                            ),
+                            child: const Text(
+                              'A valid Pilot, Core, or Pro licence is required to continue.',
                             ),
                           ),
                           const SizedBox(height: 14),
-                          Text(
-                            'Tap "Vigilo ERC" in the app bar to open the licence screen.',
+                          AnimatedDefaultTextStyle(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
                             style: TextStyle(
                               color: colors.signalBlueSoft,
                               fontSize: 15,
                               height: 1.5,
                               fontWeight: FontWeight.w700,
+                              fontFamily: textTheme.bodyMedium?.fontFamily,
+                            ),
+                            child: const Text(
+                              'Tap "Vigilo ERC" in the app bar to open the licence screen.',
                             ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Divider(color: colors.lineSoft),
+                    AnimatedContainer(
+                      duration: kThemeFadeDuration,
+                      curve: kThemeFadeCurve,
+                      height: 1,
+                      color: colors.lineSoft,
+                    ),
                     const SizedBox(height: 12),
-                    Text(
-                      'Exam creation and exam management are unavailable until a valid licence is activated.',
+                    AnimatedDefaultTextStyle(
+                      duration: kThemeFadeDuration,
+                      curve: kThemeFadeCurve,
                       style: TextStyle(
                         color: colors.textSoft,
                         height: 1.5,
+                        fontSize: 14,
+                        fontFamily: textTheme.bodyMedium?.fontFamily,
+                      ),
+                      child: const Text(
+                        'Exam creation and exam management are unavailable until a valid licence is activated.',
                       ),
                     ),
                   ],
@@ -123,9 +163,8 @@ class LicenseRequiredView extends StatelessWidget {
 
 class _LicenseRequiredColors {
   final BuildContext context;
-  _LicenseRequiredColors(this.context);
-
-  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+  final bool isDark;
+  _LicenseRequiredColors(this.context, this.isDark);
 
   Color get bg => VigiloUiColors.bg(isDark);
   Color get bg2 => VigiloUiColors.bg2(isDark);
@@ -148,29 +187,22 @@ class _BlueprintGateScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _LicenseRequiredColors(context);
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [colors.bg, colors.bg2],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: child,
-    );
+    return child;
   }
 }
 
 class _BlueprintGatePanel extends StatelessWidget {
-  const _BlueprintGatePanel({required this.child});
+  const _BlueprintGatePanel({required this.child, required this.isDark});
 
   final Widget child;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
-    final colors = _LicenseRequiredColors(context);
-    return Container(
+    final colors = _LicenseRequiredColors(context, isDark);
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       decoration: BoxDecoration(
         color: colors.panel.withValues(alpha: 0.96),

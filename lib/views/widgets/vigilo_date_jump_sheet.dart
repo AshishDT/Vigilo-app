@@ -72,9 +72,9 @@ class VigiloDateJumpSheet extends StatelessWidget {
           ),
           child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-            child: Scaffold(
-              backgroundColor: Colors.transparent,
-              body: SafeArea(
+            child: Material(
+              type: MaterialType.transparency,
+              child: SafeArea(
                 child: Column(
                   children: [
                     const SizedBox(height: 14),
@@ -145,6 +145,7 @@ class VigiloDateJumpSheet extends StatelessWidget {
                       child: dates.isEmpty
                           ? SingleChildScrollView(
                               controller: scrollController,
+                              primary: false,
                               child: Align(
                                 alignment: Alignment.centerLeft,
                                 child: Padding(
@@ -166,6 +167,7 @@ class VigiloDateJumpSheet extends StatelessWidget {
                             )
                           : ListView.separated(
                               controller: scrollController,
+                              primary: false,
                               padding: const EdgeInsets.symmetric(horizontal: 20),
                               itemCount: dates.length,
                               separatorBuilder: (_, __) => Divider(

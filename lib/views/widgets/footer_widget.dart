@@ -17,8 +17,11 @@ class FooterWidget extends StatefulWidget {
     required this.onBriefings,
     required this.isVibrateOn,
     required this.isArchiveMode,
+    this.isDark,
     super.key,
   });
+
+  final bool? isDark;
 
   @override
   State<FooterWidget> createState() => _FooterWidgetState();
@@ -47,38 +50,31 @@ class _FooterWidgetState extends State<FooterWidget>
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final dark = widget.isDark ?? (Theme.of(context).brightness == Brightness.dark);
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: VigiloUiColors.panel(dark).withOpacity(0.96),
+        color: VigiloUiColors.panel(dark).withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: VigiloUiColors.blue(dark).withOpacity(dark ? 0.30 : 0.26),
+          color: VigiloUiColors.blue(dark).withValues(alpha: dark ? 0.30 : 0.26),
           width: 1,
         ),
-        boxShadow: dark
-            ? [
-                BoxShadow(
-                  color: VigiloUiColors.blue(dark).withOpacity(0.07),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: VigiloUiColors.blue(dark).withOpacity(0.10),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.07),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+        boxShadow: [
+          BoxShadow(
+            color: VigiloUiColors.blue(dark).withValues(alpha: dark ? 0.07 : 0.10),
+            blurRadius: dark ? 10 : 12,
+            offset: Offset(0, dark ? 3 : 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: dark ? 0.22 : 0.07),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -141,16 +137,25 @@ class _FooterWidgetState extends State<FooterWidget>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 28),
+            TweenAnimationBuilder<Color?>(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
+              tween: ColorTween(end: color),
+              builder: (context, animatedColor, child) {
+                return Icon(icon, color: animatedColor, size: 28);
+              },
+            ),
             const SizedBox(height: 4),
-            Text(
-              label,
+            AnimatedDefaultTextStyle(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
               style: TextStyle(
                 color: VigiloUiColors.textSoft(dark),
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 height: 1.1,
               ),
+              child: Text(label),
             ),
           ],
         ),

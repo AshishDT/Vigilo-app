@@ -4,18 +4,26 @@ import '../../utils/constants.dart';
 class FilteredEmptyStateWidget extends StatelessWidget {
   final VoidCallback onClear;
 
+  /// Optional explicit dark mode flag to ensure immediate, synchronous theme switching
+  /// without Flutter's ThemeData.lerp thresholding delay.
+  final bool? dark;
+
   const FilteredEmptyStateWidget({
     super.key,
     required this.onClear,
+    this.dark,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = dark ?? (Theme.of(context).brightness == Brightness.dark);
+    final textTheme = Theme.of(context).textTheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Container(
+      child: AnimatedContainer(
+        duration: kThemeFadeDuration,
+        curve: kThemeFadeCurve,
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(24, 34, 24, 34),
         decoration: BoxDecoration(
@@ -40,7 +48,9 @@ class FilteredEmptyStateWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
+            AnimatedContainer(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
               width: 84,
               height: 84,
               decoration: BoxDecoration(
@@ -57,38 +67,51 @@ class FilteredEmptyStateWidget extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(
-                Icons.filter_alt_off_outlined,
-                color: VigiloUiColors.blueSoft(isDark),
-                size: 42,
+              child: TweenAnimationBuilder<Color?>(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
+                tween: ColorTween(end: VigiloUiColors.blueSoft(isDark)),
+                builder: (_, iconColor, _) => Icon(
+                  Icons.filter_alt_off_outlined,
+                  color: iconColor,
+                  size: 42,
+                ),
               ),
             ),
             const SizedBox(height: 24),
-            Text(
-              'No matches',
+            AnimatedDefaultTextStyle(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: VigiloUiColors.text(isDark),
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.2,
+                fontFamily: textTheme.bodyMedium?.fontFamily,
               ),
+              child: const Text('No matches'),
             ),
             const SizedBox(height: 9),
-            Text(
-              'Try adjusting Status or Date',
+            AnimatedDefaultTextStyle(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: VigiloUiColors.textSoft(isDark),
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 height: 1.35,
+                fontFamily: textTheme.bodyMedium?.fontFamily,
               ),
+              child: const Text('Try adjusting Status or Date'),
             ),
             const SizedBox(height: 20),
             GestureDetector(
               onTap: onClear,
-              child: Container(
+              child: AnimatedContainer(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 22,
                   vertical: 12,

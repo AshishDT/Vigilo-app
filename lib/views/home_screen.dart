@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:vibration/vibration.dart';
 
 import '../enums/exam_phase.dart';
 import '../models/exam_card_data.dart';
 import '../models/incident.dart';
-import '../models/home_list_item.dart';
 import '../services/license_service.dart';
 import '../services/session_service.dart';
 import '../utils/constants.dart';
@@ -34,16 +34,19 @@ import 'widgets/vigilo_duration_picker.dart';
 import 'widgets/session_manager_panel.dart';
 import 'widgets/vigilo_date_jump_sheet.dart';
 import 'widgets/speed_dial_option.dart';
+import 'widgets/home_sessions_list_view.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.dark,
     required this.onToggleTheme,
+    this.initialLicenseRequired,
   });
 
   final bool dark;
   final VoidCallback onToggleTheme;
+  final bool? initialLicenseRequired;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -59,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen>
   final Set<String> _extraTimeWarningVibrationSent = <String>{};
   bool _tickInFlight = false;
   bool _isAdjustingProgress = false;
+  final ScrollController _homeScrollController = ScrollController();
 
   List<String> _getUniqueInvigilators(ExamCardData s) {
     if (s.scheduleList != null && s.scheduleList!.isNotEmpty) {
@@ -74,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (s.invigilatorsSnapshot.trim().isNotEmpty) {
       final names = s.invigilatorsSnapshot
           .replaceAll('\r', '\n')
-          .split(RegExp(r'[\n,;|.]+'))
+          .split(RegExp(r'[\n,;|]+'))
           .map((name) => name.trim())
           .where((name) => name.isNotEmpty)
           .toSet()
@@ -110,12 +114,40 @@ class _HomeScreenState extends State<HomeScreen>
   Timer? _ticker;
   Timer? _extraPulseTicker;
   Timer? _clickTimer;
-  bool _licenseLoaded = false;
+  final Map<String, ValueNotifier<ExamCardData>> _cardNotifiers = {};
   bool _licenseRequired = true;
+  bool _isSessionsLoaded = false;
+  final ItemScrollController _itemScrollController = ItemScrollController();
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
+  bool _isUserScrolling = false;
+  bool _pendingCardRefreshAfterScroll = false;
+  bool _isThemeSwitching = false;
+  Timer? _themeSwitchTimer;
+
+  @override
+  void didUpdateWidget(HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.dark != widget.dark) {
+      _isThemeSwitching = true;
+      _themeSwitchTimer?.cancel();
+      _themeSwitchTimer = Timer(
+        kThemeFadeDuration + const Duration(milliseconds: 100),
+        () {
+          if (mounted) {
+            setState(() {
+              _isThemeSwitching = false;
+            });
+          }
+        },
+      );
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    _licenseRequired = widget.initialLicenseRequired ?? true;
     _pulse = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -131,12 +163,13 @@ class _HomeScreenState extends State<HomeScreen>
     WidgetsBinding.instance.addObserver(this);
     _initializeHomeState();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
-    _extraPulseTicker = Timer.periodic(const Duration(milliseconds: 1500), (_) {
-      if (mounted) setState(() => extraPulse = !extraPulse);
-    });
+    // Eliminated _extraPulseTicker periodic setState to avoid periodic scroll interruptions
   }
 
   Future<void> _initializeHomeState() async {
+    await _loadLicenseStatus();
+    if (!mounted) return;
+    if (_licenseRequired) return;
     await _sessionService.initialize();
     if (!mounted) return;
     await _loadState();
@@ -144,8 +177,6 @@ class _HomeScreenState extends State<HomeScreen>
     await _clearLegacyLicenceCentrePrefillIfNeeded();
     if (!mounted) return;
     await _seedOrganizationFromLicenseIfNeeded();
-    if (!mounted) return;
-    await _loadLicenseStatus();
   }
 
   Future<void> _saveState() async {
@@ -206,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  Future<void> _refreshCards() async {
+  Future<void> _refreshCards({bool resort = false}) async {
     final state = await _sessionService.loadHomeState();
     final lastImportIds = await _sessionService.getLastImportedSessionIds();
     final activeIds = state.cards
@@ -217,6 +248,7 @@ class _HomeScreenState extends State<HomeScreen>
     _extraTimeWarningVibrationSent.retainAll(activeIds);
     if (!mounted) return;
     setState(() {
+      _isSessionsLoaded = true;
       _lastImportedSessionIds = lastImportIds;
       final previousCards = List<ExamCardData>.from(_cards);
       final previousArchiveCards = List<ExamCardData>.from(_archiveCards);
@@ -243,7 +275,19 @@ class _HomeScreenState extends State<HomeScreen>
       _lastStart = state.lastUsed['start'];
       _lastDuration = state.lastUsed['duration'];
       _lastExtra = state.lastUsed['extra'];
-      _updateFilteredAndGroupedCards();
+      _updateFilteredAndGroupedCards(resort: resort);
+      for (final card in _cards) {
+        final id = card.recordId;
+        if (id != null && _cardNotifiers.containsKey(id)) {
+          _cardNotifiers[id]!.value = card;
+        }
+      }
+      for (final card in _archiveCards) {
+        final id = card.recordId;
+        if (id != null && _cardNotifiers.containsKey(id)) {
+          _cardNotifiers[id]!.value = card;
+        }
+      }
     });
   }
 
@@ -252,6 +296,7 @@ class _HomeScreenState extends State<HomeScreen>
     final lastImportIds = await _sessionService.getLastImportedSessionIds();
     if (!mounted) return;
     setState(() {
+      _isSessionsLoaded = true;
       _lastImportedSessionIds = lastImportIds;
       _cards
         ..clear()
@@ -269,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen>
       _lastStart = state.lastUsed['start'];
       _lastDuration = state.lastUsed['duration'];
       _lastExtra = state.lastUsed['extra'];
-      _updateFilteredAndGroupedCards();
+      _updateFilteredAndGroupedCards(resort: true);
     });
   }
 
@@ -280,18 +325,40 @@ class _HomeScreenState extends State<HomeScreen>
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {
       _sessionService.checkpoint();
+      _sessionService.flushPendingDeltaSaves();
     } else if (state == AppLifecycleState.resumed) {
-      _loadLicenseStatus();
+      _handleAppResumed();
     }
+  }
+
+  Future<void> _handleAppResumed() async {
+    await _loadLicenseStatus();
+    if (!mounted || _licenseRequired) return;
+    final ended = await _sessionService.autoEndIfNeeded();
+    if (!mounted) return;
+    if (ended || _cards.any((c) => c.running || c.isPaused)) {
+      await _refreshCards();
+    }
+    if (!mounted) return;
+    _tick();
   }
 
   Future<void> _loadLicenseStatus() async {
     final required = await LicenseService.requiresValidLicense();
     if (!mounted) return;
+    final wasRequired = _licenseRequired;
     setState(() {
       _licenseRequired = required;
-      _licenseLoaded = true;
     });
+    if (wasRequired && !required) {
+      await _sessionService.initialize();
+      if (!mounted) return;
+      await _loadState();
+      if (!mounted) return;
+      await _clearLegacyLicenceCentrePrefillIfNeeded();
+      if (!mounted) return;
+      await _seedOrganizationFromLicenseIfNeeded();
+    }
   }
 
   Future<void> _seedOrganizationFromLicenseIfNeeded() async {
@@ -356,11 +423,18 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _sessionService.flushPendingDeltaSaves();
+    for (final notifier in _cardNotifiers.values) {
+      notifier.dispose();
+    }
+    _cardNotifiers.clear();
     _pulse.dispose();
     _fabDialCtrl.dispose();
+    _homeScrollController.dispose();
     _ticker?.cancel();
     _extraPulseTicker?.cancel();
     _clickTimer?.cancel();
+    _themeSwitchTimer?.cancel();
     super.dispose();
   }
 
@@ -503,27 +577,71 @@ class _HomeScreenState extends State<HomeScreen>
     required List<ExamCardData> previous,
     required List<ExamCardData> incoming,
   }) {
-    if (previous.isEmpty || incoming.isEmpty) {
+    if (incoming.isEmpty) return [];
+    if (previous.isEmpty) {
       return incoming.map((c) => c.copyWith(expanded: false)).toList();
     }
 
-    final previousById = <String, ExamCardData>{
-      for (final card in previous)
+    final incomingById = <String, ExamCardData>{
+      for (final card in incoming)
         if (card.recordId != null) card.recordId!: card,
     };
 
-    return incoming.map((card) {
+    final result = <ExamCardData>[];
+    final seenIds = <String>{};
+
+    // Preserve the exact in-session order from previous
+    for (final prior in previous) {
+      final id = prior.recordId;
+      if (id != null && incomingById.containsKey(id)) {
+        final card = incomingById[id]!;
+        seenIds.add(id);
+
+        final priorMessages = prior.messages;
+        final incomingMessages = card.messages;
+        final resolvedMessages = (priorMessages != null &&
+                (incomingMessages == null ||
+                    priorMessages.length > incomingMessages.length))
+            ? priorMessages
+            : incomingMessages;
+
+        final priorLogs = prior.logs;
+        final incomingLogs = card.logs;
+        final resolvedLogs = (priorLogs.length > incomingLogs.length)
+            ? priorLogs
+            : incomingLogs;
+
+        final priorRecipients = prior.selectedRecipients;
+        final incomingRecipients = card.selectedRecipients;
+        final resolvedRecipients = (priorRecipients != null && priorRecipients.isNotEmpty)
+            ? priorRecipients
+            : incomingRecipients;
+
+        result.add(
+          card.copyWith(
+            expanded: prior.expanded,
+            isSelected: prior.isSelected,
+            tapScale: prior.tapScale,
+            isActiveTime: prior.isActiveTime,
+            messages: resolvedMessages,
+            logs: resolvedLogs,
+            selectedRecipients: resolvedRecipients,
+          ),
+        );
+      } else if (id == null) {
+        result.add(prior);
+      }
+    }
+
+    // Append any newly added cards from incoming that were not in previous
+    for (final card in incoming) {
       final id = card.recordId;
-      if (id == null) return card;
-      final prior = previousById[id];
-      if (prior == null) return card;
-      return card.copyWith(
-        expanded: prior.expanded,
-        isSelected: prior.isSelected,
-        tapScale: prior.tapScale,
-        isActiveTime: prior.isActiveTime,
-      );
-    }).toList();
+      if (id == null || !seenIds.contains(id)) {
+        result.add(card.copyWith(expanded: false));
+      }
+    }
+
+    return result;
   }
 
   DateTime? _scheduledDateTime(ExamCardData c) {
@@ -543,7 +661,12 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _tick() {
     if (!mounted) return;
-    if (_licenseRequired || _tickInFlight || _isAdjustingProgress) return;
+    if (_licenseRequired ||
+        _tickInFlight ||
+        _isAdjustingProgress ||
+        _isThemeSwitching) {
+      return;
+    }
     _tickInFlight = true;
     _tickAsync().whenComplete(() {
       _tickInFlight = false;
@@ -584,16 +707,89 @@ class _HomeScreenState extends State<HomeScreen>
       autoStartTriggered = true;
     }
 
+    final isActivelyScrolling = _isUserScrolling ||
+        (_homeScrollController.hasClients &&
+            _homeScrollController.position.isScrollingNotifier.value);
+
+    if (_pendingCardRefreshAfterScroll && !isActivelyScrolling) {
+      _pendingCardRefreshAfterScroll = false;
+      await _refreshCards();
+      return;
+    }
+
     final ended = await _sessionService.autoEndIfNeeded();
     if (autoStartTriggered || ended) {
-      await _refreshCards();
+      if (!isActivelyScrolling) {
+        await _refreshCards();
+      } else {
+        _pendingCardRefreshAfterScroll = true;
+      }
       await _vibrateForTenMinutesBeforeNormalEnd();
       await _vibrateForTenMinutesBeforeExtraEnd();
       return;
     }
 
-    // UI tick refresh only; no per-second persistence.
-    await _refreshCards();
+    // Isolated tick refresh: only update active running cards; avoid scanning 500 records on disk every second.
+    final hasRunningCards = _cards.any((c) => c.running);
+    if (hasRunningCards && !isActivelyScrolling) {
+      final updatedActive =
+          await _sessionService.refreshActiveCardsOnly(_cards);
+      if (updatedActive.isNotEmpty && mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          for (final updated in updatedActive) {
+            final idx = _cards.indexWhere((c) => c.recordId == updated.recordId);
+            if (idx != -1) {
+              final current = _cards[idx];
+              final merged = current.copyWith(
+                running: updated.running,
+                isPaused: updated.isPaused,
+                progress: updated.progress,
+                phase: updated.phase,
+                pausedSeconds: updated.pausedSeconds,
+                epochStart: updated.epochStart,
+                end: updated.end,
+                normalEnd: updated.normalEnd,
+                extraEnd: updated.extraEnd,
+                logs: updated.logs.length >= current.logs.length
+                    ? updated.logs
+                    : current.logs,
+              );
+              _cards[idx] = merged;
+              final id = updated.recordId;
+              if (id != null && _cardNotifiers.containsKey(id)) {
+                _cardNotifiers[id]!.value = merged;
+              }
+            } else {
+              final archIdx =
+                  _archiveCards.indexWhere((c) => c.recordId == updated.recordId);
+              if (archIdx != -1) {
+                final current = _archiveCards[archIdx];
+                final merged = current.copyWith(
+                  running: updated.running,
+                  isPaused: updated.isPaused,
+                  progress: updated.progress,
+                  phase: updated.phase,
+                  pausedSeconds: updated.pausedSeconds,
+                  epochStart: updated.epochStart,
+                  end: updated.end,
+                  normalEnd: updated.normalEnd,
+                  extraEnd: updated.extraEnd,
+                  logs: updated.logs.length >= current.logs.length
+                      ? updated.logs
+                      : current.logs,
+                );
+                _archiveCards[archIdx] = merged;
+                final id = updated.recordId;
+                if (id != null && _cardNotifiers.containsKey(id)) {
+                  _cardNotifiers[id]!.value = merged;
+                }
+              }
+            }
+          }
+        });
+      }
+    }
     await _vibrateForTenMinutesBeforeNormalEnd();
     await _vibrateForTenMinutesBeforeExtraEnd();
   }
@@ -710,6 +906,17 @@ class _HomeScreenState extends State<HomeScreen>
   void _log(ExamCardData data, Incident inc) {
     final recordId = data.recordId;
     if (recordId == null) return;
+    final idx = _cards.indexWhere((c) => c.recordId == recordId);
+    if (idx != -1) {
+      final current = _cards[idx];
+      final updated = current.copyWith(
+        logs: [...current.logs, inc],
+      );
+      _cards[idx] = updated;
+      if (_cardNotifiers.containsKey(recordId)) {
+        _cardNotifiers[recordId]!.value = updated;
+      }
+    }
     _sessionService
         .appendIncident(examRecordId: recordId, incident: inc)
         .then((_) => _refreshCards());
@@ -758,10 +965,11 @@ class _HomeScreenState extends State<HomeScreen>
           normalStart: "$hh:$mm",
           progress: 0.0,
           phase: ExamPhase.normal,
-          running: false,
+          running: true,
           isPaused: false,
-          epochStart: null,
+          epochStart: now,
           pausedSeconds: 0,
+          wasEverStarted: true,
         ),
       );
       await _saveState();
@@ -987,9 +1195,21 @@ class _HomeScreenState extends State<HomeScreen>
                 _lastExtra = null;
                 _updateFilteredAndGroupedCards();
               });
-              await _saveState();
-              if (!mounted) return;
-              context.safePop(true);
+              await _sessionService.saveCardDelta(newCard, debounceDurationMs: 0);
+              unawaited(
+                _sessionService.saveLastUsed({
+                  'school': null,
+                  'centre': null,
+                  'subject': null,
+                  'board': null,
+                  'start': null,
+                  'duration': null,
+                  'extra': null,
+                }),
+              );
+              if (context.mounted) {
+                context.safePop(true);
+              }
             },
       ),
     );
@@ -1072,60 +1292,41 @@ class _HomeScreenState extends State<HomeScreen>
 
 
 
-    if (!_licenseLoaded) {
-      return Scaffold(
-        appBar: AppBar(
-          title: InkWell(
-            borderRadius: BorderRadius.circular(8),
-            onTap: _openLicenseActivation,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-              child: Text('Vigilo ERC'),
-            ),
-          ),
-        ),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
 
     if (_licenseRequired) {
-      return Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
+      return AnimatedContainer(
+        duration: kThemeFadeDuration,
+        curve: kThemeFadeCurve,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              VigiloUiColors.bg(dark),
+              VigiloUiColors.bg2(dark),
+              VigiloUiColors.bg(dark),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Scaffold(
           backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          title: InkWell(
-            borderRadius: BorderRadius.circular(8),
-            onTap: _openLicenseActivation,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-              child: Text(
-                'Vigilo ERC',
-                style: TextStyle(
-                  color: VigiloUiColors.text(dark),
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.4,
+          body: SafeArea(
+            child: Column(
+              children: [
+                _header(dark),
+                Expanded(
+                  child: LicenseRequiredView(dark: dark),
                 ),
-              ),
+              ],
             ),
           ),
-          actions: [
-            _headerIcon(
-              dark,
-              dark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
-              onTap: widget.onToggleTheme,
-            ),
-            const SizedBox(width: 20),
-          ],
         ),
-        body: const LicenseRequiredView(),
       );
     }
 
-    return Container(
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -1144,8 +1345,9 @@ class _HomeScreenState extends State<HomeScreen>
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
           child: AnimatedOpacity(
-            opacity: anyOpen ? 0 : 1,
-            duration: const Duration(milliseconds: 250),
+            opacity: (_isSessionsLoaded && !anyOpen) ? 1 : 0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
             // Speed Dial FAB: expands to reveal Import / Create options
             child: FloatingActionButton.extended(
               tooltip: _fabOpen ? 'Close' : 'Add Exam',
@@ -1192,6 +1394,7 @@ class _HomeScreenState extends State<HomeScreen>
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
             child: FooterWidget(
+              isDark: dark,
               onVibrate: () async {
                 if (!isArchiveView) {
                   int i = getExpandedCardIndex();
@@ -1326,7 +1529,28 @@ class _HomeScreenState extends State<HomeScreen>
                         onLog: (inc) {
                           _log(_cards[i], inc);
                         },
-                        onSaveData: _saveState,
+                        onSaveData: () async {
+                          final targetId = _cards[i].recordId;
+                          final idx = targetId != null
+                              ? _cards.indexWhere((c) => c.recordId == targetId)
+                              : i;
+                          if (idx >= 0 && idx < _cards.length) {
+                            await _sessionService.saveCardDelta(
+                              _cards[idx],
+                              debounceDurationMs: 0,
+                            );
+                          } else {
+                            final archIdx = targetId != null
+                                ? _archiveCards.indexWhere((c) => c.recordId == targetId)
+                                : -1;
+                            if (archIdx != -1) {
+                              await _sessionService.saveCardDelta(
+                                _archiveCards[archIdx],
+                                debounceDurationMs: 0,
+                              );
+                            }
+                          }
+                        },
                         onReStart: () async {
                           final ok = await showDialog<bool>(
                             context: context,
@@ -1397,16 +1621,63 @@ class _HomeScreenState extends State<HomeScreen>
                               NotificationType.information,
                             );
                           }
-                          _saveState();
+                          final cardToSave = _cards[i];
+                          _sessionService.saveCardDelta(
+                            cardToSave,
+                            debounceDurationMs: 0,
+                          );
                         },
                         onUpdateData: (updated) {
-                          if (!mounted || i < 0 || i >= _cards.length) return;
-                          final current = _cards[i];
-                          _cards[i] = _mergeOfficerToolsUpdate(
-                            current: current,
-                            updated: updated,
-                          );
-                          _saveState();
+                          if (!mounted) return;
+                          final targetId = updated.recordId;
+                          final idx = targetId != null
+                              ? _cards.indexWhere((c) => c.recordId == targetId)
+                              : -1;
+                          final resolvedIndex = idx != -1 ? idx : i;
+                          if (resolvedIndex >= 0 && resolvedIndex < _cards.length) {
+                            final current = _cards[resolvedIndex];
+                            final merged = _mergeOfficerToolsUpdate(
+                              current: current,
+                              updated: updated,
+                            );
+                            _cards[resolvedIndex] = merged;
+                            if (targetId != null &&
+                                _cardNotifiers.containsKey(targetId)) {
+                              _cardNotifiers[targetId]!.value = merged;
+                            }
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted) {
+                                setState(() {
+                                  _updateFilteredAndGroupedCards();
+                                });
+                              }
+                            });
+                          } else {
+                            final archIdx = targetId != null
+                                ? _archiveCards.indexWhere(
+                                    (c) => c.recordId == targetId,
+                                  )
+                                : -1;
+                            if (archIdx != -1) {
+                              final current = _archiveCards[archIdx];
+                              final merged = _mergeOfficerToolsUpdate(
+                                current: current,
+                                updated: updated,
+                              );
+                              _archiveCards[archIdx] = merged;
+                              if (targetId != null &&
+                                  _cardNotifiers.containsKey(targetId)) {
+                                _cardNotifiers[targetId]!.value = merged;
+                              }
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (mounted) {
+                                  setState(() {
+                                    _updateFilteredAndGroupedCards();
+                                  });
+                                }
+                              });
+                            }
+                          }
                         },
                         onDeleteData: () async {
                           final ok = await showDialog<bool>(
@@ -1462,12 +1733,18 @@ class _HomeScreenState extends State<HomeScreen>
                   const SizedBox(height: 14),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: StatChip(
-                      invigilatorsOnDuty: allInvigilators,
-                      activeExams: isArchiveView
-                          ? _archiveCards.length
-                          : _activeExamCount,
-                      isArchiveView: isArchiveView,
+                    child: AnimatedOpacity(
+                      opacity: _isSessionsLoaded ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                      child: StatChip(
+                        isDark: dark,
+                        invigilatorsOnDuty: allInvigilators,
+                        activeExams: isArchiveView
+                            ? _archiveCards.length
+                            : _activeExamCount,
+                        isArchiveView: isArchiveView,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -1552,27 +1829,43 @@ class _HomeScreenState extends State<HomeScreen>
                         : const SizedBox(width: double.infinity, height: 0),
                   ),
                   Expanded(
-                    child: isArchiveView
-                        ? (_archiveCards.isEmpty
-                              ? const SingleChildScrollView(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      layoutBuilder: (currentChild, previousChildren) {
+                        return Stack(
+                          fit: StackFit.expand,
+                          alignment: Alignment.center,
+                          children: <Widget>[
+                            ...previousChildren,
+                            if (currentChild != null) currentChild,
+                          ],
+                        );
+                      },
+                      child: isArchiveView
+                          ? (_archiveCards.isEmpty
+                              ? SingleChildScrollView(
+                                  key: ValueKey('archive_empty'),
                                   child: Center(
                                     child: Column(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
                                         SizedBox(height: 20),
-                                        HomeEmptyStateWidget(),
+                                        HomeEmptyStateWidget(dark: dark),
                                         SizedBox(height: 120),
                                       ],
                                     ),
                                   ),
                                 )
                               : ListView.separated(
+                                  key: const ValueKey('archive_list'),
                                   padding: const EdgeInsets.fromLTRB(
                                     20,
                                     8,
                                     20,
-                                    100,
+                                    380,
                                   ),
                                   itemCount: _archiveCards.length,
                                   separatorBuilder: (_, index) =>
@@ -1585,153 +1878,71 @@ class _HomeScreenState extends State<HomeScreen>
                                     );
                                   },
                                 ))
-                        : (_filteredCardsCached.isEmpty
-                              ? LayoutBuilder(
-                                  builder: (context, constraints) =>
-                                      SingleChildScrollView(
-                                        child: ConstrainedBox(
-                                          constraints: BoxConstraints(
-                                            minHeight: constraints.maxHeight,
-                                          ),
-                                          child: Center(
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                _cards.isEmpty
-                                                    ? const HomeEmptyStateWidget()
-                                                    : FilteredEmptyStateWidget(
-                                                        onClear: () => setState(
-                                                          () {
-                                                            _statusFilter =
-                                                                'All';
-                                                            _dateFilter = 'All';
-                                                            _updateFilteredAndGroupedCards();
-                                                          },
-                                                        ),
-                                                      ),
-
-                                                SizedBox(height: 45),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
+                          : (!_isSessionsLoaded
+                              ? Center(
+                                  key: const ValueKey('sessions_loading'),
+                                  child: CircularProgressIndicator(
+                                    color: VigiloUiColors.blue(dark),
+                                  ),
                                 )
-                              : SingleChildScrollView(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    20,
-                                    8,
-                                    20,
-                                    100,
-                                  ),
-                                  child: Column(
-                                    children: _groupedCardsCached.keys.map((
-                                      date,
-                                    ) {
-                                      final sessions =
-                                          _groupedCardsCached[date] ?? [];
-                                      final sessionsCount = sessions.length;
-                                      final headerKey = _dateKeys.putIfAbsent(
-                                        date,
-                                        () => GlobalKey(),
-                                      );
-                                      final isHighlighted =
-                                          _highlightedDate == date;
-                                      return Column(
-                                        key: ValueKey('group_$date'),
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Padding(
-                                            key: headerKey,
-                                            padding: const EdgeInsets.fromLTRB(
-                                              0,
-                                              14,
-                                              0,
-                                              14,
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Container(
-                                                  width: 3,
-                                                  height: 14,
-                                                  decoration: BoxDecoration(
-                                                    color:
-                                                        VigiloUiColors.blueSoft(
-                                                          dark,
-                                                        ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          2,
-                                                        ),
+                              : KeyedSubtree(
+                                  key: const ValueKey('sessions_loaded'),
+                                  child: (_filteredCardsCached.isEmpty
+                                      ? LayoutBuilder(
+                                          builder: (context, constraints) =>
+                                              SingleChildScrollView(
+                                                child: ConstrainedBox(
+                                                  constraints: BoxConstraints(
+                                                    minHeight:
+                                                        constraints.maxHeight,
+                                                  ),
+                                                  child: Center(
+                                                    child: Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment.center,
+                                                      children: [
+                                                        _cards.isEmpty
+                                                            ? HomeEmptyStateWidget(dark: dark)
+                                                            : FilteredEmptyStateWidget(
+                                                                dark: dark,
+                                                                onClear: () => setState(
+                                                                  () {
+                                                                    _statusFilter =
+                                                                        'All';
+                                                                    _dateFilter = 'All';
+                                                                    _updateFilteredAndGroupedCards();
+                                                                  },
+                                                                ),
+                                                              ),
+                                                        const SizedBox(height: 45),
+                                                      ],
+                                                    ),
                                                   ),
                                                 ),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  _fd(date),
-                                                  style: TextStyle(
-                                                    color:
-                                                        VigiloUiColors.blueSoft(
-                                                          dark,
-                                                        ),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12,
-                                                    letterSpacing: 0.2,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  '$sessionsCount session${sessionsCount == 1 ? '' : 's'}',
-                                                  style: TextStyle(
-                                                    color:
-                                                        VigiloUiColors.textFaint(
-                                                          dark,
-                                                        ),
-                                                    fontSize: 11,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          AnimatedContainer(
-                                            duration: const Duration(
-                                              milliseconds: 300,
-                                            ),
-                                            curve: Curves.easeInOut,
-                                            padding: EdgeInsets.zero,
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(18),
-                                              border: Border.all(
-                                                color: isHighlighted
-                                                    ? VigiloUiColors.blue(dark)
-                                                    : Colors.transparent,
-                                                width: 1.5,
                                               ),
-                                            ),
-                                            child: Column(
-                                              children: sessions.map((c) {
-                                                final isLast =
-                                                    c == sessions.last;
-                                                return Padding(
-                                                  key: ValueKey(
-                                                    'card_${c.recordId}',
-                                                  ),
-                                                  padding: EdgeInsets.only(
-                                                    bottom: isLast ? 0 : 16,
-                                                  ),
-                                                  child: _buildExamCard(c),
-                                                );
-                                              }).toList(),
-                                            ),
+                                        )
+                                      : NotificationListener<ScrollNotification>(
+                                          onNotification: (notification) {
+                                            if (notification is ScrollStartNotification) {
+                                              _isUserScrolling = true;
+                                            } else if (notification is ScrollEndNotification) {
+                                              _isUserScrolling = false;
+                                            }
+                                            return false;
+                                          },
+                                          child: HomeSessionsListView(
+                                            itemScrollController: _itemScrollController,
+                                            itemPositionsListener: _itemPositionsListener,
+                                            groupedCards: _groupedCardsCached,
+                                            highlightedDate: _highlightedDate,
+                                            dark: dark,
+                                            dateKeys: _dateKeys,
+                                            formatDate: _fd,
+                                            buildCard: _buildExamCard,
                                           ),
-                                          const SizedBox(height: 12),
-                                        ],
-                                      );
-                                    }).toList(),
-                                  ),
+                                        )),
                                 )),
+                    ),
                   ),
                 ],
               ),
@@ -1800,7 +2011,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                 newSessions.first.centreNumber;
                                           });
                                         }
-                                        await _refreshCards();
+                                        await _refreshCards(resort: true);
                                         await _saveState();
                                       },
                                       onClose: () => context.safePop(),
@@ -1876,12 +2087,17 @@ class _HomeScreenState extends State<HomeScreen>
     return sb.toString();
   }
 
-  void _updateFilteredAndGroupedCards() {
+  void _updateFilteredAndGroupedCards({bool resort = false}) {
     if (_cards.length <= 5) {
       _showSessionMgr = false;
       _statusFilter = 'All';
       _dateFilter = 'All';
     }
+
+    if (resort) {
+      _cards.sort(SessionService.compareExamCards);
+    }
+
     var list = List<ExamCardData>.from(_cards);
 
     if (_statusFilter != 'All') {
@@ -1931,44 +2147,9 @@ class _HomeScreenState extends State<HomeScreen>
       }).toList();
     }
 
-    list.sort((a, b) {
-      // Date comparison
-      DateTime? da, db;
-      try {
-        final pa = a.date.split('/');
-        da = DateTime(int.parse(pa[2]), int.parse(pa[1]), int.parse(pa[0]));
-      } catch (_) {}
-      try {
-        final pb = b.date.split('/');
-        db = DateTime(int.parse(pb[2]), int.parse(pb[1]), int.parse(pb[0]));
-      } catch (_) {}
-
-      if (da != null && db != null) {
-        final cmp = da.compareTo(db);
-        if (cmp != 0) return cmp;
-      } else if (da != null) {
-        return -1;
-      } else if (db != null) {
-        return 1;
-      }
-
-      // Start time comparison
-      final sa = a.normalStart;
-      final sb = b.normalStart;
-      final cmpTime = sa.compareTo(sb);
-      if (cmpTime != 0) return cmpTime;
-
-      // Subject alphabetically
-      final subA = a.subject;
-      final subB = b.subject;
-      final cmpSub = subA.toLowerCase().compareTo(subB.toLowerCase());
-      if (cmpSub != 0) return cmpSub;
-
-      // Room alphabetically
-      final ra = a.roomsSnapshot;
-      final rb = b.roomsSnapshot;
-      return ra.toLowerCase().compareTo(rb.toLowerCase());
-    });
+    if (resort) {
+      list.sort(SessionService.compareExamCards);
+    }
 
     _filteredCardsCached = list;
 
@@ -1976,19 +2157,28 @@ class _HomeScreenState extends State<HomeScreen>
     for (final s in list) {
       map.putIfAbsent(s.date, () => []).add(s);
     }
-    _groupedCardsCached = map;
 
-    final flattened = <HomeListItem>[];
-    for (final date in map.keys) {
-      final sessions = map[date]!;
-      flattened.add(HomeListItem(dateHeader: date));
-      for (final c in sessions) {
-        final idx = _cards.indexOf(c);
-        if (idx != -1) {
-          flattened.add(HomeListItem(card: c, cardIndex: idx));
-        }
-      }
-    }
+    final sortedKeys = map.keys.toList()
+      ..sort((ka, kb) {
+        DateTime? da, db;
+        try {
+          final pa = ka.split('/');
+          da = DateTime(int.parse(pa[2]), int.parse(pa[1]), int.parse(pa[0]));
+        } catch (_) {}
+        try {
+          final pb = kb.split('/');
+          db = DateTime(int.parse(pb[2]), int.parse(pb[1]), int.parse(pb[0]));
+        } catch (_) {}
+        if (da != null && db != null) return da.compareTo(db);
+        if (da != null) return -1;
+        if (db != null) return 1;
+        return ka.compareTo(kb);
+      });
+
+    final sortedMap = <String, List<ExamCardData>>{
+      for (final k in sortedKeys) k: map[k]!,
+    };
+    _groupedCardsCached = sortedMap;
   }
 
   String _fd(String date) {
@@ -2041,45 +2231,32 @@ class _HomeScreenState extends State<HomeScreen>
           VigiloDateJumpSheet(dark: widget.dark, dateSessionCounts: dateCounts),
     );
 
-    debugPrint('[JumpToDate] User selected date from sheet: $selectedDate');
+    debugPrint('[JumpToDate] === Date Picker Returned === selectedDate: $selectedDate');
     if (selectedDate != null && mounted) {
-      // 1. Close Session Manager
-      setState(() {
-        _showSessionMgr = false;
-      });
+      // 1. Close session manager panel if open
+      if (_showSessionMgr) {
+        setState(() => _showSessionMgr = false);
+      }
 
-      // 2. Scroll to date section
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final key = _dateKeys[selectedDate];
-        debugPrint(
-          '[JumpToDate] GlobalKey lookup for date $selectedDate: $key',
+      final dates = _groupedCardsCached.keys.toList();
+      final targetIndex = dates.indexOf(selectedDate);
+      if (targetIndex != -1 && _itemScrollController.isAttached) {
+        await _itemScrollController.scrollTo(
+          index: targetIndex,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+          alignment: 0.05,
         );
-        if (key != null) {
-          debugPrint('[JumpToDate] key.currentContext: ${key.currentContext}');
-          if (key.currentContext != null) {
-            debugPrint(
-              '[JumpToDate] Attempting scroll to element: ${key.currentContext}',
-            );
-            Scrollable.ensureVisible(
-              key.currentContext!,
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOut,
-              alignment: 0.05,
-            );
-          } else {
-            debugPrint(
-              '[JumpToDate] WARNING: currentContext is null! Widget might be offscreen/not rendered.',
-            );
-          }
-        } else {
-          debugPrint('[JumpToDate] ERROR: key not found in _dateKeys mapping.');
-        }
+      }
+
+      if (mounted) {
         setState(() => _highlightedDate = selectedDate);
         Future.delayed(const Duration(milliseconds: 1400), () {
-          if (mounted) setState(() => _highlightedDate = null);
+          if (mounted) {
+            setState(() => _highlightedDate = null);
+          }
         });
-      });
+      }
     }
   }
 
@@ -2093,20 +2270,23 @@ class _HomeScreenState extends State<HomeScreen>
             borderRadius: BorderRadius.circular(8),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-              child: Text(
-                'Vigilo ERC',
+              child: AnimatedDefaultTextStyle(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
                 style: TextStyle(
                   color: VigiloUiColors.text(dark),
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.4,
                 ),
+                child: const Text('Vigilo ERC'),
               ),
             ),
           ),
           const Spacer(),
-          if (_archiveCards.isNotEmpty || isArchiveView) ...[
-            _headerIcon(
+          _conditionalHeaderAction(
+            show: _archiveCards.isNotEmpty || isArchiveView,
+            child: _headerIcon(
               dark,
               isArchiveView ? Icons.archive : Icons.archive_outlined,
               color: isArchiveView ? VigiloUiColors.green(dark) : null,
@@ -2132,10 +2312,10 @@ class _HomeScreenState extends State<HomeScreen>
                 }
               }),
             ),
-            const SizedBox(width: 10),
-          ],
-          if (_cards.length > 5) ...[
-            _headerIcon(
+          ),
+          _conditionalHeaderAction(
+            show: _cards.length > 5,
+            child: _headerIcon(
               dark,
               Icons.tune_rounded,
               color:
@@ -2156,12 +2336,25 @@ class _HomeScreenState extends State<HomeScreen>
                 }
               }),
             ),
-            const SizedBox(width: 10),
-          ],
+          ),
           _headerIcon(
             dark,
             dark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
-            onTap: widget.onToggleTheme,
+            onTap: () {
+              _isThemeSwitching = true;
+              _themeSwitchTimer?.cancel();
+              _themeSwitchTimer = Timer(
+                kThemeFadeDuration + const Duration(milliseconds: 100),
+                () {
+                  if (mounted) {
+                    setState(() {
+                      _isThemeSwitching = false;
+                    });
+                  }
+                },
+              );
+              widget.onToggleTheme();
+            },
           ),
         ],
       ),
@@ -2179,7 +2372,9 @@ class _HomeScreenState extends State<HomeScreen>
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        child: Container(
+        child: AnimatedContainer(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           width: 44,
           height: 44,
           decoration: BoxDecoration(
@@ -2203,13 +2398,44 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ],
           ),
-          child: Icon(
-            icon,
-            color: color ?? VigiloUiColors.textSoft(dark),
-            size: 23,
+          child: TweenAnimationBuilder<Color?>(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
+            tween: ColorTween(end: color ?? VigiloUiColors.textSoft(dark)),
+            builder: (context, iconColor, _) {
+              return Icon(
+                icon,
+                color: iconColor,
+                size: 23,
+              );
+            },
           ),
         ),
       ),
+    );
+  }
+
+  Widget _conditionalHeaderAction({
+    required bool show,
+    required Widget child,
+  }) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      switchInCurve: Curves.easeIn,
+      switchOutCurve: Curves.easeOut,
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: child,
+        );
+      },
+      child: show
+          ? Padding(
+              key: const ValueKey(true),
+              padding: const EdgeInsets.only(right: 10),
+              child: child,
+            )
+          : const SizedBox.shrink(key: ValueKey(false)),
     );
   }
 
@@ -2233,14 +2459,32 @@ class _HomeScreenState extends State<HomeScreen>
       return const SizedBox.shrink();
     }
 
-    return ExamCard(
-      key: key,
-      data: c,
-      pulse: _pulse,
-      isExamCompleted: c.phase == ExamPhase.finished || isArchiveView,
-      isArchiveMode: isArchiveMode,
-      extraPulse: extraPulse,
-      tapScale: isArchiveView ? 1.0 : _cards[idx].tapScale,
+    final currentData = listToUse[idx];
+    final id = currentData.recordId ?? '';
+    final notifier = _cardNotifiers.putIfAbsent(
+      id,
+      () => ValueNotifier<ExamCardData>(currentData),
+    );
+    if (notifier.value != currentData) {
+      notifier.value = currentData;
+    }
+
+    return RepaintBoundary(
+      key: ValueKey('repaint_${currentData.recordId}'),
+      child: ValueListenableBuilder<ExamCardData>(
+        key: ValueKey('val_listen_${currentData.recordId}'),
+        valueListenable: notifier,
+        builder: (context, cardData, _) {
+          return ExamCard(
+          key: key ?? ValueKey('exam_card_${cardData.recordId}'),
+          isDark: widget.dark,
+          data: cardData,
+          pulse: _pulse,
+          isExamCompleted:
+              cardData.phase == ExamPhase.finished || isArchiveView,
+          isArchiveMode: isArchiveMode,
+          extraPulse: extraPulse,
+          tapScale: isArchiveView ? 1.0 : cardData.tapScale,
       onProgressDragState: (dragging) {
         _isAdjustingProgress = dragging;
       },
@@ -2250,11 +2494,12 @@ class _HomeScreenState extends State<HomeScreen>
         );
         if (!mounted || currentIdx == -1) return;
         _isAdjustingProgress = true;
+        final updated = _applyManualProgress(_cards[currentIdx], v);
         setState(() {
-          _cards[currentIdx] = _applyManualProgress(_cards[currentIdx], v);
+          _cards[currentIdx] = updated;
         });
         try {
-          await _saveState();
+          await _sessionService.saveCardDelta(updated);
           await _refreshCards();
         } finally {
           _isAdjustingProgress = false;
@@ -2346,8 +2591,10 @@ class _HomeScreenState extends State<HomeScreen>
             (card) => card.recordId == c.recordId,
           );
           if (saveIdx != -1) {
-            setState(() => _cards[saveIdx] = c.copyWith(date: "$dd/$mm/$yy"));
-            _saveState();
+            final updated = c.copyWith(date: "$dd/$mm/$yy");
+            setState(() => _cards[saveIdx] = updated);
+            await _sessionService.saveCardDelta(updated, debounceDurationMs: 0);
+            await _refreshCards();
           }
         }
       },
@@ -2453,12 +2700,12 @@ class _HomeScreenState extends State<HomeScreen>
             (card) => card.recordId == c.recordId,
           );
           if (saveIdx != -1) {
-            setState(
-              () => _cards[saveIdx] = _recompute(
-                c.copyWith(normalStart: selectedStart),
-              ),
+            final updated = _recompute(
+              c.copyWith(normalStart: selectedStart),
             );
-            _saveState();
+            setState(() => _cards[saveIdx] = updated);
+            await _sessionService.saveCardDelta(updated, debounceDurationMs: 0);
+            await _refreshCards();
           }
         }
       },
@@ -2524,11 +2771,9 @@ class _HomeScreenState extends State<HomeScreen>
             (card) => card.recordId == c.recordId,
           );
           if (saveIdx != -1) {
-            setState(
-              () =>
-                  _cards[saveIdx] = _recompute(c.copyWith(normalDuration: res)),
-            );
-            await _saveState();
+            final updated = _recompute(c.copyWith(normalDuration: res));
+            setState(() => _cards[saveIdx] = updated);
+            await _sessionService.saveCardDelta(updated);
             final recordId = _cards[saveIdx].recordId;
             if (recordId != null) {
               await _sessionService.updatePlannedDuration(
@@ -2589,7 +2834,9 @@ class _HomeScreenState extends State<HomeScreen>
             } else {
               detail = "Adjustment entered after exam finished";
             }
-            await _saveState();
+            final updated = _recompute(c.copyWith(extraTime: res));
+            setState(() => _cards[saveIdx] = updated);
+            await _sessionService.saveCardDelta(updated);
             final recordId = _cards[saveIdx].recordId;
             if (recordId != null) {
               await _sessionService.updatePlannedDuration(
@@ -2618,31 +2865,34 @@ class _HomeScreenState extends State<HomeScreen>
           final now = u.epochStart!;
           final hh = now.hour.toString().padLeft(2, '0');
           final mm = now.minute.toString().padLeft(2, '0');
-          final fixed = _recompute(
+          final runningCard = _recompute(
             u.copyWith(
-              running: false,
+              running: true,
               isPaused: false,
-              epochStart: null,
+              epochStart: now,
               pausedSeconds: 0,
               progress: 0.0,
               phase: ExamPhase.normal,
               normalStart: "$hh:$mm",
+              wasEverStarted: true,
             ),
           );
           setState(() {
-            _cards[saveIdx] = fixed;
+            _cards[saveIdx] = runningCard;
           });
-          await _saveState();
-          final recordId = fixed.recordId;
+          final recordId = runningCard.recordId;
           if (recordId != null) {
+            if (_cardNotifiers.containsKey(recordId)) {
+              _cardNotifiers[recordId]!.value = runningCard;
+            }
             await _sessionService.startSession(
               examRecordId: recordId,
               startedAt: now,
-              normalDurationMs: fixed.normalSeconds * 1000,
-              extraTimeMs: fixed.extraSeconds * 1000,
+              normalDurationMs: runningCard.normalSeconds * 1000,
+              extraTimeMs: runningCard.extraSeconds * 1000,
             );
           }
-          await _refreshCards();
+          _tick();
         } else {
           final saveIdx = _cards.indexWhere(
             (card) => card.recordId == c.recordId,
@@ -2677,7 +2927,10 @@ class _HomeScreenState extends State<HomeScreen>
           _clickTimer?.cancel();
         }
       },
-    );
+        );
+      },
+    ),
+  );
   }
 
   @visibleForTesting

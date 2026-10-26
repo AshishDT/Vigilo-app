@@ -1311,7 +1311,9 @@ class _GradientScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [VigiloUiColors.bg(isDark), VigiloUiColors.bg2(isDark)],
@@ -1368,7 +1370,9 @@ class _BlueprintPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(
         color: VigiloUiColors.panel(isDark).withValues(alpha: 0.96),
@@ -1470,7 +1474,9 @@ class _LicenceTypePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(

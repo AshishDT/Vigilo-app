@@ -18,50 +18,60 @@ class ElapsedRemainingLine extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          'Elapsed',
+        AnimatedDefaultTextStyle(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           style: TextStyle(
             color: VigiloUiColors.textSoft(isDark),
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
+          child: const Text('Elapsed'),
         ),
         const SizedBox(width: 6),
-        Text(
-          elapsedStr,
+        AnimatedDefaultTextStyle(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           style: TextStyle(
             color: VigiloUiColors.text(isDark),
             fontSize: 22,
             fontWeight: FontWeight.w900,
           ),
+          child: Text(elapsedStr),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(
-            '|',
+          child: AnimatedDefaultTextStyle(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
             style: TextStyle(
               color: VigiloUiColors.textSoft(isDark),
               fontSize: 22,
               fontWeight: FontWeight.w700,
             ),
+            child: const Text('|'),
           ),
         ),
-        Text(
-          'Remaining',
+        AnimatedDefaultTextStyle(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           style: TextStyle(
             color: VigiloUiColors.textSoft(isDark),
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
+          child: const Text('Remaining'),
         ),
         const SizedBox(width: 6),
-        Text(
-          remainingStr,
+        AnimatedDefaultTextStyle(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           style: TextStyle(
             color: VigiloUiColors.text(isDark),
             fontSize: 22,
             fontWeight: FontWeight.w900,
           ),
+          child: Text(remainingStr),
         ),
       ],
     );

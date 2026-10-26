@@ -27,20 +27,26 @@ class SecurityPrivacyShield extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VigiloUiColors.bg(dark),
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
+      color: VigiloUiColors.bg(dark),
+      child: Scaffold(
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        actions: [
-          InkWell(
-            onTap: onToggleTheme,
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              width: 44,
-              height: 44,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          actions: [
+            InkWell(
+              onTap: onToggleTheme,
+              borderRadius: BorderRadius.circular(14),
+              child: AnimatedContainer(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
+                width: 44,
+                height: 44,
               decoration: BoxDecoration(
                 color: VigiloUiColors.panel(dark),
                 borderRadius: BorderRadius.circular(14),
@@ -71,7 +77,9 @@ class SecurityPrivacyShield extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Center(
-                      child: Container(
+                      child: AnimatedContainer(
+                        duration: kThemeFadeDuration,
+                        curve: kThemeFadeCurve,
                         width: 76,
                         height: 76,
                         decoration: BoxDecoration(
@@ -114,34 +122,44 @@ class SecurityPrivacyShield extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: VigiloUiColors.blue(dark),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: isAuthenticating ? null : onUnlockPressed,
+                      child: AnimatedContainer(
+                        duration: kThemeFadeDuration,
+                        curve: kThemeFadeCurve,
                         padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
+                        decoration: BoxDecoration(
+                          color: VigiloUiColors.blue(dark),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                      ),
-                      onPressed: isAuthenticating ? null : onUnlockPressed,
-                      icon: isAuthenticating
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (isAuthenticating)
+                              const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            else
+                              const Icon(
+                                Icons.lock_open_rounded,
                                 color: Colors.white,
                               ),
-                            )
-                          : const Icon(
-                              Icons.lock_open_rounded,
-                              color: Colors.white,
+                            const SizedBox(width: 8),
+                            Text(
+                              isAuthenticating ? 'Authenticating...' : 'Unlock App',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
-                      label: Text(
-                        isAuthenticating ? 'Authenticating...' : 'Unlock App',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          ],
                         ),
                       ),
                     ),
@@ -152,6 +170,7 @@ class SecurityPrivacyShield extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

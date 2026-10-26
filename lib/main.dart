@@ -4,8 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
+import 'services/license_service.dart';
 import 'services/security_service.dart';
 import 'utils/app_themes.dart';
+import 'utils/constants.dart';
 import 'views/home_screen.dart';
 import 'views/no_lock_screen.dart';
 import 'views/widgets/security_privacy_shield.dart';
@@ -23,11 +25,15 @@ void main() async {
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  runApp(const VigiloApp());
+  final initialLicenseRequired = await LicenseService.requiresValidLicense();
+
+  runApp(VigiloApp(initialLicenseRequired: initialLicenseRequired));
 }
 
 class VigiloApp extends StatefulWidget {
-  const VigiloApp({super.key});
+  final bool? initialLicenseRequired;
+
+  const VigiloApp({super.key, this.initialLicenseRequired});
 
   @override
   State<VigiloApp> createState() => _VigiloAppState();
@@ -42,6 +48,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
   bool _isShieldActive = true;
   bool _isAuthenticating = false;
   bool _requiresAuthentication = true;
+  bool _hasInitiallyAuthenticated = false;
 
   @override
   void initState() {
@@ -130,6 +137,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
           _isNoLockState = true;
           _isShieldActive = false;
           _requiresAuthentication = false;
+          _hasInitiallyAuthenticated = true;
         });
       }
       FlutterNativeSplash.remove();
@@ -153,6 +161,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
           _isNoLockState = true;
           _isShieldActive = false;
           _requiresAuthentication = false;
+          _hasInitiallyAuthenticated = true;
         });
       }
       return;
@@ -179,6 +188,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
       setState(() {
         _isShieldActive = false;
         _isAuthenticating = false;
+        _hasInitiallyAuthenticated = true;
       });
     } else {
       _requiresAuthentication = true;
@@ -195,14 +205,20 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
       title: 'Vigilo ERC',
       debugShowCheckedModeBanner: false,
       theme: dark ? darkTheme() : lightTheme(),
+      themeAnimationDuration: kThemeFadeDuration,
+      themeAnimationCurve: kThemeFadeCurve,
       builder: (context, child) {
         final bool isLocked = _isNoLockState || _isShieldActive;
+        final bool shouldMountChild = _hasInitiallyAuthenticated || !isLocked;
         return Stack(
           children: [
-            if (child != null)
+            if (child != null && shouldMountChild)
               Offstage(
                 offstage: isLocked,
-                child: child,
+                child: TickerMode(
+                  enabled: !isLocked,
+                  child: child,
+                ),
               ),
             if (_isNoLockState)
               NoLockScreen(
@@ -229,6 +245,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
       },
       home: HomeScreen(
         dark: dark,
+        initialLicenseRequired: widget.initialLicenseRequired,
         onToggleTheme: () {
           setState(() => dark = !dark);
         },

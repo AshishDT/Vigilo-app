@@ -24,7 +24,7 @@ class ScheduleData {
   static List<String> _splitNames(String raw) {
     final parts = raw
         .replaceAll('\r', '\n')
-        .split(RegExp(r'[\n,;|.]+'))
+        .split(RegExp(r'[\n,;|]+'))
         .map((name) => name.trim())
         .where((name) => name.isNotEmpty);
     final ordered = <String>[];
@@ -46,7 +46,15 @@ class ScheduleData {
       for (final item in raw) {
         if (item == null) continue;
         if (item is String) {
-          names.addAll(_splitNames(item));
+          final trimmed = item.trim();
+          if (trimmed.contains('\n') ||
+              trimmed.contains(',') ||
+              trimmed.contains(';') ||
+              trimmed.contains('|')) {
+            names.addAll(_splitNames(trimmed));
+          } else if (trimmed.isNotEmpty) {
+            names.add(trimmed);
+          }
           continue;
         }
         final text = item.toString().trim();

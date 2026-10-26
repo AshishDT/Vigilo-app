@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -33,6 +34,50 @@ class HomeStateSnapshot {
 
 class SessionService {
   final AppDatabase _db = AppDatabase();
+
+  /// Canonical chronological comparator for exam sessions:
+  /// 1. Date (earliest first)
+  /// 2. Start Time (earliest normalStart first)
+  /// 3. Subject alphabetically (case-insensitive)
+  /// 4. Room snapshot alphabetically (case-insensitive)
+  static int compareExamCards(ExamCardData a, ExamCardData b) {
+    // Date comparison
+    DateTime? da, db;
+    try {
+      final pa = a.date.split('/');
+      da = DateTime(int.parse(pa[2]), int.parse(pa[1]), int.parse(pa[0]));
+    } catch (_) {}
+    try {
+      final pb = b.date.split('/');
+      db = DateTime(int.parse(pb[2]), int.parse(pb[1]), int.parse(pb[0]));
+    } catch (_) {}
+
+    if (da != null && db != null) {
+      final cmp = da.compareTo(db);
+      if (cmp != 0) return cmp;
+    } else if (da != null) {
+      return -1;
+    } else if (db != null) {
+      return 1;
+    }
+
+    // Start time comparison
+    final sa = a.normalStart;
+    final sb = b.normalStart;
+    final cmpTime = sa.compareTo(sb);
+    if (cmpTime != 0) return cmpTime;
+
+    // Subject alphabetically
+    final subA = a.subject;
+    final subB = b.subject;
+    final cmpSub = subA.toLowerCase().compareTo(subB.toLowerCase());
+    if (cmpSub != 0) return cmpSub;
+
+    // Room alphabetically
+    final ra = a.roomsSnapshot;
+    final rb = b.roomsSnapshot;
+    return ra.toLowerCase().compareTo(rb.toLowerCase());
+  }
 
   Future<void> initialize() async {
     await _db.database;
@@ -137,6 +182,134 @@ class SessionService {
     });
 
     return await loadHomeState();
+  }
+
+  Future<void> saveLastUsed(Map<String, String?> lastUsed) async {
+    final db = await _db.database;
+    await _db.setAppState(
+      db,
+      key: _lastUsedStateKey,
+      value: jsonEncode(lastUsed),
+    );
+  }
+
+  Timer? _deltaDebounceTimer;
+  final Map<String, ({ExamCardData card, bool? archived})> _pendingDeltas = {};
+
+  /// Granular delta save with debouncing.
+  /// Batches rapid edits (e.g. slider scrubbing, time adjustments) within [debounceDurationMs] (default 300ms)
+  /// into a single SQLite transaction. Pass [debounceDurationMs: 0] for immediate write.
+  Future<void> saveCardDelta(
+    ExamCardData card, {
+    bool? archived,
+    int debounceDurationMs = 0,
+  }) async {
+    final id = card.recordId;
+    if (id == null) return;
+
+    if (debounceDurationMs <= 0) {
+      _pendingDeltas.remove(id);
+      await _persistSingleCardDirectly(card, archived: archived);
+      return;
+    }
+
+    _pendingDeltas[id] = (card: card, archived: archived);
+    _deltaDebounceTimer?.cancel();
+    _deltaDebounceTimer = Timer(Duration(milliseconds: debounceDurationMs), () {
+      flushPendingDeltaSaves();
+    });
+  }
+
+  /// Immediately flushes all pending debounced card saves to SQLite.
+  Future<void> flushPendingDeltaSaves() async {
+    _deltaDebounceTimer?.cancel();
+    _deltaDebounceTimer = null;
+    if (_pendingDeltas.isEmpty) return;
+
+    final entries = Map.of(_pendingDeltas);
+    _pendingDeltas.clear();
+
+    final db = await _db.database;
+    await db.transaction((txn) async {
+      for (final entry in entries.values) {
+        final isArch = entry.archived ?? _isArchivableCard(entry.card);
+        await _upsertCard(
+          txn,
+          card: entry.card,
+          archived: isArch,
+          fromMigration: false,
+        );
+      }
+    });
+  }
+
+  Future<void> _persistSingleCardDirectly(
+    ExamCardData card, {
+    bool? archived,
+  }) async {
+    final db = await _db.database;
+    await db.transaction((txn) async {
+      final isArch = archived ?? _isArchivableCard(card);
+      await _upsertCard(
+        txn,
+        card: card,
+        archived: isArch,
+        fromMigration: false,
+      );
+    });
+  }
+
+  /// Lightweight tick refresh: only loads and recalculates runtime state for active (running/paused) cards.
+  /// Bypasses the 500-session disk scan so periodic ticks take < 1ms instead of 500ms+.
+  Future<List<ExamCardData>> refreshActiveCardsOnly(
+    List<ExamCardData> existingCards,
+  ) async {
+    final activeSnapshots = await _db.getActiveSnapshots();
+    final activeIds = activeSnapshots.map((s) => s.examRecordId).toSet();
+
+    final updated = <ExamCardData>[];
+    for (final snapshot in activeSnapshots) {
+      final idx = existingCards.indexWhere(
+        (c) => c.recordId == snapshot.examRecordId,
+      );
+      if (idx == -1) continue;
+      final card = existingCards[idx];
+      final events = await _db.getEvents(snapshot.examRecordId);
+      final logs = _eventsToIncidents(events);
+      updated.add(
+        _applyRuntime(card.copyWith(logs: logs), snapshot, events: events),
+      );
+    }
+
+    for (final card in existingCards) {
+      final id = card.recordId;
+      if (id == null || activeIds.contains(id)) continue;
+      if (card.running || card.isPaused) {
+        final snapshot = await _db.getSnapshot(id);
+        if (snapshot != null) {
+          final events = await _db.getEvents(id);
+          final logs = _eventsToIncidents(events);
+          updated.add(
+            _applyRuntime(card.copyWith(logs: logs), snapshot, events: events),
+          );
+        }
+      }
+    }
+
+    return updated;
+  }
+
+  /// Lightweight runtime refresh for a single card.
+  /// Reads only the snapshot and events for [card.recordId] from SQLite.
+  /// Avoids scanning or deserializing all 400+ sessions.
+  Future<ExamCardData?> refreshSingleCardRuntime(ExamCardData card) async {
+    final id = card.recordId;
+    if (id == null) return null;
+    final snapshot = await _db.getSnapshot(id);
+    if (snapshot == null) return null;
+    final events = await _db.getEvents(id);
+    final logs = _eventsToIncidents(events);
+    return _applyRuntime(card.copyWith(logs: logs), snapshot, events: events);
   }
 
   Future<void> importSessions(List<ExamCardData> newSessions) async {
@@ -497,7 +670,11 @@ class SessionService {
       final snapshot = SessionSnapshot.fromMap(snapshotMap);
 
       if (!restart && snapshot.sessionStatus == SessionStatus.running) {
-        return;
+        if (autoStart) return;
+        final existingStart = await _firstStartEventUtc(txn, examRecordId);
+        if (existingStart != null) {
+          return;
+        }
       }
 
       final metadataPlannedDurationMs = await _metadataPlannedDurationMs(
@@ -569,6 +746,33 @@ class SessionService {
       await _db.insertEvent(txn, event);
       await _db.updateSnapshot(txn, updatedSnapshot);
       await _db.updateExamRecord(txn, updatedRecord);
+
+      final metadataMap = await _queryMetadataMap(txn, examRecordId);
+      if (metadataMap != null) {
+        final payloadJson = metadataMap['payload_json'] as String?;
+        if (payloadJson != null) {
+          final payload = _safeJsonObject(payloadJson);
+          final card = ExamCardData.fromJson(payload);
+          final hh = nowUtc.toLocal().hour.toString().padLeft(2, '0');
+          final mm = nowUtc.toLocal().minute.toString().padLeft(2, '0');
+          final updatedCard = card.copyWith(
+            running: true,
+            isPaused: false,
+            epochStart: nowUtc.toLocal(),
+            pausedSeconds: 0,
+            progress: 0.0,
+            phase: ExamPhase.normal,
+            normalStart: "$hh:$mm",
+            wasEverStarted: true,
+          );
+          await _db.upsertMetadata(
+            txn,
+            examRecordId: examRecordId,
+            payloadJson: jsonEncode(updatedCard.toJson()),
+            archived: metadataMap['archived'] == 1,
+          );
+        }
+      }
     });
   }
 
@@ -929,7 +1133,12 @@ class SessionService {
     } else {
       final snapshot = SessionSnapshot.fromMap(existingSnapshotMap);
       final scheduleAnchor = _scheduledDateTimeUtc(card);
-      final desiredStatus = _statusFromCard(normalizedCard);
+      var desiredStatus = _statusFromCard(normalizedCard);
+      if (desiredStatus == SessionStatus.idle &&
+          (snapshot.sessionStatus == SessionStatus.running ||
+           snapshot.sessionStatus == SessionStatus.paused)) {
+        desiredStatus = snapshot.sessionStatus;
+      }
       final isTransitionFromIdleToEnded =
           snapshot.sessionStatus == SessionStatus.idle &&
           desiredStatus == SessionStatus.ended;
@@ -1919,7 +2128,7 @@ class SessionService {
       return card.copyWith(
         running: false,
         isPaused: false,
-        epochStart: snapshot.startedAtUtc?.toLocal(),
+        epochStart: snapshot.startedAtUtc.toLocal(),
         pausedSeconds: card.pausedSeconds,
         progress: clampedProgress,
         phase: phase,

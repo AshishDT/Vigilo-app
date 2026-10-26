@@ -28,7 +28,10 @@ class ExamCard extends StatefulWidget {
     required this.onProgressChangeEnd,
     required this.onProgressDragState,
     required this.isExamCompleted,
+    this.isDark,
   });
+
+  final bool? isDark;
 
   final bool isArchiveMode;
   final ExamCardData data;
@@ -151,7 +154,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = widget.isDark ?? (Theme.of(context).brightness == Brightness.dark);
 
     final subjectLine = data.subjectName.isEmpty ? data.subject : data.subjectName;
     final organizationLine = data.resolvedCentreNumber.isEmpty
@@ -177,8 +180,9 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     final collapsedExtra = data.phase == ExamPhase.extra && !data.expanded;
     final showRunning = data.running || data.progress > 0.0;
 
-    return AnimatedScale(
-      scale: isArchiveMode ? widget.tapScale : _localScale,
+    return RepaintBoundary(
+      child: AnimatedScale(
+        scale: isArchiveMode ? widget.tapScale : _localScale,
       duration: const Duration(milliseconds: 120),
       curve: Curves.easeOut,
       child: GestureDetector(
@@ -202,9 +206,12 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                 }
               },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           decoration: BoxDecoration(
+            color: isDark
+                ? VigiloUiColors.panel(isDark).withOpacity(0.96)
+                : VigiloUiColors.panel(isDark),
             borderRadius: BorderRadius.circular(18),
             border: collapsedExtra
                 ? Border.all(
@@ -232,17 +239,25 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             ],
           ),
           child: Card(
-            color: isDark ? VigiloUiColors.panel(isDark).withOpacity(0.96) : VigiloUiColors.panel(isDark),
+            color: Colors.transparent,
+            elevation: 0,
             margin: EdgeInsets.zero,
             clipBehavior: Clip.antiAlias,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            child: AnimatedDefaultTextStyle(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
+              style: TextStyle(
+                color: VigiloUiColors.text(isDark),
+                fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   Builder(builder: (context) {
                     final hasExamLevel = (data.examLevel ?? '').trim().isNotEmpty;
                     final hasExamBoard = data.subjectBoard.trim().isNotEmpty;
@@ -263,14 +278,25 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                              child: Text(
-                                subjectLine,
+                              child: AnimatedDefaultTextStyle(
+                                duration: kThemeFadeDuration,
+                                curve: kThemeFadeCurve,
                                 style: TextStyle(
                                   color: VigiloUiColors.text(isDark),
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: -0.15,
                                   height: 1.15,
+                                ),
+                                child: Text(
+                                  subjectLine,
+                                  style: TextStyle(
+                                    color: VigiloUiColors.text(isDark),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.15,
+                                    height: 1.15,
+                                  ),
                                 ),
                               ),
                             ),
@@ -280,13 +306,20 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 if (showArchiveCheck) ...[
-                                  Icon(
-                                    data.isSelected
-                                        ? Icons.check_circle_rounded
-                                        : Icons.radio_button_unchecked,
-                                    color: data.isSelected
-                                        ? VigiloUiColors.green(isDark)
-                                        : VigiloUiColors.textSoft(isDark),
+                                  TweenAnimationBuilder<Color?>(
+                                    duration: kThemeFadeDuration,
+                                    curve: kThemeFadeCurve,
+                                    tween: ColorTween(
+                                      end: data.isSelected
+                                          ? VigiloUiColors.green(isDark)
+                                          : VigiloUiColors.textSoft(isDark),
+                                    ),
+                                    builder: (_, iconColor, _) => Icon(
+                                      data.isSelected
+                                          ? Icons.check_circle_rounded
+                                          : Icons.radio_button_unchecked,
+                                      color: iconColor,
+                                    ),
                                   ),
                                 ],
                                 if (showChevron) ...[
@@ -312,7 +345,17 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                                     child: AnimatedRotation(
                                       duration: const Duration(milliseconds: 200),
                                       turns: data.expanded ? 0.5 : 0.0,
-                                      child: Icon(Icons.expand_more, color: VigiloUiColors.textSoft(isDark)),
+                                      child: TweenAnimationBuilder<Color?>(
+                                        duration: kThemeFadeDuration,
+                                        curve: kThemeFadeCurve,
+                                        tween: ColorTween(
+                                          end: VigiloUiColors.textSoft(isDark),
+                                        ),
+                                        builder: (_, iconColor, _) => Icon(
+                                          Icons.expand_more,
+                                          color: iconColor,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -328,41 +371,55 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Expanded(
-                                child: Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      if (hasExamLevel)
-                                        TextSpan(
-                                          text: data.examLevel!,
-                                          style: TextStyle(
-                                            color: VigiloUiColors.textSoft(isDark),
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            height: 1.2,
+                                child: TweenAnimationBuilder<Color?>(
+                                  tween: ColorTween(end: VigiloUiColors.textSoft(isDark)),
+                                  duration: kThemeFadeDuration,
+                                  curve: kThemeFadeCurve,
+                                  builder: (context, softColor, _) {
+                                    return TweenAnimationBuilder<Color?>(
+                                      tween: ColorTween(end: VigiloUiColors.textFaint(isDark)),
+                                      duration: kThemeFadeDuration,
+                                      curve: kThemeFadeCurve,
+                                      builder: (context, faintColor, _) {
+                                        return Text.rich(
+                                          TextSpan(
+                                            children: [
+                                              if (hasExamLevel)
+                                                TextSpan(
+                                                  text: data.examLevel!,
+                                                  style: TextStyle(
+                                                    color: softColor,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    height: 1.2,
+                                                  ),
+                                                ),
+                                              if (hasExamLevel && hasExamBoard)
+                                                TextSpan(
+                                                  text: '  ·  ',
+                                                  style: TextStyle(
+                                                    color: faintColor,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    height: 1.2,
+                                                  ),
+                                                ),
+                                              if (hasExamBoard)
+                                                TextSpan(
+                                                  text: data.subjectBoard,
+                                                  style: TextStyle(
+                                                    color: softColor,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    height: 1.2,
+                                                  ),
+                                                ),
+                                            ],
                                           ),
-                                        ),
-                                      if (hasExamLevel && hasExamBoard)
-                                        TextSpan(
-                                          text: '  ·  ',
-                                          style: TextStyle(
-                                            color: VigiloUiColors.textFaint(isDark),
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            height: 1.2,
-                                          ),
-                                        ),
-                                      if (hasExamBoard)
-                                        TextSpan(
-                                          text: data.subjectBoard,
-                                          style: TextStyle(
-                                            color: VigiloUiColors.textSoft(isDark),
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            height: 1.2,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
+                                        );
+                                      },
+                                    );
+                                  },
                                 ),
                               ),
                               if (hasStatusPill) ...[
@@ -381,13 +438,23 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(
-                              child: Text(
-                                data.date,
+                              child: AnimatedDefaultTextStyle(
+                                duration: kThemeFadeDuration,
+                                curve: kThemeFadeCurve,
                                 style: TextStyle(
                                   color: VigiloUiColors.textSoft(isDark),
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   height: 1.2,
+                                ),
+                                child: Text(
+                                  data.date,
+                                  style: TextStyle(
+                                    color: VigiloUiColors.text(isDark),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.2,
+                                  ),
                                 ),
                               ),
                             ),
@@ -400,13 +467,23 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
 
                         // Organization Line
                         const SizedBox(height: 3),
-                        Text(
-                          organizationLine,
+                        AnimatedDefaultTextStyle(
+                          duration: kThemeFadeDuration,
+                          curve: kThemeFadeCurve,
                           style: TextStyle(
                             color: VigiloUiColors.textSoft(isDark),
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             height: 1.2,
+                          ),
+                          child: Text(
+                            organizationLine,
+                            style: TextStyle(
+                              color: VigiloUiColors.textSoft(isDark),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              height: 1.2,
+                            ),
                           ),
                         ),
                       ],
@@ -417,27 +494,45 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                     opacity: data.isLocked ? 0.4 : 1.0,
                     child: _compactTimingBox(isDark),
                   ),
-                  SizeTransition(
-                    sizeFactor: _expandAnimation,
-                    axisAlignment: -1.0,
-                    child: ClipRect(
-                      child: FadeTransition(
-                        opacity: _expandAnimation,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 16),
-                            _timerRing(isDark, phaseColor, phaseRemaining, phaseElapsed, usedPercent),
-                            const SizedBox(height: 8),
-                            _elapsedRemainingRow(context, isDark),
-                            const SizedBox(height: 24),
-                            _editButtonRows(context, isDark, showRunning: showRunning),
-                            const SizedBox(height: 14),
-                            _fullTimingSummaryBox(isDark),
-                          ],
+                  AnimatedBuilder(
+                    animation: _expandAnimation,
+                    builder: (context, _) {
+                      if (!data.expanded && _expandAnimation.value == 0.0) {
+                        return const SizedBox.shrink();
+                      }
+                      return SizeTransition(
+                        sizeFactor: _expandAnimation,
+                        axisAlignment: -1.0,
+                        child: ClipRect(
+                          child: FadeTransition(
+                            opacity: _expandAnimation,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 16),
+                                _timerRing(
+                                  isDark,
+                                  phaseColor,
+                                  phaseRemaining,
+                                  phaseElapsed,
+                                  usedPercent,
+                                ),
+                                const SizedBox(height: 8),
+                                _elapsedRemainingRow(context, isDark),
+                                const SizedBox(height: 24),
+                                _editButtonRows(
+                                  context,
+                                  isDark,
+                                  showRunning: showRunning,
+                                ),
+                                const SizedBox(height: 14),
+                                _fullTimingSummaryBox(isDark),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -445,15 +540,19 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   Widget _compactTimingBox(bool isDark) {
     final color = data.phase == ExamPhase.finished
         ? VigiloUiColors.finished(isDark)
         : VigiloUiColors.blue(isDark);
 
-    return Container(
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       padding: const EdgeInsets.symmetric(vertical: 13),
       decoration: BoxDecoration(
         color: VigiloUiColors.panel3(isDark).withOpacity(isDark ? 0.58 : 1.0),
@@ -478,8 +577,9 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
   Widget _compactTimeValue(bool isDark, String label, String value, Color color) {
     return Column(
       children: [
-        Text(
-          label,
+        AnimatedDefaultTextStyle(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           style: TextStyle(
             color: VigiloUiColors.textFaint(isDark),
             fontSize: 10.5,
@@ -487,10 +587,12 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             letterSpacing: 0.55,
             height: 1,
           ),
+          child: Text(label),
         ),
         const SizedBox(height: 8),
-        Text(
-          value,
+        AnimatedDefaultTextStyle(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           style: TextStyle(
             color: color,
             fontSize: 18.5,
@@ -498,6 +600,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             letterSpacing: 0.1,
             height: 1,
           ),
+          child: Text(value),
         ),
       ],
     );
@@ -516,6 +619,14 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
         phaseLabel = 'FINISHED';
         break;
     }
+
+    final targetTrackColor = isDark
+        ? VigiloUiColors.line(isDark).withOpacity(0.42)
+        : VigiloUiColors.line(isDark).withOpacity(0.62);
+    final badgeColor = (data.phase == ExamPhase.finished
+            ? VigiloUiColors.green(isDark)
+            : phaseColor)
+        .withOpacity(0.88);
 
     return Center(
       child: SizedBox(
@@ -537,42 +648,62 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             child: Stack(
               alignment: Alignment.center,
               children: [
-                CustomPaint(
-                  size: const Size.square(228),
-                  painter: RingPainter(
-                    progress: v,
-                    trackColor: isDark ? VigiloUiColors.line(isDark).withOpacity(0.42) : VigiloUiColors.line(isDark).withOpacity(0.62),
-                    progressColor: phaseColor,
-                    strokeWidth: 12,
-                    isRunning: data.running,
-                    isDark: isDark,
-                  ),
+                TweenAnimationBuilder<Color?>(
+                  tween: ColorTween(end: targetTrackColor),
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
+                  builder: (context, animTrackColor, _) {
+                    return TweenAnimationBuilder<Color?>(
+                      tween: ColorTween(end: phaseColor),
+                      duration: kThemeFadeDuration,
+                      curve: kThemeFadeCurve,
+                      builder: (context, animPhaseColor, _) {
+                        return CustomPaint(
+                          size: const Size.square(228),
+                          painter: RingPainter(
+                            progress: v,
+                            trackColor: animTrackColor ?? targetTrackColor,
+                            progressColor: animPhaseColor ?? phaseColor,
+                            strokeWidth: 12,
+                            isRunning: data.running,
+                            isDark: isDark,
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     GestureDetector(
                       onTap: onTimeTap,
-                      child: Text(
-                        _fmtHhMm(
-                          data.isActiveTime ? phaseRemaining : phaseElapsed,
-                          roundUp: data.isActiveTime,
-                        ),
+                      child: AnimatedDefaultTextStyle(
+                        duration: kThemeFadeDuration,
+                        curve: kThemeFadeCurve,
                         style: TextStyle(
                           color: VigiloUiColors.text(isDark),
                           fontSize: 36,
                           fontWeight: FontWeight.w900,
                         ),
+                        child: Text(
+                          _fmtHhMm(
+                            data.isActiveTime ? phaseRemaining : phaseElapsed,
+                            roundUp: data.isActiveTime,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Container(
+                    AnimatedContainer(
+                      duration: kThemeFadeDuration,
+                      curve: kThemeFadeCurve,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 18,
                         vertical: 9,
                       ),
                       decoration: BoxDecoration(
-                        color: (data.phase == ExamPhase.finished ? VigiloUiColors.green(isDark) : phaseColor).withOpacity(0.88),
+                        color: badgeColor,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(
@@ -586,13 +717,15 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Text(
-                      '$usedPercent%',
+                    AnimatedDefaultTextStyle(
+                      duration: kThemeFadeDuration,
+                      curve: kThemeFadeCurve,
                       style: TextStyle(
                         color: phaseColor.withOpacity(data.running ? (isDark ? 1.0 : 0.78) : (isDark ? 1.0 : 0.95)),
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
                       ),
+                      child: Text('$usedPercent%'),
                     ),
                   ],
                 ),
@@ -695,21 +828,25 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
 
   Widget _pill(String label, Color color) {
     return AnimatedScaleOnPress(
-      child: Container(
+      child: AnimatedContainer(
+        duration: kThemeFadeDuration,
+        curve: kThemeFadeCurve,
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
         decoration: BoxDecoration(
           color: color.withOpacity(0.15),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: color),
         ),
-        child: Text(
-          label,
+        child: AnimatedDefaultTextStyle(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.bold,
             fontSize: 9.5,
             letterSpacing: 0.4,
           ),
+          child: Text(label),
         ),
       ),
     );
@@ -724,29 +861,53 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
   }) {
     final activeAccent = accent ?? VigiloUiColors.blueSoft(isDark);
 
-    return SizedBox(
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       height: 42,
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isDark ? VigiloUiColors.panel3(isDark).withOpacity(0.86) : VigiloUiColors.panel3(isDark),
-          foregroundColor: VigiloUiColors.text(isDark),
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: BorderSide(color: activeAccent.withOpacity(isDark ? 0.36 : 0.34), width: 1),
-          ),
+      decoration: BoxDecoration(
+        color: isDark ? VigiloUiColors.panel3(isDark).withOpacity(0.86) : VigiloUiColors.panel3(isDark),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: activeAccent.withOpacity(isDark ? 0.36 : 0.34),
+          width: 1,
         ),
-        onPressed: onPressed,
-        icon: Icon(icon, size: 17, color: activeAccent),
-        label: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
-              letterSpacing: 0.05,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TweenAnimationBuilder<Color?>(
+                  tween: ColorTween(end: activeAccent),
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
+                  builder: (context, iconColor, _) =>
+                      Icon(icon, size: 17, color: iconColor),
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: AnimatedDefaultTextStyle(
+                      duration: kThemeFadeDuration,
+                      curve: kThemeFadeCurve,
+                      style: TextStyle(
+                        color: VigiloUiColors.text(isDark),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        letterSpacing: 0.05,
+                      ),
+                      child: Text(label),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -755,26 +916,37 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
   }
 
   Widget _startNowButton(bool isDark, VoidCallback onTap) {
-    return SizedBox(
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       height: 42,
-      child: FilledButton.icon(
-        style: FilledButton.styleFrom(
-          backgroundColor: VigiloUiColors.blue(isDark),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-        ),
-        onPressed: onTap,
-        icon: const Icon(Icons.play_arrow_rounded, size: 18),
-        label: const Text(
-          'Start Now',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 13,
-            letterSpacing: 0.05,
+      decoration: BoxDecoration(
+        color: VigiloUiColors.blue(isDark),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.play_arrow_rounded, size: 18, color: Colors.white),
+                SizedBox(width: 4),
+                Text(
+                  'Start Now',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    letterSpacing: 0.05,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -784,40 +956,49 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
   Widget _runningButton(bool isDark) {
     final bool completed = isExamCompleted || data.phase == ExamPhase.finished;
     final String labelText = completed ? 'Finished' : 'Running';
-    final IconData iconData = completed ? Icons.check_circle_outline_rounded : Icons.lock_rounded;
+    final IconData iconData =
+        completed ? Icons.check_circle_outline_rounded : Icons.lock_rounded;
+    final Color tintColor = completed
+        ? VigiloUiColors.finished(isDark)
+        : VigiloUiColors.blue(isDark);
 
-    return GestureDetector(
-      onTap: () {},
-      child: SizedBox(
-        height: 42,
-        child: FilledButton.icon(
-          style: FilledButton.styleFrom(
-            disabledBackgroundColor: completed
-                ? VigiloUiColors.finished(isDark).withOpacity(isDark ? 0.27 : 0.16)
-                : VigiloUiColors.blue(isDark).withOpacity(isDark ? 0.27 : 0.16),
-            disabledForegroundColor: VigiloUiColors.textSoft(isDark),
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-              side: BorderSide(
-                color: completed
-                    ? VigiloUiColors.finished(isDark).withOpacity(isDark ? 0.36 : 0.30)
-                    : VigiloUiColors.blue(isDark).withOpacity(isDark ? 0.36 : 0.30),
-                width: 1,
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
+      height: 42,
+      decoration: BoxDecoration(
+        color: tintColor.withOpacity(isDark ? 0.27 : 0.16),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: tintColor.withOpacity(isDark ? 0.36 : 0.30),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TweenAnimationBuilder<Color?>(
+              tween: ColorTween(end: VigiloUiColors.textSoft(isDark)),
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
+              builder: (context, iconColor, _) =>
+                  Icon(iconData, size: 16, color: iconColor),
+            ),
+            const SizedBox(width: 4),
+            AnimatedDefaultTextStyle(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
+              style: TextStyle(
+                color: VigiloUiColors.textSoft(isDark),
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+                letterSpacing: 0.05,
               ),
+              child: Text(labelText),
             ),
-          ),
-          onPressed: null,
-          icon: Icon(iconData, size: 16),
-          label: Text(
-            labelText,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 13,
-              letterSpacing: 0.05,
-            ),
-          ),
+          ],
         ),
       ),
     );
@@ -828,7 +1009,9 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     final extraActive = data.phase == ExamPhase.extra;
     final finished = data.phase == ExamPhase.finished;
 
-    return Container(
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: isDark ? VigiloUiColors.panel3(isDark).withOpacity(0.58) : VigiloUiColors.panel3(isDark),
@@ -936,7 +1119,8 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     required List<Widget> children,
   }) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -953,20 +1137,24 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
   Widget _summaryTimeValue(bool isDark, String label, String value, Color color) {
     return Column(
       children: [
-        Text(
-          label,
-          textAlign: TextAlign.center,
+        AnimatedDefaultTextStyle(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           style: TextStyle(
             color: VigiloUiColors.textSoft(isDark),
             fontSize: 11.7,
             fontWeight: FontWeight.w700,
             height: 1,
           ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+          ),
         ),
         const SizedBox(height: 7),
-        Text(
-          value,
-          textAlign: TextAlign.center,
+        AnimatedDefaultTextStyle(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           style: TextStyle(
             color: color,
             fontSize: 18.2,
@@ -974,13 +1162,19 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             letterSpacing: 0.2,
             height: 1,
           ),
+          child: Text(
+            value,
+            textAlign: TextAlign.center,
+          ),
         ),
       ],
     );
   }
 
   Widget _verticalDivider(bool isDark, {double height = 34}) {
-    return Container(
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       width: 1,
       height: height,
       color: VigiloUiColors.line(isDark).withOpacity(isDark ? 0.50 : 0.74),

@@ -1,5 +1,6 @@
 import 'animated_scale_on_press.dart';
 import 'package:flutter/material.dart';
+import '../../utils/constants.dart';
 
 Widget confirmationDialog({
   required BuildContext context,
@@ -36,7 +37,9 @@ Widget confirmationDialog({
   return Dialog(
     backgroundColor: Colors.transparent,
     insetPadding: const EdgeInsets.symmetric(horizontal: 8),
-    child: Container(
+    child: AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: panelColor,

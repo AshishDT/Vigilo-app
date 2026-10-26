@@ -752,9 +752,11 @@ class _AddExamSheetState extends State<AddExamSheet> {
           return Scaffold(
             backgroundColor: Colors.transparent,
             resizeToAvoidBottomInset: false,
-            body: Container(
-            decoration: BoxDecoration(
-              color: colors.panel.withValues(alpha: 0.985),
+            body: AnimatedContainer(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
+              decoration: BoxDecoration(
+                color: colors.panel.withValues(alpha: 0.985),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
               boxShadow: const [
                 BoxShadow(
@@ -1032,9 +1034,7 @@ class _AddExamSheetState extends State<AddExamSheet> {
                                     );
                                     return;
                                   }
-                                  setState(() {
-                                    _isSaving = true;
-                                  });
+                                  _isSaving = true;
                                   try {
                                     final school = _schoolCtl.text.trim();
                                     final centre = _centreCtl.text.trim();

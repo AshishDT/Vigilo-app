@@ -86,20 +86,26 @@ class _NoLockScreenState extends State<NoLockScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VigiloUiColors.bg(d),
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
+      color: VigiloUiColors.bg(d),
+      child: Scaffold(
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        actions: [
-          InkWell(
-            onTap: widget.onToggleTheme,
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              width: 44,
-              height: 44,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          actions: [
+            InkWell(
+              onTap: widget.onToggleTheme,
+              borderRadius: BorderRadius.circular(14),
+              child: AnimatedContainer(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
+                width: 44,
+                height: 44,
               decoration: BoxDecoration(
                 color: VigiloUiColors.panel(d),
                 borderRadius: BorderRadius.circular(14),
@@ -132,7 +138,9 @@ class _NoLockScreenState extends State<NoLockScreen>
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Center(
-                            child: Container(
+                            child: AnimatedContainer(
+                              duration: kThemeFadeDuration,
+                              curve: kThemeFadeCurve,
                               width: 76,
                               height: 76,
                               decoration: BoxDecoration(
@@ -177,7 +185,9 @@ class _NoLockScreenState extends State<NoLockScreen>
                           const SizedBox(height: 32),
                           GestureDetector(
                             onTap: checking ? null : _openSettings,
-                            child: Container(
+                            child: AnimatedContainer(
+                              duration: kThemeFadeDuration,
+                              curve: kThemeFadeCurve,
                               padding: const EdgeInsets.symmetric(vertical: 15),
                               decoration: BoxDecoration(
                                 color: VigiloUiColors.blue(d),
@@ -233,8 +243,9 @@ class _NoLockScreenState extends State<NoLockScreen>
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   /// Temporary success view rendered when a valid device lock is detected before transitioning into the app.
   Widget _admitted() {

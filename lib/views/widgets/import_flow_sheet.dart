@@ -12,10 +12,11 @@ import '../../utils/notifications.dart';
 // Helper for UI styling and color retrieval matching the rest of the app
 class _FlowColors {
   final BuildContext context;
+  final bool? isDarkOverride;
 
-  _FlowColors(this.context);
+  _FlowColors(this.context, [this.isDarkOverride]);
 
-  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+  bool get isDark => isDarkOverride ?? (Theme.of(context).brightness == Brightness.dark);
 
   Color get bg => VigiloUiColors.bg(isDark);
 
@@ -67,11 +68,20 @@ class ImportFlowSheet extends StatefulWidget {
 }
 
 class _ImportFlowSheetState extends State<ImportFlowSheet> {
+  late bool _isDark = widget.dark;
   int _step = 0; // 0: File Picker, 1: Map Columns, 2: Preview, 3: Result
   String? _selectedFileName;
   List<String> _detectedHeaders = [];
   List<Map<String, dynamic>> _parsedRows = [];
   bool _isLoading = false;
+
+  @override
+  void didUpdateWidget(covariant ImportFlowSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.dark != widget.dark) {
+      _isDark = widget.dark;
+    }
+  }
 
   // Licence details
   String _orgName = '';
@@ -581,7 +591,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
   }
 
   void _showHeaderSelector(String field) {
-    final colors = _FlowColors(context);
+    final colors = _FlowColors(context, _isDark);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -823,7 +833,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _FlowColors(context);
+    final colors = _FlowColors(context, _isDark);
     final String currentTitle;
     switch (_step) {
       case 0:
@@ -842,29 +852,35 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
         currentTitle = 'Import';
     }
 
-    return Scaffold(
-      backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.bg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: true,
-        leadingWidth: 68,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: Center(
-            child: InkWell(
-              onTap: _step > 0 && _step < 3
-                  ? () {
-                      setState(() {
-                        _step--;
-                      });
-                    }
-                  : widget.onClose,
-              borderRadius: BorderRadius.circular(14),
-              child: Container(
-                width: 44,
-                height: 44,
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
+      color: colors.bg,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: true,
+          leadingWidth: 68,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Center(
+              child: InkWell(
+                onTap: _step > 0 && _step < 3
+                    ? () {
+                        setState(() {
+                          _step--;
+                        });
+                      }
+                    : widget.onClose,
+                borderRadius: BorderRadius.circular(14),
+                child: AnimatedContainer(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
+                  width: 44,
+                  height: 44,
                 decoration: BoxDecoration(
                   color: VigiloUiColors.panel(colors.isDark).withValues(alpha: colors.isDark ? 0.72 : 0.92),
                   borderRadius: BorderRadius.circular(14),
@@ -882,33 +898,47 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                     ),
                   ],
                 ),
-                child: Icon(
-                  _step > 0 && _step < 3
-                      ? Icons.arrow_back_rounded
-                      : Icons.close_rounded,
-                  size: 23,
-                  color: VigiloUiColors.textSoft(colors.isDark),
+                child: TweenAnimationBuilder<Color?>(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
+                  tween: ColorTween(end: VigiloUiColors.textSoft(colors.isDark)),
+                  builder: (context, iconColor, _) {
+                    return Icon(
+                      _step > 0 && _step < 3
+                          ? Icons.arrow_back_rounded
+                          : Icons.close_rounded,
+                      size: 23,
+                      color: iconColor,
+                    );
+                  },
                 ),
               ),
             ),
           ),
         ),
-        title: Text(
-          currentTitle,
+        title: AnimatedDefaultTextStyle(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           style: TextStyle(
             color: colors.text,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
+          child: Text(currentTitle),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 18),
             child: Center(
               child: InkWell(
-                onTap: widget.onToggleTheme,
+                onTap: () {
+                  setState(() => _isDark = !_isDark);
+                  widget.onToggleTheme();
+                },
                 borderRadius: BorderRadius.circular(14),
-                child: Container(
+                child: AnimatedContainer(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
@@ -928,10 +958,17 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                       ),
                     ],
                   ),
-                  child: Icon(
-                    colors.isDark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
-                    color: VigiloUiColors.textSoft(colors.isDark),
-                    size: 23,
+                  child: TweenAnimationBuilder<Color?>(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
+                    tween: ColorTween(end: VigiloUiColors.textSoft(colors.isDark)),
+                    builder: (context, iconColor, _) {
+                      return Icon(
+                        colors.isDark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
+                        color: iconColor,
+                        size: 23,
+                      );
+                    },
                   ),
                 ),
               ),
@@ -980,6 +1017,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -1017,7 +1055,9 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
+          AnimatedContainer(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
             decoration: BoxDecoration(
               color: colors.panel,
@@ -1030,18 +1070,22 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.apartment_rounded,
-                        color: colors.blueSoft,
-                        size: 20,
+                      TweenAnimationBuilder<Color?>(
+                        duration: kThemeFadeDuration,
+                        curve: kThemeFadeCurve,
+                        tween: ColorTween(end: colors.blueSoft),
+                        builder: (context, iconColor, _) =>
+                            Icon(Icons.apartment_rounded, color: iconColor, size: 20),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        'Organisation Name',
+                      AnimatedDefaultTextStyle(
+                        duration: kThemeFadeDuration,
+                        curve: kThemeFadeCurve,
                         style: TextStyle(
                           color: colors.textSoft,
                           fontSize: 14,
                         ),
+                        child: const Text('Organisation Name'),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -1084,18 +1128,22 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.tag_rounded,
-                        color: colors.blueSoft,
-                        size: 20,
+                      TweenAnimationBuilder<Color?>(
+                        duration: kThemeFadeDuration,
+                        curve: kThemeFadeCurve,
+                        tween: ColorTween(end: colors.blueSoft),
+                        builder: (context, iconColor, _) =>
+                            Icon(Icons.tag_rounded, color: iconColor, size: 20),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        'Organisation Number',
+                      AnimatedDefaultTextStyle(
+                        duration: kThemeFadeDuration,
+                        curve: kThemeFadeCurve,
                         style: TextStyle(
                           color: colors.textSoft,
                           fontSize: 14,
                         ),
+                        child: const Text('Organisation Number'),
                       ),
                       const Spacer(),
                       SizedBox(
@@ -1133,23 +1181,31 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
             ),
           ),
           const SizedBox(height: 24),
-          Text(
-            'Select your timetable file',
+          AnimatedDefaultTextStyle(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
             style: TextStyle(
               color: colors.text,
               fontWeight: FontWeight.bold,
               fontSize: 20,
             ),
+            child: const Text('Select your timetable file'),
           ),
           const SizedBox(height: 4),
-          Text(
-            'One session per room will be created — you\'ll have a chance to review everything before confirming.',
+          AnimatedDefaultTextStyle(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
             style: TextStyle(color: colors.textSoft, fontSize: 14, height: 1.5),
+            child: const Text(
+              'One session per room will be created — you\'ll have a chance to review everything before confirming.',
+            ),
           ),
           const SizedBox(height: 24),
           GestureDetector(
             onTap: _pickFile,
-            child: Container(
+            child: AnimatedContainer(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
               decoration: BoxDecoration(
@@ -1162,33 +1218,47 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
               ),
               child: Column(
                 children: [
-                  Icon(Icons.upload_file_rounded, size: 52, color: colors.blue),
+                  TweenAnimationBuilder<Color?>(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
+                    tween: ColorTween(end: colors.blue),
+                    builder: (context, iconColor, _) =>
+                        Icon(Icons.upload_file_rounded, size: 52, color: iconColor),
+                  ),
                   const SizedBox(height: 16),
-                  Text(
-                    'Tap to select file',
+                  AnimatedDefaultTextStyle(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
                     style: TextStyle(
                       color: colors.blue,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
+                    child: const Text('Tap to select file'),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    'CSV (.csv)  ·  Excel (.xlsx, .xls)',
+                  AnimatedDefaultTextStyle(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
                     style: TextStyle(color: colors.textFaint, fontSize: 13),
+                    child: const Text('CSV (.csv)  ·  Excel (.xlsx, .xls)'),
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 16),
-          Text(
-            'Export your timetable as CSV or Excel from your MIS or spreadsheet. Vigilo remembers your column mapping after the first import.',
+          AnimatedDefaultTextStyle(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
             style: TextStyle(
               color: colors.textFaint,
               fontSize: 12,
               fontStyle: FontStyle.italic,
               height: 1.5,
+            ),
+            child: const Text(
+              'Export your timetable as CSV or Excel from your MIS or spreadsheet. Vigilo remembers your column mapping after the first import.',
             ),
           ),
         ],
@@ -1201,29 +1271,45 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
     return Column(
       children: [
         const SizedBox(height: 6),
-        Container(
+        AnimatedContainer(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           color: colors.green.withValues(alpha: 0.08),
           child: Row(
             children: [
-              Icon(Icons.check_circle_outline, color: colors.green, size: 16),
+              TweenAnimationBuilder<Color?>(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
+                tween: ColorTween(end: colors.green),
+                builder: (context, iconColor, _) =>
+                    Icon(Icons.check_circle_outline, color: iconColor, size: 16),
+              ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  _selectedFileName ?? 'timetable.csv',
+                child: AnimatedDefaultTextStyle(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
                   style: TextStyle(
                     color: colors.green,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
-                  overflow: TextOverflow.ellipsis,
+                  child: Text(
+                    _selectedFileName ?? 'timetable.csv',
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
               const SizedBox(width: 6),
-              Text(
-                '${_detectedHeaders.length} columns  \u00b7  ${_parsedRows.length} rows',
+              AnimatedDefaultTextStyle(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
                 style: TextStyle(color: colors.textFaint, fontSize: 12),
+                child: Text(
+                  '${_detectedHeaders.length} columns  \u00b7  ${_parsedRows.length} rows',
+                ),
               ),
             ],
           ),
@@ -1233,17 +1319,21 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              Text(
-                'ORGANISATION',
+              AnimatedDefaultTextStyle(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
                 style: TextStyle(
                   color: colors.blueSoft,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                 ),
+                child: const Text('ORGANISATION'),
               ),
               const SizedBox(height: 8),
-              Container(
+              AnimatedContainer(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
                 padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
                 decoration: BoxDecoration(
                   color: colors.panel,
@@ -1279,29 +1369,39 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                 ),
               ),
               const SizedBox(height: 20),
-              Text(
-                'TIMETABLE COLUMNS',
+              AnimatedDefaultTextStyle(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
                 style: TextStyle(
                   color: colors.blueSoft,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                 ),
+                child: const Text('TIMETABLE COLUMNS'),
               ),
               const SizedBox(height: 4),
-              Text(
-                'Match each field to the corresponding column in your file.',
+              AnimatedDefaultTextStyle(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
                 style: TextStyle(color: colors.textFaint, fontSize: 12),
+                child: const Text(
+                  'Match each field to the corresponding column in your file.',
+                ),
               ),
               const SizedBox(height: 10),
-              Material(
-                color: colors.panel,
-                clipBehavior: Clip.antiAlias,
-                shape: RoundedRectangleBorder(
+              AnimatedContainer(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
+                decoration: BoxDecoration(
+                  color: colors.panel,
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: colors.line),
+                  border: Border.all(color: colors.line),
                 ),
-                child: Column(
+                clipBehavior: Clip.antiAlias,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Column(
                   children: _mappings.keys.map((field) {
                     final isRequired =
                         field == 'Exam Subject' ||
@@ -1328,10 +1428,12 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                             ),
                             child: Row(
                               children: [
-                                Icon(
-                                  Icons.drag_indicator,
-                                  color: colors.textFaint,
-                                  size: 16,
+                                TweenAnimationBuilder<Color?>(
+                                  duration: kThemeFadeDuration,
+                                  curve: kThemeFadeCurve,
+                                  tween: ColorTween(end: colors.textFaint),
+                                  builder: (context, iconColor, _) =>
+                                      Icon(Icons.drag_indicator, color: iconColor, size: 16),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -1339,26 +1441,31 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        field,
+                                      AnimatedDefaultTextStyle(
+                                        duration: kThemeFadeDuration,
+                                        curve: kThemeFadeCurve,
                                         style: TextStyle(
                                           color: colors.text,
                                           fontWeight: FontWeight.w600,
                                           fontSize: 14,
                                         ),
+                                        child: Text(field),
                                       ),
-                                      Text(
-                                        isRequired ? 'required' : 'optional',
+                                      AnimatedDefaultTextStyle(
+                                        duration: kThemeFadeDuration,
+                                        curve: kThemeFadeCurve,
                                         style: TextStyle(
                                           color: colors.textFaint,
                                           fontSize: 11,
                                         ),
+                                        child: Text(isRequired ? 'required' : 'optional'),
                                       ),
                                     ],
                                   ),
                                 ),
-                                Text(
-                                  isMapped ? colVal : 'Unmapped',
+                                AnimatedDefaultTextStyle(
+                                  duration: kThemeFadeDuration,
+                                  curve: kThemeFadeCurve,
                                   style: TextStyle(
                                     color: isMapped
                                         ? colors.blue
@@ -1368,12 +1475,15 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                                         : FontWeight.normal,
                                     fontSize: 14,
                                   ),
+                                  child: Text(isMapped ? colVal : 'Unmapped'),
                                 ),
                                 const SizedBox(width: 6),
-                                Icon(
-                                  Icons.chevron_right,
-                                  color: colors.textFaint,
-                                  size: 18,
+                                TweenAnimationBuilder<Color?>(
+                                  duration: kThemeFadeDuration,
+                                  curve: kThemeFadeCurve,
+                                  tween: ColorTween(end: colors.textFaint),
+                                  builder: (context, iconColor, _) =>
+                                      Icon(Icons.chevron_right, color: iconColor, size: 18),
                                 ),
                               ],
                             ),
@@ -1384,7 +1494,8 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                   }).toList(),
                 ),
               ),
-              const SizedBox(height: 40),
+            ),
+            const SizedBox(height: 40),
             ],
           ),
         ),
@@ -1433,28 +1544,40 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                 child: Column(
                   children: [
                     const SizedBox(height: 6),
-                    Container(
+                    AnimatedContainer(
+                      duration: kThemeFadeDuration,
+                      curve: kThemeFadeCurve,
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       color: colors.panel,
                       child: Row(
                         children: [
-                          Icon(Icons.calendar_today_outlined, color: colors.blue, size: 16),
+                          TweenAnimationBuilder<Color?>(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
+                            tween: ColorTween(end: colors.blue),
+                            builder: (context, iconColor, _) =>
+                                Icon(Icons.calendar_today_outlined, color: iconColor, size: 16),
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  '$_totalSessionsToCreate sessions to create',
+                                AnimatedDefaultTextStyle(
+                                  duration: kThemeFadeDuration,
+                                  curve: kThemeFadeCurve,
                                   style: TextStyle(
                                     color: colors.text,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 15,
                                   ),
+                                  child: Text('$_totalSessionsToCreate sessions to create'),
                                 ),
-                                Text(
-                                  '$_orgName  \u00b7  ${_centreController.text}',
+                                AnimatedDefaultTextStyle(
+                                  duration: kThemeFadeDuration,
+                                  curve: kThemeFadeCurve,
                                   style: TextStyle(color: colors.textSoft, fontSize: 12),
+                                  child: Text('$_orgName  \u00b7  ${_centreController.text}'),
                                 ),
                               ],
                             ),
@@ -1470,9 +1593,13 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                 pinned: true,
                 delegate: _PinnedSummaryBarDelegate(
                   height: 40.0 + MediaQuery.textScalerOf(context).scale(15.0),
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
                     color: colors.bg,
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: kThemeFadeDuration,
+                      curve: kThemeFadeCurve,
                       margin: const EdgeInsets.fromLTRB(16, 6, 16, 6),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
@@ -1482,32 +1609,50 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.check_circle, color: colors.green, size: 14),
+                          TweenAnimationBuilder<Color?>(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
+                            tween: ColorTween(end: colors.green),
+                            builder: (context, iconColor, _) =>
+                                Icon(Icons.check_circle, color: iconColor, size: 14),
+                          ),
                           const SizedBox(width: 5),
-                          Text(
-                            '$validCount valid',
+                          AnimatedDefaultTextStyle(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
                             style: TextStyle(
                               color: colors.green,
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
+                            child: Text('$validCount valid'),
                           ),
                           const SizedBox(width: 12),
-                          Icon(Icons.error, color: colors.red, size: 14),
+                          TweenAnimationBuilder<Color?>(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
+                            tween: ColorTween(end: colors.red),
+                            builder: (context, iconColor, _) =>
+                                Icon(Icons.error, color: iconColor, size: 14),
+                          ),
                           const SizedBox(width: 5),
-                          Text(
-                            '$flaggedCount flagged',
+                          AnimatedDefaultTextStyle(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
                             style: TextStyle(
                               color: colors.red,
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
+                            child: Text('$flaggedCount flagged'),
                           ),
                           const Spacer(),
                           if (totalPages > 1)
-                            Text(
-                              'Page ${_previewPage + 1} of $totalPages',
+                            AnimatedDefaultTextStyle(
+                              duration: kThemeFadeDuration,
+                              curve: kThemeFadeCurve,
                               style: TextStyle(color: colors.textFaint, fontSize: 12),
+                              child: Text('Page ${_previewPage + 1} of $totalPages'),
                             ),
                         ],
                       ),
@@ -1530,7 +1675,9 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                             padding: const EdgeInsets.fromLTRB(0, 4, 0, 8),
                             child: Row(
                               children: [
-                                Container(
+                                AnimatedContainer(
+                                  duration: kThemeFadeDuration,
+                                  curve: kThemeFadeCurve,
                                   width: 3,
                                   height: 14,
                                   decoration: BoxDecoration(
@@ -1539,18 +1686,22 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                Text(
-                                  date,
+                                AnimatedDefaultTextStyle(
+                                  duration: kThemeFadeDuration,
+                                  curve: kThemeFadeCurve,
                                   style: TextStyle(
                                     color: colors.blueSoft,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
                                   ),
+                                  child: Text(date),
                                 ),
                               ],
                             ),
                           ),
-                          Container(
+                          AnimatedContainer(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
                             decoration: BoxDecoration(
                               color: colors.panel,
                               borderRadius: BorderRadius.circular(12),
@@ -1658,7 +1809,9 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
             ),
           ),
         ),
-        Container(
+        AnimatedContainer(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           color: colors.bg,
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           child: Row(
@@ -1673,6 +1826,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
+                    animationDuration: kThemeFadeDuration,
                   ),
                   child: const Text(
                     'Cancel',
@@ -1695,6 +1849,7 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     elevation: 0,
+                    animationDuration: kThemeFadeDuration,
                   ),
                   child: Text(
                     'Create $_totalSessionsToCreate Sessions',
@@ -1729,20 +1884,23 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      s.subject,
+                    AnimatedDefaultTextStyle(
+                      duration: kThemeFadeDuration,
+                      curve: kThemeFadeCurve,
                       style: TextStyle(
                         color: hasError ? colors.red : colors.text,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
+                      child: Text(s.subject),
                     ),
                     Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         if (s.level != null) ...[
-                          Text(
-                            s.level!,
+                          AnimatedDefaultTextStyle(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
                             style: TextStyle(
                               color: hasError
                                   ? colors.red.withValues(alpha: 0.8)
@@ -1750,17 +1908,20 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
+                            child: Text(s.level!),
                           ),
                           const SizedBox(width: 4),
                         ],
-                        Text(
-                          '·  ${s.board}',
+                        AnimatedDefaultTextStyle(
+                          duration: kThemeFadeDuration,
+                          curve: kThemeFadeCurve,
                           style: TextStyle(
                             color: hasError
                                 ? colors.red.withValues(alpha: 0.6)
                                 : colors.textSoft,
                             fontSize: 12,
                           ),
+                          child: Text('·  ${s.board}'),
                         ),
                       ],
                     ),
@@ -1771,20 +1932,24 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    s.startTime,
+                  AnimatedDefaultTextStyle(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
                     style: TextStyle(
                       color: hasError ? colors.red : colors.text,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
+                    child: Text(s.startTime),
                   ),
-                  Text(
-                    '${s.duration}  +  ${s.extraTime} ET',
+                  AnimatedDefaultTextStyle(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
                     style: TextStyle(
                       color: hasError ? colors.red.withValues(alpha: 0.6) : colors.textSoft,
                       fontSize: 11,
                     ),
+                    child: Text('${s.duration}  +  ${s.extraTime} ET'),
                   ),
                 ],
               ),
@@ -1797,17 +1962,25 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 1.5),
-                  child: Icon(Icons.sticky_note_2_outlined, size: 12, color: colors.amber),
+                  child: TweenAnimationBuilder<Color?>(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
+                    tween: ColorTween(end: colors.amber),
+                    builder: (context, iconColor, _) =>
+                        Icon(Icons.sticky_note_2_outlined, size: 12, color: iconColor),
+                  ),
                 ),
                 const SizedBox(width: 4),
                 Expanded(
-                  child: Text(
-                    s.notes,
+                  child: AnimatedDefaultTextStyle(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
                     style: TextStyle(
                       color: colors.amber,
                       fontSize: 11,
                       fontStyle: FontStyle.italic,
                     ),
+                    child: Text(s.notes),
                   ),
                 ),
               ],
@@ -1826,21 +1999,25 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(top: 1.5),
-                        child: Icon(
-                          Icons.error_outline_rounded,
-                          color: colors.red,
-                          size: 14,
+                        child: TweenAnimationBuilder<Color?>(
+                          duration: kThemeFadeDuration,
+                          curve: kThemeFadeCurve,
+                          tween: ColorTween(end: colors.red),
+                          builder: (context, iconColor, _) =>
+                              Icon(Icons.error_outline_rounded, color: iconColor, size: 14),
                         ),
                       ),
                       const SizedBox(width: 4),
                       Expanded(
-                        child: Text(
-                          err,
+                        child: AnimatedDefaultTextStyle(
+                          duration: kThemeFadeDuration,
+                          curve: kThemeFadeCurve,
                           style: TextStyle(
                             color: colors.red,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
+                          child: Text(err),
                         ),
                       ),
                     ],
@@ -1851,16 +2028,24 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           ] else if (multi) ...[
             Row(
               children: [
-                Icon(Icons.meeting_room_outlined, size: 13, color: colors.blue),
+                TweenAnimationBuilder<Color?>(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
+                  tween: ColorTween(end: colors.blue),
+                  builder: (context, iconColor, _) =>
+                      Icon(Icons.meeting_room_outlined, size: 13, color: iconColor),
+                ),
                 const SizedBox(width: 4),
                 Expanded(
-                  child: Text(
-                    '${rooms.length} sessions will be created:',
+                  child: AnimatedDefaultTextStyle(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
                     style: TextStyle(
                       color: colors.blue,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
+                    child: Text('${rooms.length} sessions will be created:'),
                   ),
                 ),
               ],
@@ -1870,7 +2055,9 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
               spacing: 6,
               runSpacing: 4,
               children: rooms.map((r) {
-                return Container(
+                return AnimatedContainer(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 3,
@@ -1880,9 +2067,11 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(color: colors.blue.withValues(alpha: 0.3)),
                   ),
-                  child: Text(
-                    r.isEmpty ? 'No Room' : r,
+                  child: AnimatedDefaultTextStyle(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
                     style: TextStyle(color: colors.blue, fontSize: 11),
+                    child: Text(r.isEmpty ? 'No Room' : r),
                   ),
                 );
               }).toList(),
@@ -1890,16 +2079,22 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
           ] else ...[
             Row(
               children: [
-                Icon(
-                  Icons.meeting_room_outlined,
-                  size: 13,
-                  color: colors.textFaint,
+                TweenAnimationBuilder<Color?>(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
+                  tween: ColorTween(end: colors.textFaint),
+                  builder: (context, iconColor, _) =>
+                      Icon(Icons.meeting_room_outlined, size: 13, color: iconColor),
                 ),
                 const SizedBox(width: 4),
                 Expanded(
-                  child: Text(
-                    rooms.isEmpty || rooms.first.isEmpty ? 'No Room' : rooms.first,
+                  child: AnimatedDefaultTextStyle(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
                     style: TextStyle(color: colors.textFaint, fontSize: 12),
+                    child: Text(
+                      rooms.isEmpty || rooms.first.isEmpty ? 'No Room' : rooms.first,
+                    ),
                   ),
                 ),
               ],
@@ -1918,30 +2113,38 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Spacer(),
-          Container(
+          AnimatedContainer(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
             width: 80,
             height: 80,
             decoration: BoxDecoration(
               color: colors.green.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.check_rounded,
-              color: colors.green,
-              size: 48,
+            child: TweenAnimationBuilder<Color?>(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
+              tween: ColorTween(end: colors.green),
+              builder: (context, iconColor, _) =>
+                  Icon(Icons.check_rounded, color: iconColor, size: 48),
             ),
           ),
           const SizedBox(height: 24),
-          Text(
-            '$_totalSessionsToCreate sessions created',
+          AnimatedDefaultTextStyle(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
             style: TextStyle(
               color: colors.text,
               fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
+            child: Text('$_totalSessionsToCreate sessions created'),
           ),
           const SizedBox(height: 16),
-          Container(
+          AnimatedContainer(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
             decoration: BoxDecoration(
               color: colors.panel,
@@ -1985,31 +2188,46 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Sorted by date, time, and subject.',
-            textAlign: TextAlign.center,
+          AnimatedDefaultTextStyle(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
             style: TextStyle(
               color: colors.textFaint,
               fontSize: 12,
               fontStyle: FontStyle.italic,
             ),
+            child: const Text(
+              'Sorted by date, time, and subject.',
+              textAlign: TextAlign.center,
+            ),
           ),
           const Spacer(),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: widget.onClose,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.blue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+            child: AnimatedContainer(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
+              height: 52,
+              decoration: BoxDecoration(
+                color: colors.blue,
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: const Text(
-                'Go to Home Screen',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: widget.onClose,
+                  borderRadius: BorderRadius.circular(16),
+                  child: const Center(
+                    child: Text(
+                      'Go to Home Screen',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -2027,37 +2245,49 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
     String value, {
     bool locked = false,
   }) {
+    final activeColor = locked ? colors.textFaint : colors.blueSoft;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: locked ? colors.textFaint : colors.blueSoft,
-            size: 20,
+          TweenAnimationBuilder<Color?>(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
+            tween: ColorTween(end: activeColor),
+            builder: (context, iconColor, _) =>
+                Icon(icon, color: iconColor, size: 20),
           ),
           const SizedBox(width: 12),
-          Text(
-            label,
+          AnimatedDefaultTextStyle(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
             style: TextStyle(
               color: locked ? colors.textFaint : colors.textSoft,
               fontSize: 14,
             ),
+            child: Text(label),
           ),
           const SizedBox(width: 2),
           if (locked) ...[
-            Icon(Icons.lock_outline, color: colors.textFaint, size: 14),
+            TweenAnimationBuilder<Color?>(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
+              tween: ColorTween(end: colors.textFaint),
+              builder: (context, iconColor, _) =>
+                  Icon(Icons.lock_outline, color: iconColor, size: 14),
+            ),
             const SizedBox(width: 6),
           ],
           Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
+            child: AnimatedDefaultTextStyle(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
               style: TextStyle(
                 color: locked ? colors.textFaint : colors.text,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
+              child: Text(value, textAlign: TextAlign.end),
             ),
           ),
         ],
@@ -2070,27 +2300,41 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
     required String label,
     required VoidCallback? onPressed,
   }) {
-    return Container(
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       color: colors.bg,
       child: SizedBox(
         width: double.infinity,
-        child: ElevatedButton(
-          onPressed: onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colors.blue,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: colors.panel2,
-            disabledForegroundColor: colors.textFaint.withValues(alpha: 0.5),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 0,
+        child: AnimatedContainer(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
+          height: 52,
+          decoration: BoxDecoration(
+            color: onPressed != null ? colors.blue : colors.panel2,
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onPressed,
+              borderRadius: BorderRadius.circular(16),
+              child: Center(
+                child: AnimatedDefaultTextStyle(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: onPressed != null
+                        ? Colors.white
+                        : colors.textFaint.withValues(alpha: 0.5),
+                  ),
+                  child: Text(label),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -2105,23 +2349,12 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
     required VoidCallback onTap,
     bool iconTrailing = false,
   }) {
-    final children = [
-      if (!iconTrailing) Icon(icon, size: 16, color: enabled ? colors.blueSoft : colors.textFaint),
-      if (!iconTrailing) const SizedBox(width: 3),
-      Text(
-        label,
-        style: TextStyle(
-          color: enabled ? colors.blueSoft : colors.textFaint,
-          fontSize: 12.5,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      if (iconTrailing) const SizedBox(width: 3),
-      if (iconTrailing) Icon(icon, size: 16, color: enabled ? colors.blueSoft : colors.textFaint),
-    ];
+    final activeColor = enabled ? colors.blueSoft : colors.textFaint;
     return GestureDetector(
       onTap: enabled ? onTap : null,
-      child: Container(
+      child: AnimatedContainer(
+        duration: kThemeFadeDuration,
+        curve: kThemeFadeCurve,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
@@ -2129,7 +2362,41 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
             color: enabled ? colors.line : colors.line.withValues(alpha: 0.4),
           ),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: children),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!iconTrailing) ...[
+              TweenAnimationBuilder<Color?>(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
+                tween: ColorTween(end: activeColor),
+                builder: (context, iconColor, _) =>
+                    Icon(icon, size: 16, color: iconColor),
+              ),
+              const SizedBox(width: 3),
+            ],
+            AnimatedDefaultTextStyle(
+              duration: kThemeFadeDuration,
+              curve: kThemeFadeCurve,
+              style: TextStyle(
+                color: activeColor,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+              ),
+              child: Text(label),
+            ),
+            if (iconTrailing) ...[
+              const SizedBox(width: 3),
+              TweenAnimationBuilder<Color?>(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
+                tween: ColorTween(end: activeColor),
+                builder: (context, iconColor, _) =>
+                    Icon(icon, size: 16, color: iconColor),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -2142,7 +2409,8 @@ class _ImportFlowSheetState extends State<ImportFlowSheet> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           width: selected ? 20 : 7,
           height: 7,
           decoration: BoxDecoration(

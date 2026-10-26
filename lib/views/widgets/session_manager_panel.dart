@@ -43,7 +43,9 @@ class SessionManagerPanel extends StatelessWidget {
     final undoable =
         lastImportSessions.where((s) => !protected.contains(s)).toList();
 
-    return Container(
+    return AnimatedContainer(
+      duration: kThemeFadeDuration,
+      curve: kThemeFadeCurve,
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
       decoration: BoxDecoration(
         color: VigiloUiColors.panel(dark),
@@ -53,7 +55,9 @@ class SessionManagerPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
+          AnimatedContainer(
+            duration: kThemeFadeDuration,
+            curve: kThemeFadeCurve,
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
             decoration: BoxDecoration(
@@ -68,32 +72,43 @@ class SessionManagerPanel extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.tune_rounded,
-                  color: VigiloUiColors.blueSoft(dark),
-                  size: 16,
+                TweenAnimationBuilder<Color?>(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
+                  tween: ColorTween(end: VigiloUiColors.blueSoft(dark)),
+                  builder: (context, iconColor, _) {
+                    return Icon(
+                      Icons.tune_rounded,
+                      color: iconColor,
+                      size: 16,
+                    );
+                  },
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Session Manager',
+                AnimatedDefaultTextStyle(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
                   style: TextStyle(
                     color: VigiloUiColors.blueSoft(dark),
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
+                  child: const Text('Session Manager'),
                 ),
                 const Spacer(),
                 if (statusFilter != 'All' || dateFilter != 'All')
                   AnimatedScaleOnPress(
                     child: GestureDetector(
                       onTap: onClear,
-                      child: Text(
-                        'Clear Filters',
+                      child: AnimatedDefaultTextStyle(
+                        duration: kThemeFadeDuration,
+                        curve: kThemeFadeCurve,
                         style: TextStyle(
                           color: VigiloUiColors.amber(dark),
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
                         ),
+                        child: const Text('Clear Filters'),
                       ),
                     ),
                   ),
@@ -105,14 +120,16 @@ class SessionManagerPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'STATUS',
+                AnimatedDefaultTextStyle(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
                   style: TextStyle(
                     color: VigiloUiColors.blueSoft(dark),
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
                   ),
+                  child: const Text('STATUS'),
                 ),
                 const SizedBox(height: 6),
                 Wrap(
@@ -130,14 +147,16 @@ class SessionManagerPanel extends StatelessWidget {
                   ).toList(),
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  'DATE',
+                AnimatedDefaultTextStyle(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
                   style: TextStyle(
                     color: VigiloUiColors.blueSoft(dark),
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
                   ),
+                  child: const Text('DATE'),
                 ),
                 const SizedBox(height: 6),
                 Wrap(
@@ -154,7 +173,9 @@ class SessionManagerPanel extends StatelessWidget {
                     AnimatedScaleOnPress(
                       child: GestureDetector(
                         onTap: onJumpToDateTap,
-                        child: Container(
+                        child: AnimatedContainer(
+                          duration: kThemeFadeDuration,
+                          curve: kThemeFadeCurve,
                           padding: const EdgeInsets.all(7),
                           decoration: BoxDecoration(
                             color: VigiloUiColors.blue(dark).withValues(
@@ -167,10 +188,17 @@ class SessionManagerPanel extends StatelessWidget {
                               ),
                             ),
                           ),
-                          child: Icon(
-                            Icons.calendar_today_rounded,
-                            color: VigiloUiColors.blue(dark),
-                            size: 15,
+                          child: TweenAnimationBuilder<Color?>(
+                            duration: kThemeFadeDuration,
+                            curve: kThemeFadeCurve,
+                            tween: ColorTween(end: VigiloUiColors.blue(dark)),
+                            builder: (context, iconColor, _) {
+                              return Icon(
+                                Icons.calendar_today_rounded,
+                                color: iconColor,
+                                size: 15,
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -179,7 +207,9 @@ class SessionManagerPanel extends StatelessWidget {
                 ),
                 if (lastImportSessions.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  Container(
+                  AnimatedContainer(
+                    duration: kThemeFadeDuration,
+                    curve: kThemeFadeCurve,
                     width: double.infinity,
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
@@ -196,28 +226,41 @@ class SessionManagerPanel extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(
-                              Icons.history_rounded,
-                              color: VigiloUiColors.amber(dark),
-                              size: 13,
+                            TweenAnimationBuilder<Color?>(
+                              duration: kThemeFadeDuration,
+                              curve: kThemeFadeCurve,
+                              tween: ColorTween(end: VigiloUiColors.amber(dark)),
+                              builder: (context, iconColor, _) {
+                                return Icon(
+                                  Icons.history_rounded,
+                                  color: iconColor,
+                                  size: 13,
+                                );
+                              },
                             ),
                             const SizedBox(width: 5),
-                            Text(
-                              'LAST IMPORT',
+                            AnimatedDefaultTextStyle(
+                              duration: kThemeFadeDuration,
+                              curve: kThemeFadeCurve,
                               style: TextStyle(
                                 color: VigiloUiColors.amber(dark),
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.4,
                               ),
+                              child: const Text('LAST IMPORT'),
                             ),
                             const Spacer(),
-                            Text(
-                              '${lastImportSessions.length} session${lastImportSessions.length == 1 ? '' : 's'}'
-                              '${protected.isEmpty ? '' : ' \u00b7 ${protected.length} protected'}',
+                            AnimatedDefaultTextStyle(
+                              duration: kThemeFadeDuration,
+                              curve: kThemeFadeCurve,
                               style: TextStyle(
                                 color: VigiloUiColors.textSoft(dark),
                                 fontSize: 11.5,
+                              ),
+                              child: Text(
+                                '${lastImportSessions.length} session${lastImportSessions.length == 1 ? '' : 's'}'
+                                '${protected.isEmpty ? '' : ' \u00b7 ${protected.length} protected'}',
                               ),
                             ),
                           ],
@@ -227,7 +270,9 @@ class SessionManagerPanel extends StatelessWidget {
                           isDisabled: undoable.isEmpty,
                           child: GestureDetector(
                             onTap: undoable.isEmpty ? null : onUndoLastImport,
-                            child: Container(
+                            child: AnimatedContainer(
+                              duration: kThemeFadeDuration,
+                              curve: kThemeFadeCurve,
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(
                                 vertical: 9,
@@ -248,24 +293,37 @@ class SessionManagerPanel extends StatelessWidget {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
-                                    Icons.undo_rounded,
-                                    size: 14,
-                                    color: undoable.isEmpty
-                                        ? VigiloUiColors.textFaint(dark)
-                                        : VigiloUiColors.amber(dark),
+                                  TweenAnimationBuilder<Color?>(
+                                    duration: kThemeFadeDuration,
+                                    curve: kThemeFadeCurve,
+                                    tween: ColorTween(
+                                      end: undoable.isEmpty
+                                          ? VigiloUiColors.textFaint(dark)
+                                          : VigiloUiColors.amber(dark),
+                                    ),
+                                    builder: (context, iconColor, _) {
+                                      return Icon(
+                                        Icons.undo_rounded,
+                                        size: 14,
+                                        color: iconColor,
+                                      );
+                                    },
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    undoable.isEmpty
-                                        ? "Can't undo, all protected"
-                                        : 'Undo ${undoable.length} session${undoable.length == 1 ? '' : 's'}',
+                                  AnimatedDefaultTextStyle(
+                                    duration: kThemeFadeDuration,
+                                    curve: kThemeFadeCurve,
                                     style: TextStyle(
                                       color: undoable.isEmpty
                                           ? VigiloUiColors.textFaint(dark)
                                           : VigiloUiColors.amber(dark),
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w700,
+                                    ),
+                                    child: Text(
+                                      undoable.isEmpty
+                                          ? "Can't undo, all protected"
+                                          : 'Undo ${undoable.length} session${undoable.length == 1 ? '' : 's'}',
                                     ),
                                   ),
                                 ],
@@ -279,12 +337,16 @@ class SessionManagerPanel extends StatelessWidget {
                   if (protected.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 4, left: 2),
-                      child: Text(
-                        'Protected = started, archived, or has an incident',
+                      child: AnimatedDefaultTextStyle(
+                        duration: kThemeFadeDuration,
+                        curve: kThemeFadeCurve,
                         style: TextStyle(
                           color: VigiloUiColors.textFaint(dark),
                           fontSize: 10,
                           fontStyle: FontStyle.italic,
+                        ),
+                        child: const Text(
+                          'Protected = started, archived, or has an incident',
                         ),
                       ),
                     ),
@@ -304,7 +366,9 @@ class SessionManagerPanel extends StatelessWidget {
   }) => AnimatedScaleOnPress(
     child: GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: kThemeFadeDuration,
+        curve: kThemeFadeCurve,
         margin: const EdgeInsets.only(right: 6),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
@@ -312,13 +376,15 @@ class SessionManagerPanel extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: selected ? VigiloUiColors.blue(dark) : VigiloUiColors.line(dark)),
         ),
-        child: Text(
-          label,
+        child: AnimatedDefaultTextStyle(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
           style: TextStyle(
             color: selected ? Colors.white : VigiloUiColors.textSoft(dark),
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
+          child: Text(label),
         ),
       ),
     ),

@@ -129,52 +129,53 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     final recordId = widget.data.recordId;
     if (recordId == null) return;
 
-    final state = await _sessionService.loadHomeState();
-    if (!mounted) return;
+    final found =
+        await _sessionService.refreshSingleCardRuntime(_currentData);
+    if (!mounted || found == null) return;
 
-    ExamCardData? found;
-    for (final card in state.cards) {
-      if (card.recordId == recordId) {
-        found = card;
-        break;
-      }
-    }
-    if (found == null) {
-      for (final card in state.archiveCards) {
-        if (card.recordId == recordId) {
-          found = card;
-          break;
+    final hasChanges =
+        found.phase != _currentData.phase ||
+        found.running != _currentData.running ||
+        found.isPaused != _currentData.isPaused ||
+        found.progress != _currentData.progress ||
+        found.start != _currentData.start ||
+        found.end != _currentData.end ||
+        found.normalDuration != _currentData.normalDuration ||
+        found.extraTime != _currentData.extraTime ||
+        found.logs.length != _currentData.logs.length ||
+        (found.messages?.length ?? 0) != (_currentData.messages?.length ?? 0);
+
+    if (hasChanges) {
+      final foundCard = found;
+      setState(() {
+        final List<Message> mergedMessages;
+        if (messageLog.length > (foundCard.messages?.length ?? 0)) {
+          mergedMessages = List<Message>.from(messageLog);
+        } else {
+          mergedMessages = foundCard.messages != null
+              ? List<Message>.from(foundCard.messages!)
+              : messageLog;
         }
-      }
-    }
+        messageLog = mergedMessages;
 
-    if (found != null) {
-      final hasChanges =
-          found.phase != _currentData.phase ||
-          found.running != _currentData.running ||
-          found.isPaused != _currentData.isPaused ||
-          found.progress != _currentData.progress ||
-          found.start != _currentData.start ||
-          found.end != _currentData.end ||
-          found.normalDuration != _currentData.normalDuration ||
-          found.extraTime != _currentData.extraTime ||
-          found.logs.length != _currentData.logs.length ||
-          (found.messages?.length ?? 0) != (_currentData.messages?.length ?? 0);
+        final List<Incident> mergedLogs;
+        if (_currentData.logs.length > foundCard.logs.length) {
+          mergedLogs = List<Incident>.from(_currentData.logs);
+        } else {
+          mergedLogs = List<Incident>.from(foundCard.logs);
+        }
 
-      if (hasChanges) {
-        setState(() {
-          _currentData = found!.copyWith(
-            scheduleList: scheduleList,
-            roomsSnapshot: _scheduleRoomsSummary(),
-            invigilatorsSnapshot: allInvigilators.join(", "),
-            setUpBy: _setUpByController.text.trim(),
-            setUpRole: _setUpRole,
-          );
-          if (found.messages != null) {
-            messageLog = List<Message>.from(found.messages!);
-          }
-        });
-      }
+        _currentData = foundCard.copyWith(
+          scheduleList: scheduleList,
+          roomsSnapshot: _scheduleRoomsSummary(),
+          invigilatorsSnapshot: allInvigilators.join(", "),
+          setUpBy: _setUpByController.text.trim(),
+          setUpRole: _setUpRole,
+          messages: mergedMessages,
+          selectedRecipients: selectedInvigilators,
+          logs: mergedLogs,
+        );
+      });
     }
   }
 
@@ -340,7 +341,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     _setUpByController.text = widget.data.setUpBy;
     _setUpRole = normalizeSetUpRole(widget.data.setUpRole);
     _syncSetupControllersFromSchedule();
-    _syncAssignmentSnapshots();
+    _syncAssignmentSnapshots(notify: false);
   }
 
   Future<void> _migrateLegacyBriefings() async {
@@ -359,13 +360,13 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   List<String> _parseInvigilatorsInput(String raw) {
     final parts = raw
         .replaceAll('\r', '\n')
-        .split(RegExp(r'[\n,;|.]+'))
+        .split(RegExp(r'[\n,;|]+'))
         .map((name) => name.trim())
         .where((name) => name.isNotEmpty);
     return parts.toSet().toList();
   }
 
-  void _syncAssignmentSnapshots() {
+  void _syncAssignmentSnapshots({bool notify = true}) {
     final rooms =
         scheduleList
             .map((s) => s.room.trim())
@@ -384,18 +385,21 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     if (invigilators.isNotEmpty) {
       selectedInvigilators.retainWhere(invigilators.contains);
     }
-    _updateData(
-      _currentData.copyWith(
-        roomsSnapshot: rooms.join(', '),
-        invigilatorsSnapshot: invigilators.join(', '),
-        setUpBy: _setUpByController.text.trim(),
-        setUpRole: _setUpRole,
-        notes: _setupNotesController.text.trim(),
-        scheduleList: scheduleList,
-        messages: messageLog,
-        selectedRecipients: selectedInvigilators,
-      ),
+    final next = _currentData.copyWith(
+      roomsSnapshot: rooms.join(', '),
+      invigilatorsSnapshot: invigilators.join(', '),
+      setUpBy: _setUpByController.text.trim(),
+      setUpRole: _setUpRole,
+      notes: _setupNotesController.text.trim(),
+      scheduleList: scheduleList,
+      messages: messageLog,
+      selectedRecipients: selectedInvigilators,
     );
+    if (notify) {
+      _updateData(next);
+    } else {
+      _currentData = next;
+    }
   }
 
   String _setupTimeRange() =>
@@ -424,17 +428,107 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     setState(() {
       scheduleList = [entry];
     });
-    _syncAssignmentSnapshots();
 
     if (save) {
-      widget.onSaveData();
-      _showBanner(
-        "Setup Saved",
-        "Your setup details have been saved",
-        Icons.save_rounded,
-        NotificationType.success,
-      );
+      _saveAllSetupChanges();
     }
+  }
+
+  void _saveAllSetupChanges() {
+    final entry = ScheduleData(
+      time: _setupTimeRange(),
+      room: _setupRoomController.text.trim(),
+      invigilators: _parseInvigilatorsInput(_setupInvigilatorsController.text),
+      notes: _setupNotesController.text.trim(),
+    );
+
+    setState(() {
+      scheduleList = [entry];
+    });
+
+    final rooms =
+        scheduleList
+            .map((s) => s.room.trim())
+            .where((s) => s.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    final invigilators =
+        scheduleList
+            .expand((s) => s.invigilators)
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    if (invigilators.isNotEmpty) {
+      selectedInvigilators.retainWhere(invigilators.contains);
+    }
+
+    final nextSetUpBy = _setUpByController.text.trim();
+    final nextSetUpRole = normalizeSetUpRole(_setUpRole);
+    _setUpRole = nextSetUpRole;
+
+    _updateData(
+      _currentData.copyWith(
+        roomsSnapshot: rooms.join(', '),
+        invigilatorsSnapshot: invigilators.join(', '),
+        setUpBy: nextSetUpBy,
+        setUpRole: nextSetUpRole,
+        notes: _setupNotesController.text.trim(),
+        scheduleList: scheduleList,
+        messages: messageLog,
+        selectedRecipients: selectedInvigilators,
+      ),
+    );
+    widget.onSaveData();
+    _showBanner(
+      "Setup Saved",
+      "Your setup details have been saved",
+      Icons.save_rounded,
+      NotificationType.success,
+    );
+  }
+
+  void _syncTransientSetupState() {
+    if (_isExamCompleted) return;
+    final entry = ScheduleData(
+      time: _setupTimeRange(),
+      room: _setupRoomController.text.trim(),
+      invigilators: _parseInvigilatorsInput(_setupInvigilatorsController.text),
+      notes: _setupNotesController.text.trim(),
+    );
+    scheduleList = [entry];
+    final rooms =
+        scheduleList
+            .map((s) => s.room.trim())
+            .where((s) => s.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    final invigilators =
+        scheduleList
+            .expand((s) => s.invigilators)
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    final nextSetUpBy = _setUpByController.text.trim();
+    final nextSetUpRole = normalizeSetUpRole(_setUpRole);
+    final updated = _currentData.copyWith(
+      roomsSnapshot: rooms.join(', '),
+      invigilatorsSnapshot: invigilators.join(', '),
+      setUpBy: nextSetUpBy,
+      setUpRole: nextSetUpRole,
+      notes: _setupNotesController.text.trim(),
+      scheduleList: scheduleList,
+      messages: messageLog,
+      selectedRecipients: selectedInvigilators,
+    );
+    _currentData = updated;
+    widget.onUpdateData(updated);
+    widget.onSaveData();
   }
 
   void _showBanner(
@@ -512,6 +606,15 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     );
   }
 
+  void _logIncident(Incident incident) {
+    setState(() {
+      _currentData = _currentData.copyWith(
+        logs: [..._currentData.logs, incident],
+      );
+    });
+    widget.onLog(incident);
+  }
+
   void _showMedicalIncidentDialog() {
     showDialog<void>(
       context: context,
@@ -519,7 +622,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       builder: (_) => _MedicalIncidentDialog(
         initialRoom: _scheduleRoomsSummary(),
         onSave: (room, student, details, action) {
-          widget.onLog(
+          _logIncident(
             Incident(
               "Medical incident",
               eventType: "incident",
@@ -550,7 +653,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       builder: (_) => _MalpracticeIncidentDialog(
         initialRoom: _scheduleRoomsSummary(),
         onSave: (room, student, details, action) {
-          widget.onLog(
+          _logIncident(
             Incident(
               "Malpractice",
               eventType: "incident",
@@ -581,7 +684,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       builder: (_) => _ToiletVisitIncidentDialog(
         initialRoom: _scheduleRoomsSummary(),
         onSave: (room, student, duration, timeReturned, notes, action) {
-          widget.onLog(
+          _logIncident(
             Incident(
               "Toilet break",
               eventType: "incident",
@@ -673,7 +776,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               }
               final detail = detailParts.join('. ');
 
-              widget.onLog(
+              _logIncident(
                 Incident(
                   "Late arrival",
                   eventType: "incident",
@@ -773,9 +876,14 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     setState(() {
       for (final name in selectedInvigilators) {
         messageLog.insert(0, Message("to $name: $message"));
-        _updateData(_currentData.copyWith(messages: messageLog));
-        widget.onSaveData();
       }
+      _updateData(
+        _currentData.copyWith(
+          messages: messageLog,
+          selectedRecipients: selectedInvigilators,
+        ),
+      );
+      widget.onSaveData();
     });
     customMessageCtrl.clear();
     _showBanner(
@@ -1552,6 +1660,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     FocusNode? focusNode,
     FocusNode? nextFocusNode,
     TextInputAction? textInputAction,
+    int? maxLines = 2,
+    int? minLines = 1,
+    TextInputType? keyboardType,
   }) {
     final hintText = switch (label) {
       'Invigilators' => 'Add invigilator names',
@@ -1564,14 +1675,18 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: VigiloUiColors.textSoft(_isDark),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: VigiloUiColors.textSoft(_isDark),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
@@ -1584,6 +1699,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   readOnly: disabled,
                   controller: controller,
                   focusNode: focusNode,
+                  keyboardType: keyboardType ?? TextInputType.multiline,
                   textInputAction:
                       textInputAction ??
                       (nextFocusNode != null
@@ -1596,8 +1712,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   },
                   cursorColor: VigiloUiColors.blueSoft(_isDark),
                   textAlign: TextAlign.right,
-                  minLines: 1,
-                  maxLines: 2,
+                  minLines: minLines,
+                  maxLines: maxLines,
                   style: TextStyle(
                     color: disabled
                         ? Colors.grey
@@ -1954,6 +2070,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                   label: 'Invigilators',
                   controller: _setupInvigilatorsController,
                   disabled: _isExamCompleted,
+                  maxLines: null,
+                  minLines: 1,
                   textInputAction: TextInputAction.newline,
                   onChanged: (_) => _updateOperationalSetup(),
                   focusNode: _setupInvigilatorsFocus,
@@ -2004,8 +2122,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     disabled: _isExamCompleted,
                     onTap: () {
                       FocusScope.of(context).unfocus();
-                      _updateOperationalSetup(save: true);
-                      _saveScheduleDetails();
+                      _saveAllSetupChanges();
                     },
                   ),
                 ),
@@ -2995,12 +3112,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2.0),
-                      child: _otCategoryBadge(category, width: badgeWidth),
-                    ),
+                    _otCategoryBadge(category, width: badgeWidth),
                     const SizedBox(width: badgeSpacing),
                     Expanded(
                       child: titleParts.candidate != null &&
@@ -3038,25 +3152,19 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                             ),
                     ),
                     const SizedBox(width: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2.0),
-                      child: Text(
-                        time,
-                        style: TextStyle(
-                          color: VigiloUiColors.textSoft(_isDark),
-                          fontSize: 13.0,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    Text(
+                      time,
+                      style: TextStyle(
+                        color: VigiloUiColors.textSoft(_isDark),
+                        fontSize: 13.0,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 1.0),
-                      child: Icon(
-                        _logIcon(incident),
-                        color: VigiloUiColors.blackWhite(_isDark),
-                        size: 22,
-                      ),
+                    Icon(
+                      _logIcon(incident),
+                      color: VigiloUiColors.blackWhite(_isDark),
+                      size: 22,
                     ),
                   ],
                 ),
@@ -3338,9 +3446,17 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   Widget build(BuildContext context) {
     final data = _currentData;
 
-    return ScaffoldMessenger(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          _syncTransientSetupState();
+        }
+      },
+      child: ScaffoldMessenger(
       key: _scaffoldMessengerKey,
-      child: Container(
+      child: AnimatedContainer(
+        duration: kThemeFadeDuration,
+        curve: kThemeFadeCurve,
         height: MediaQuery.of(context).size.height * 0.82,
         decoration: BoxDecoration(
           color: VigiloUiColors.panel(_isDark).withValues(alpha: 0.995),
@@ -4579,6 +4695,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
           ),
         ),
       ),
+    ),
     );
   }
 
