@@ -3488,18 +3488,87 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                     spacing: 8,
                     children: [
                       Expanded(
-                        child: Text(
-                          data.subjectBoard.trim().isNotEmpty
-                              ? '${data.subjectName} (${data.subjectBoard})'
-                              : data.subject,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: VigiloUiColors.text(_isDark),
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
+                        child: () {
+                          final hasExamLevel = (data.examLevel ?? '').trim().isNotEmpty;
+                          final hasExamBoard = data.subjectBoard.trim().isNotEmpty;
+                          final title = hasExamBoard ? data.subjectName : data.subject;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: VigiloUiColors.text(_isDark),
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              if (hasExamLevel || hasExamBoard) ...[
+                                const SizedBox(height: 4),
+                                TweenAnimationBuilder<Color?>(
+                                  tween: ColorTween(
+                                    end: VigiloUiColors.textSoft(_isDark),
+                                  ),
+                                  duration: kThemeFadeDuration,
+                                  curve: kThemeFadeCurve,
+                                  builder: (context, softColor, _) {
+                                    return TweenAnimationBuilder<Color?>(
+                                      tween: ColorTween(
+                                        end: VigiloUiColors.textFaint(_isDark),
+                                      ),
+                                      duration: kThemeFadeDuration,
+                                      curve: kThemeFadeCurve,
+                                      builder: (context, faintColor, _) {
+                                        return Text.rich(
+                                          TextSpan(
+                                            children: [
+                                              if (hasExamLevel)
+                                                TextSpan(
+                                                  text: data.examLevel!,
+                                                  style: TextStyle(
+                                                    color: softColor,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    height: 1.2,
+                                                  ),
+                                                ),
+                                              if (hasExamLevel && hasExamBoard)
+                                                TextSpan(
+                                                  text: '  ·  ',
+                                                  style: TextStyle(
+                                                    color: faintColor,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    height: 1.2,
+                                                  ),
+                                                ),
+                                              if (hasExamBoard)
+                                                TextSpan(
+                                                  text: data.subjectBoard,
+                                                  style: TextStyle(
+                                                    color: softColor,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    height: 1.2,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              ],
+                            ],
+                          );
+                        }(),
                       ),
                       _otIconChipButton(
                         Icons.close_rounded,
