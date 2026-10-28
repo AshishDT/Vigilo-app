@@ -884,7 +884,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           _LicenceTypePanel(
                             title: 'Pro',
                             subtitle: Text(
-                              'Includes everything in Core plus additional coordination features.\n(Pro features will be introduced in Version 1.1)',
+                              'Includes everything in Core plus additional coordination features.',
                               style: TextStyle(
                                 color: VigiloUiColors.textSoft(isDark),
                                 fontSize: 15,
