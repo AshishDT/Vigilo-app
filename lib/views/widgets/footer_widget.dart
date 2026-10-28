@@ -52,112 +52,112 @@ class _FooterWidgetState extends State<FooterWidget>
   Widget build(BuildContext context) {
     final dark = widget.isDark ?? (Theme.of(context).brightness == Brightness.dark);
 
-    return AnimatedContainer(
-      duration: kThemeFadeDuration,
-      curve: kThemeFadeCurve,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: VigiloUiColors.panel(dark).withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: VigiloUiColors.blue(dark).withValues(alpha: dark ? 0.30 : 0.26),
-          width: 1,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedContainer(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
+          width: double.infinity,
+          height: 0.75,
+          color: VigiloUiColors.line(dark),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: VigiloUiColors.blue(dark).withValues(alpha: dark ? 0.07 : 0.10),
-            blurRadius: dark ? 10 : 12,
-            offset: Offset(0, dark ? 3 : 4),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: dark ? 0.22 : 0.07),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _footerAction(
-            dark,
-            Icons.admin_panel_settings,
-            'Officer Tools',
-            color: VigiloUiColors.blue(dark),
-            onTap: widget.onOfficerTools,
-          ),
-          _footerAction(
-            dark,
-            Icons.vibration,
-            'Vibrate',
-            color: widget.isVibrateOn
-                ? VigiloUiColors.blue(dark)
-                : (dark ? Colors.grey : VigiloUiColors.textFaint(dark)),
-            onTap: widget.onVibrate,
-          ),
-          ScaleTransition(
-            scale: _scale,
-            child: _footerAction(
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _actionCell(
+              dark,
+              Icons.admin_panel_settings,
+              'Officer Tools',
+              color: VigiloUiColors.blue(dark),
+              onTap: widget.onOfficerTools,
+            ),
+            _actionCell(
+              dark,
+              Icons.vibration,
+              'Vibrate',
+              color: widget.isVibrateOn
+                  ? VigiloUiColors.blue(dark)
+                  : (dark ? Colors.grey : VigiloUiColors.textFaint(dark)),
+              onTap: widget.onVibrate,
+            ),
+            _actionCell(
               dark,
               Icons.archive_outlined,
               'Archive',
               color: widget.isArchiveMode
                   ? VigiloUiColors.green(dark)
                   : VigiloUiColors.blue(dark),
+              pulse: true,
               onTap: () {
                 widget.onArchive();
                 if (!widget.isArchiveMode) _pulseController.forward();
               },
             ),
-          ),
-          _footerAction(
-            dark,
-            Icons.description,
-            'Briefings',
-            color: VigiloUiColors.blue(dark),
-            onTap: widget.onBriefings,
-          ),
-        ],
-      ),
+            _actionCell(
+              dark,
+              Icons.description,
+              'Briefings',
+              color: VigiloUiColors.blue(dark),
+              onTap: widget.onBriefings,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 
-  Widget _footerAction(
+  Widget _actionCell(
     bool dark,
     IconData icon,
     String label, {
     required Color color,
+    bool pulse = false,
     VoidCallback? onTap,
   }) {
-    return InkWell(
-      onTap: onTap ?? () {},
-      borderRadius: BorderRadius.circular(14),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TweenAnimationBuilder<Color?>(
-              duration: kThemeFadeDuration,
-              curve: kThemeFadeCurve,
-              tween: ColorTween(end: color),
-              builder: (context, animatedColor, child) {
-                return Icon(icon, color: animatedColor, size: 28);
-              },
-            ),
-            const SizedBox(height: 4),
-            AnimatedDefaultTextStyle(
-              duration: kThemeFadeDuration,
-              curve: kThemeFadeCurve,
-              style: TextStyle(
-                color: VigiloUiColors.textSoft(dark),
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                height: 1.1,
-              ),
-              child: Text(label),
-            ),
-          ],
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TweenAnimationBuilder<Color?>(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
+          tween: ColorTween(end: color),
+          builder: (context, animatedColor, child) {
+            return Icon(icon, color: animatedColor, size: 28);
+          },
+        ),
+        const SizedBox(height: 4),
+        AnimatedDefaultTextStyle(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
+          style: TextStyle(
+            color: VigiloUiColors.textSoft(dark),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            height: 1.1,
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+          ),
+        ),
+      ],
+    );
+
+    return Expanded(
+      child: InkWell(
+        onTap: onTap ?? () {},
+        borderRadius: BorderRadius.circular(14),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
+          child: Center(
+            child: pulse
+                ? ScaleTransition(scale: _scale, child: content)
+                : content,
+          ),
         ),
       ),
     );

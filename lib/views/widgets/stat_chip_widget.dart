@@ -25,67 +25,51 @@ class _StatChipState extends State<StatChip> {
   Widget build(BuildContext context) {
     final dark = widget.isDark ?? (Theme.of(context).brightness == Brightness.dark);
 
-    return AnimatedContainer(
-      duration: kThemeFadeDuration,
-      curve: kThemeFadeCurve,
-      height: 64,
-      decoration: BoxDecoration(
-        color: VigiloUiColors.panel(dark).withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: VigiloUiColors.blue(dark).withValues(alpha: dark ? 0.30 : 0.26),
-          width: dark ? 0.7 : 1.5,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 56),
+          alignment: Alignment.center,
+          child: Row(
+            children: [
+              Expanded(
+                child: _topStat(
+                  dark,
+                  Icons.play_circle_fill_rounded,
+                  widget.isArchiveView ? 'Archived' : 'Active Exams',
+                  '${widget.activeExams}',
+                ),
+              ),
+              AnimatedContainer(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
+                width: 1,
+                height: 30,
+                color: dark
+                    ? VigiloUiColors.line(dark).withValues(alpha: 0.52)
+                    : VigiloUiColors.line(dark).withValues(alpha: 0.75),
+              ),
+              Expanded(
+                child: _topStat(
+                  dark,
+                  Icons.groups_2_rounded,
+                  'Invigilators',
+                  '${widget.invigilatorsOnDuty}',
+                ),
+              ),
+            ],
+          ),
         ),
-        boxShadow: dark
-            ? [
-                BoxShadow(
-                  color: VigiloUiColors.blue(dark).withValues(alpha: 0.07),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: VigiloUiColors.blue(dark).withValues(alpha: 0.10),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.07),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _topStat(
-              dark,
-              Icons.play_circle_fill_rounded,
-              widget.isArchiveView ? 'Archived' : 'Active Exams',
-              '${widget.activeExams}',
-            ),
-          ),
-          AnimatedContainer(
-            duration: kThemeFadeDuration,
-            curve: kThemeFadeCurve,
-            width: 1,
-            height: 30,
-            color: dark
-                ? VigiloUiColors.line(dark).withValues(alpha: 0.52)
-                : VigiloUiColors.line(dark).withValues(alpha: 0.75),
-          ),
-          Expanded(
-            child: _topStat(
-              dark,
-              Icons.groups_2_rounded,
-              'Invigilators',
-              '${widget.invigilatorsOnDuty}',
-            ),
-          ),
-        ],
-      ),
+        AnimatedContainer(
+          duration: kThemeFadeDuration,
+          curve: kThemeFadeCurve,
+          width: double.infinity,
+          height: 0.75,
+          color: VigiloUiColors.line(dark),
+        ),
+      ],
     );
   }
 

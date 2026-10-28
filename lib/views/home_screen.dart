@@ -1387,10 +1387,8 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         bottomNavigationBar: SafeArea(
           top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-            child: FooterWidget(
-              isDark: dark,
+          child: FooterWidget(
+            isDark: dark,
               onVibrate: () async {
                 if (!isArchiveView) {
                   int i = getExpandedCardIndex();
@@ -1691,7 +1689,6 @@ class _HomeScreenState extends State<HomeScreen>
               isArchiveMode: isArchiveMode,
             ),
           ),
-        ),
         body: SafeArea(
           child: Stack(
             children: [
@@ -1699,23 +1696,20 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   _header(dark),
                   const SizedBox(height: 14),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: AnimatedOpacity(
-                      opacity: _isSessionsLoaded ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                      child: StatChip(
-                        isDark: dark,
-                        invigilatorsOnDuty: allInvigilators,
-                        activeExams: isArchiveView
-                            ? _archiveCards.length
-                            : _activeExamCount,
-                        isArchiveView: isArchiveView,
-                      ),
+                  AnimatedOpacity(
+                    opacity: _isSessionsLoaded ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                    child: StatChip(
+                      isDark: dark,
+                      invigilatorsOnDuty: allInvigilators,
+                      activeExams: isArchiveView
+                          ? _archiveCards.length
+                          : _activeExamCount,
+                      isArchiveView: isArchiveView,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   AnimatedSize(
                     duration: const Duration(milliseconds: 250),
                     curve: Curves.easeInOut,
