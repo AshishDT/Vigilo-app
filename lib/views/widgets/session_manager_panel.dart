@@ -346,7 +346,7 @@ class SessionManagerPanel extends StatelessWidget {
                           fontStyle: FontStyle.italic,
                         ),
                         child: const Text(
-                          'Protected = started, archived, or has an incident',
+                          'Protected sessions have been started or archived, or have an incident.',
                         ),
                       ),
                     ),
