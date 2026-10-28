@@ -653,7 +653,6 @@ class SessionService {
   Future<void> startSession({
     required String examRecordId,
     DateTime? startedAt,
-    bool autoStart = false,
     bool restart = false,
     int? normalDurationMs,
     int? extraTimeMs,
@@ -670,7 +669,6 @@ class SessionService {
       final snapshot = SessionSnapshot.fromMap(snapshotMap);
 
       if (!restart && snapshot.sessionStatus == SessionStatus.running) {
-        if (autoStart) return;
         final existingStart = await _firstStartEventUtc(txn, examRecordId);
         if (existingStart != null) {
           return;
@@ -735,7 +733,6 @@ class SessionService {
         type: SessionEventType.start,
         occurredAtUtc: nowUtc,
         payloadJson: jsonEncode({
-          'autoStart': autoStart,
           'restart': restart,
           'plannedDurationMs': plannedDurationMs,
           if (normalDurationMs != null) 'normalDurationMs': normalDurationMs,
@@ -1165,7 +1162,6 @@ class SessionService {
           type: SessionEventType.start,
           occurredAtUtc: startedAtUtc,
           payloadJson: jsonEncode({
-            'autoStart': false,
             'restart': false,
             'plannedDurationMs': plannedDurationMs,
             'normalDurationMs': normalDurationMs,
@@ -1801,10 +1797,6 @@ class SessionService {
       return SessionEventType.startExtraTime;
     }
     if (normalizedMessage == _normalizeAuditMessage(AuditConstants.examStartedMessage)) {
-      return SessionEventType.start;
-    }
-    if (normalizedMessage ==
-        _normalizeAuditMessage('Auto-start at scheduled time')) {
       return SessionEventType.start;
     }
     if (normalizedMessage == _normalizeAuditMessage('Exam paused')) {

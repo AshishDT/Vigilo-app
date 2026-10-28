@@ -57,7 +57,6 @@ void main() {
             onExportCopy: () {},
             onExportCsvDownload: () {},
             onExportCsvShare: () {},
-            onToggleAutoStart: (_) {},
             onDeleteData: () {},
             onUpdateData: (updated) {
               currentData = updated;
@@ -129,7 +128,6 @@ void main() {
             onExportCopy: () {},
             onExportCsvDownload: () {},
             onExportCsvShare: () {},
-            onToggleAutoStart: (_) {},
             onDeleteData: () {},
             onUpdateData: (_) {},
             onSaveData: () {},

@@ -113,7 +113,6 @@ void main() {
           totalDuration: '01:30',
           extraEnd: '10:30',
           importedAsPast: false,
-          autoStart: false,
           progress: 0.0,
           running: false,
         );
@@ -198,7 +197,6 @@ void main() {
           totalDuration: '01:30',
           extraEnd: '10:30',
           importedAsPast: false,
-          autoStart: false,
           progress: 0.0,
           running: false,
         );

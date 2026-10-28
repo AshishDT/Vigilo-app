@@ -808,7 +808,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
 
   Widget _buildClosedCardStatusPill(ExamCardData data, bool isDark) {
     if (data.isDatePassed) {
-      if (data.importedAsPast || data.autoStart) {
+      if (data.importedAsPast) {
         return _pill('DATE PASSED', VigiloUiColors.textFaint(isDark));
       } else {
         return _pill('READY TO START', VigiloUiColors.blue(isDark));

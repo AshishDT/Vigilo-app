@@ -548,8 +548,6 @@ class _HomeScreenState extends State<HomeScreen>
     return c.copyWith(
       progress: clamped,
       phase: _phaseForProgress(c, clamped),
-      autoStart: false,
-      autoStartUserModified: true,
     );
   }
 
@@ -564,8 +562,6 @@ class _HomeScreenState extends State<HomeScreen>
       pausedSeconds: current.pausedSeconds,
       progress: current.progress,
       phase: current.phase,
-      autoStart: current.autoStart,
-      autoStartUserModified: current.autoStartUserModified,
       expanded: current.expanded,
       isSelected: current.isSelected,
       tapScale: current.tapScale,
@@ -679,7 +675,6 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _tickAsync() async {
     if (!mounted) return;
     final now = DateTime.now();
-    bool autoStartTriggered = false;
 
     for (final card in List<ExamCardData>.from(_cards)) {
       if (card.running || card.isPaused || card.phase == ExamPhase.finished) {
@@ -689,47 +684,24 @@ class _HomeScreenState extends State<HomeScreen>
       final sched = _scheduledDateTime(card);
       final recordId = card.recordId;
 
-      if (!card.autoStart || card.progress != 0.0) {
-        // Redraw idle manual-start cards the exact second their scheduled time arrives
-        if (sched != null && recordId != null) {
-          if (!now.isBefore(sched)) {
-            if (!_scheduledReadyNotifiedIds.contains(recordId)) {
-              _scheduledReadyNotifiedIds.add(recordId);
-              final idx = _cards.indexWhere((c) => c.recordId == recordId);
-              if (idx != -1) {
-                final updated = _cards[idx].copyWith();
-                _cards[idx] = updated;
-                if (_cardNotifiers.containsKey(recordId)) {
-                  _cardNotifiers[recordId]!.value = updated;
-                }
+      // Redraw idle cards the exact second their scheduled time arrives (Ready to Start)
+      if (sched != null && recordId != null) {
+        if (!now.isBefore(sched)) {
+          if (!_scheduledReadyNotifiedIds.contains(recordId)) {
+            _scheduledReadyNotifiedIds.add(recordId);
+            final idx = _cards.indexWhere((c) => c.recordId == recordId);
+            if (idx != -1) {
+              final updated = _cards[idx].copyWith();
+              _cards[idx] = updated;
+              if (_cardNotifiers.containsKey(recordId)) {
+                _cardNotifiers[recordId]!.value = updated;
               }
             }
-          } else {
-            _scheduledReadyNotifiedIds.remove(recordId);
           }
-        }
-        continue;
-      }
-
-      if (sched == null || now.isBefore(sched)) continue;
-      if (recordId == null) continue;
-      final totalSeconds = card.totalSeconds;
-      DateTime effectiveStart = now;
-      if (totalSeconds > 0) {
-        final elapsedSinceScheduled = now.difference(sched).inSeconds;
-        if (elapsedSinceScheduled > 0 && elapsedSinceScheduled < totalSeconds) {
-          effectiveStart = sched;
+        } else {
+          _scheduledReadyNotifiedIds.remove(recordId);
         }
       }
-
-      await _sessionService.startSession(
-        examRecordId: recordId,
-        startedAt: effectiveStart,
-        autoStart: true,
-        normalDurationMs: card.normalSeconds * 1000,
-        extraTimeMs: card.extraSeconds * 1000,
-      );
-      autoStartTriggered = true;
     }
 
     final isActivelyScrolling = _isUserScrolling ||
@@ -743,7 +715,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     final ended = await _sessionService.autoEndIfNeeded();
-    if (autoStartTriggered || ended) {
+    if (ended) {
       if (!isActivelyScrolling) {
         await _refreshCards();
       } else {
@@ -1204,7 +1176,6 @@ class _HomeScreenState extends State<HomeScreen>
                 totalDuration: "00:00",
                 extraEnd: normalizedStart,
                 expanded: false,
-                autoStart: false,
               );
               newCard = _recompute(newCard);
 
@@ -1624,34 +1595,6 @@ class _HomeScreenState extends State<HomeScreen>
                             exportCsvDownload(_cards[i], context),
                         onExportCsvShare: () =>
                             exportCsvShare(_cards[i], context),
-                        onToggleAutoStart: (v) {
-                          setState(
-                            () => _cards[i] = _cards[i].copyWith(
-                              autoStart: v,
-                              autoStartUserModified: true,
-                            ),
-                          );
-                          if (v) {
-                            _toast(
-                              "Auto-Start Enabled",
-                              "The exam will auto-start at the scheduled time",
-                              Icons.timer_rounded,
-                              NotificationType.success,
-                            );
-                          } else {
-                            _toast(
-                              "Auto-Start Disabled",
-                              "Auto start is off",
-                              Icons.timer_off_rounded,
-                              NotificationType.information,
-                            );
-                          }
-                          final cardToSave = _cards[i];
-                          _sessionService.saveCardDelta(
-                            cardToSave,
-                            debounceDurationMs: 0,
-                          );
-                        },
                         onUpdateData: (updated) {
                           if (!mounted) return;
                           final targetId = updated.recordId;

@@ -52,8 +52,6 @@ class ExamCardData {
     this.epochStart,
     this.pausedSeconds = 0,
     this.vibrateOn = true,
-    this.autoStart = false,
-    this.autoStartUserModified = false,
     this.importedAsPast = false,
     this.isPaused = false,
     this.wasEverStarted = false,
@@ -101,8 +99,6 @@ class ExamCardData {
   final bool wasEverStarted;
 
   final bool vibrateOn;
-  final bool autoStart;
-  final bool autoStartUserModified;
   final bool importedAsPast;
   final bool isPaused;
   final bool isSelected;
@@ -245,24 +241,10 @@ class ExamCardData {
     final sched = scheduledDateTime;
     if (sched == null) return false;
 
-    // If autoStart is enabled, the 1-second tick will start this exam as soon
-    // as its scheduled time arrives. There is a race window of up to ~1 second
-    // between the moment isDatePassed first becomes true (at render time) and
-    // the moment the tick fires startSession() and sets running=true. During
-    // that window, a Flutter rebuild (from animation controllers etc.) would
-    // show "DATE PASSED" for a split second. Guard against that by never
-    // reporting date-passed for an auto-start exam that is within 5 seconds of
-    // its start time.
-    if (autoStart && progress == 0.0) {
-      if (DateTime.now().difference(sched).inSeconds < 5) {
-        return false;
-      }
-    }
-
     return sched.isBefore(DateTime.now());
   }
 
-  bool get isLocked => isDatePassed && (importedAsPast || autoStart);
+  bool get isLocked => isDatePassed && importedAsPast;
 
   (String, String) _splitTrailingMetadata(String value) {
     final trimmed = value.trim();
@@ -306,8 +288,6 @@ class ExamCardData {
     'epochStart': epochStart?.millisecondsSinceEpoch,
     'pausedSeconds': pausedSeconds,
     'vibrateOn': vibrateOn,
-    'autoStart': autoStart,
-    'autoStartUserModified': autoStartUserModified,
     'importedAsPast': importedAsPast,
     'isPaused': isPaused,
     'wasEverStarted': wasEverStarted,
@@ -349,8 +329,6 @@ class ExamCardData {
         : DateTime.fromMillisecondsSinceEpoch(m['epochStart'] as int),
     pausedSeconds: (m['pausedSeconds'] ?? 0) as int,
     vibrateOn: (m['vibrateOn'] ?? true) as bool,
-    autoStart: (m['autoStart'] ?? false) as bool,
-    autoStartUserModified: (m['autoStartUserModified'] ?? false) as bool,
     importedAsPast: (m['importedAsPast'] ?? false) as bool,
     isPaused: (m['isPaused'] ?? false) as bool,
     wasEverStarted: (m['wasEverStarted'] ?? false) as bool,
@@ -416,8 +394,6 @@ class ExamCardData {
     DateTime? epochStart,
     int? pausedSeconds,
     bool? vibrateOn,
-    bool? autoStart,
-    bool? autoStartUserModified,
     bool? importedAsPast,
     bool? isPaused,
     bool? wasEverStarted,
@@ -462,9 +438,6 @@ class ExamCardData {
       epochStart: epochStart ?? this.epochStart,
       pausedSeconds: pausedSeconds ?? this.pausedSeconds,
       vibrateOn: vibrateOn ?? this.vibrateOn,
-      autoStart: autoStart ?? this.autoStart,
-      autoStartUserModified:
-          autoStartUserModified ?? this.autoStartUserModified,
       importedAsPast: importedAsPast ?? this.importedAsPast,
       isPaused: isPaused ?? this.isPaused,
       wasEverStarted: wasEverStarted ?? this.wasEverStarted,

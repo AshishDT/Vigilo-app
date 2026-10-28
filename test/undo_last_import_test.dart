@@ -283,8 +283,8 @@ void main() {
 
           // State manipulation to archive 2 sessions
           final dynamic homeState = tester.state(find.byType(HomeScreen));
-          final c0 = homeState.cardsForTesting[0].copyWith(autoStart: false);
-          final c1 = homeState.cardsForTesting[1].copyWith(autoStart: false);
+          final c0 = homeState.cardsForTesting[0];
+          final c1 = homeState.cardsForTesting[1];
           
           homeState.cardsForTesting.removeRange(0, 2);
           homeState.archiveCardsForTesting.add(c0);

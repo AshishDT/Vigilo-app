@@ -23,7 +23,6 @@ void main() {
       totalDuration: '01:45',
       extraEnd: '10:45',
       epochStart: null,
-      autoStart: false,
     );
 
     expect(card.isDatePassed, isTrue);
@@ -135,7 +134,6 @@ void main() {
       totalDuration: '01:45',
       extraEnd: '10:45',
       epochStart: null,
-      autoStart: false,
     );
 
     final card2 = ExamCardData(
@@ -154,7 +152,6 @@ void main() {
       totalDuration: '01:45',
       extraEnd: '10:45',
       epochStart: null,
-      autoStart: false,
     );
 
     expect(card1.isDatePassed, isTrue);
@@ -183,7 +180,6 @@ void main() {
       totalDuration: '01:45',
       extraEnd: '10:45',
       epochStart: null,
-      autoStart: false,
     );
 
     expect(card.isDatePassed, isTrue);

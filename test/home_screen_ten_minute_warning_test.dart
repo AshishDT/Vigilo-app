@@ -97,7 +97,6 @@ void main() {
           extraTime: '00:15', // 15 minutes extra
           totalDuration: '01:15',
           extraEnd: '10:15',
-          autoStart: true,
           vibrateOn: true,
           phase: ExamPhase.normal,
           running: true,

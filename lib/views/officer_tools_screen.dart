@@ -33,7 +33,6 @@ class OfficerToolsSheet extends StatefulWidget {
     required this.onExportCopy,
     required this.onExportCsvDownload,
     required this.onExportCsvShare,
-    required this.onToggleAutoStart,
     required this.onDeleteData,
     required this.onUpdateData,
     required this.onSaveData,
@@ -50,7 +49,6 @@ class OfficerToolsSheet extends StatefulWidget {
   final VoidCallback onExportCopy;
   final VoidCallback onExportCsvDownload;
   final VoidCallback onExportCsvShare;
-  final ValueChanged<bool> onToggleAutoStart;
   final VoidCallback onDeleteData;
   final ValueChanged<ExamCardData> onUpdateData;
   final VoidCallback onSaveData;
@@ -201,14 +199,11 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     return names;
   }
 
-  bool autoStart = true;
-
   @override
   void initState() {
     super.initState();
     // _loadResolvedIncidents();
     _currentData = widget.data;
-    autoStart = widget.data.autoStart;
     _activeTabIndex = widget.initialTabIndex.clamp(0, _tabs.length - 1);
     _tabs.index = _activeTabIndex;
 
@@ -3629,109 +3624,6 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     disabled: _isExamCompleted || data.isPaused,
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: 24),
-                              Text(
-                                "AUTOMATION",
-                                style: TextStyle(
-                                  color: VigiloUiColors.blueSoft(_isDark),
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.3,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 16,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: VigiloUiColors.panel2(
-                                    _isDark,
-                                  ).withValues(alpha: 0.7),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: VigiloUiColors.lineSoft(_isDark),
-                                    width: .7,
-                                  ),
-                                ),
-                                child: Row(
-                                  spacing: 16,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "Auto-start exam",
-                                            style: TextStyle(
-                                              color: _isExamCompleted
-                                                  ? VigiloUiColors.textFaint(
-                                                      _isDark,
-                                                    ).withValues(alpha: 0.58)
-                                                  : VigiloUiColors.text(
-                                                      _isDark,
-                                                    ),
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            "Automatically start the exam at the scheduled time",
-                                            style: TextStyle(
-                                              color: _isExamCompleted
-                                                  ? VigiloUiColors.textFaint(
-                                                      _isDark,
-                                                    ).withValues(alpha: 0.4)
-                                                  : VigiloUiColors.textSoft(
-                                                      _isDark,
-                                                    ),
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Switch(
-                                      value: autoStart,
-                                      activeThumbColor: Colors.white,
-                                      activeTrackColor: VigiloUiColors.blue(
-                                        _isDark,
-                                      ),
-                                      inactiveTrackColor: VigiloUiColors.panel(
-                                        _isDark,
-                                      ),
-                                      inactiveThumbColor:
-                                          VigiloUiColors.finished(_isDark),
-                                      trackOutlineColor:
-                                          WidgetStateProperty.resolveWith((
-                                            states,
-                                          ) {
-                                            if (states.contains(
-                                              WidgetState.selected,
-                                            )) {
-                                              return Colors.transparent;
-                                            }
-                                            return VigiloUiColors.lineSoft(
-                                              _isDark,
-                                            );
-                                          }),
-                                      onChanged: _isExamCompleted
-                                          ? null
-                                          : (v) {
-                                              setState(() {
-                                                autoStart = v;
-                                              });
-                                              widget.onToggleAutoStart(v);
-                                            },
-                                    ),
-                                  ],
-                                ),
                               ),
                             ],
                           ),

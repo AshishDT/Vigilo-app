@@ -650,7 +650,6 @@ ExamCardData _buildCard({
     extraTime: extraTime,
     totalDuration: totalDuration,
     extraEnd: extraEnd,
-    autoStart: false,
   );
 }
 

@@ -290,7 +290,6 @@ void main() {
               onExportCopy: () {},
               onExportCsvDownload: () {},
               onExportCsvShare: () {},
-              onToggleAutoStart: (_) {},
               onDeleteData: () {},
               onUpdateData: (_) {},
               onSaveData: () {},

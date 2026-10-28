@@ -495,8 +495,7 @@ class CsvExportService {
   }
 
   String _startType(SessionEvent? startEvent) {
-    final payload = _decodePayload(startEvent?.payloadJson);
-    return payload['autoStart'] == true ? 'Auto' : 'Manual';
+    return 'Manual';
   }
 
   List<_ExportLogRow> _buildExportLogRows(_ExportSnapshot snapshot) {
