@@ -2529,8 +2529,7 @@ class _HomeScreenState extends State<HomeScreen>
         final currentIdx = _cards.indexWhere(
           (card) => card.recordId == c.recordId,
         );
-        if (currentIdx == -1 ||
-            _cards[currentIdx].phase == ExamPhase.finished) {
+        if (currentIdx == -1 || _cards[currentIdx].hasStarted) {
           return;
         }
         final now = DateTime.now();
@@ -2570,8 +2569,7 @@ class _HomeScreenState extends State<HomeScreen>
         final currentIdx = _cards.indexWhere(
           (card) => card.recordId == c.recordId,
         );
-        if (currentIdx == -1 ||
-            _cards[currentIdx].phase == ExamPhase.finished) {
+        if (currentIdx == -1 || _cards[currentIdx].hasStarted) {
           return;
         }
 

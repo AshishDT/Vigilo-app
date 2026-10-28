@@ -229,6 +229,27 @@ class ExamCardData {
     return null;
   }
 
+  bool get hasStarted =>
+      running || isPaused || phase == ExamPhase.finished || wasEverStarted || progress > 0.0;
+
+  bool get isToday {
+    final sched = scheduledDateTime;
+    if (sched == null) return false;
+    final now = DateTime.now();
+    return sched.year == now.year &&
+           sched.month == now.month &&
+           sched.day == now.day;
+  }
+
+  bool get isFutureDay {
+    final sched = scheduledDateTime;
+    if (sched == null) return false;
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final schedDay = DateTime(sched.year, sched.month, sched.day);
+    return schedDay.isAfter(todayStart);
+  }
+
   bool get isDatePassed {
     // An exam has a history if it is currently running/paused/finished OR
     // if it was ever started (even after a reset — wasEverStarted survives resets).
