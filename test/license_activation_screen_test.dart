@@ -484,7 +484,7 @@ void main() {
 
     expect(
       find.text(
-        'This application should only be used by authorised staff during examinations.',
+        'Vigilo ERC is intended only for use by authorised staff during examinations.',
       ),
       findsOneWidget,
     );
@@ -504,7 +504,7 @@ void main() {
 
     expect(
       find.text(
-        "Export logs after each exam session, then use Archive (from the exam screen) or Delete Exam Data (in that exam's Privacy tab) to keep your Home Screen showing only relevant, upcoming exams.",
+        "Export logs after each exam session. Then use Archive (from the exam screen) or Delete Exam Data (in that exam's Privacy tab) to keep your Home Screen showing only relevant, upcoming exams.",
       ),
       findsOneWidget,
     );

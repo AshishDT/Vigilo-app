@@ -21,21 +21,35 @@ class LicenseActivationScreen extends StatefulWidget {
 class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
   bool get isDark => Theme.of(context).brightness == Brightness.dark;
 
+  static const String _licenceAgreementText =
+      'Vigilo ERC is licensed, not sold, to the organisation named on your licence for use by its authorised examination staff. No ownership of the software passes to you.\n\n'
+      'The licence cannot be transferred. You must not copy, modify, reverse engineer, sublicense or resell the app, or use it to build a competing product.\n\n'
+      'Your licence belongs to your organisation and may only be used on the devices it allows. Vigilo Platforms Ltd may check your licence online and may suspend it if it expires, is misused or is shared outside your organisation.\n\n'
+      'The app is an aid to exam administration. Your organisation remains responsible for running its examinations, for meeting examination board and regulator requirements, and for keeping its own records.\n\n'
+      'To the extent the law allows, Vigilo Platforms Ltd is not liable for indirect or consequential loss. Nothing in this agreement limits liability that cannot lawfully be limited.\n\n'
+      'If your organisation has signed a separate agreement with Vigilo Platforms Ltd, that agreement applies where it differs from this summary. This agreement is governed by the law of England and Wales.\n\n'
+      'Using Vigilo ERC means you accept these licence terms.';
+
   static const String _privacyNoticeText =
-      'Vigilo ERC stores exam data locally on the device and does not transmit it to any external server.\n\n'
-      'The organisation is responsible for the retention, export, archiving, and deletion of records in accordance with its own policies, relevant examination regulations (such as JCQ where applicable), and applicable data protection requirements.\n\n'
-      'This application should only be used by authorised staff during examinations.';
+      'Vigilo ERC is provided by Vigilo Platforms Ltd. Your organisation decides why and how exam data is used, so it is the data controller. For data held on our cloud service, Vigilo Platforms Ltd acts as its processor.\n\n'
+      'On this device: exam sessions, incident logs, candidate details, invigilator names and notes are stored locally and protected by your device lock and the app\'s PIN or biometric check. Incident logs, candidate details and exported records stay on this device.\n\n'
+      'In the cloud: when you run a live session, information such as exam details, the invigilator list, messages and briefings is sent to our secure cloud service provider so that invigilators can join by QR code and exchange messages. We also check your licence online. Cloud session data is deleted no more than 30 days after the session ends. We do not sell data or use it for advertising.\n\n'
+      'Your organisation is responsible for the retention, export, archiving and deletion of records in accordance with its own policies, relevant examination regulations (such as JCQ where applicable) and data protection law, including the UK GDPR.\n\n'
+      'For privacy questions, contact support@vigiloapp.co.uk. You can complain to the Information Commissioner\'s Office (ico.org.uk).\n\n'
+      'Vigilo ERC is intended only for use by authorised staff during examinations.';
 
   static const String _termsOfUseText =
       'Vigilo ERC is intended for use by authorised examination staff within an organisation or examination centre.\n\n'
-      'Use of the application is subject to the Vigilo licence agreement and the organisation’s own examination, data protection, and device management policies.\n\n'
-      'The organisation is responsible for ensuring that local devices and any exported records are kept secure.';
+      'Use of the application is subject to the Vigilo licence agreement and to the organisation\'s own examination, data protection and device management policies.\n\n'
+      'The organisation is responsible for keeping local devices and any exported records secure. Session QR codes and join links must only be shared with staff invigilating that session.\n\n'
+      'You must not try to bypass the app\'s security or licence checks, or use the app in a way that interferes with an examination.\n\n'
+      'The app supports exam administration. It does not replace your organisation\'s duties under examination regulations.';
 
   static const String _aboutText =
       'Vigilo ERC is a digital exam room control system for exam officers and invigilators. '
-      'It supports live timing, structured event logging, incident capture, and exportable records while remaining offline-first for core operation.';
+      'It supports live timing, structured event logging, incident capture, exportable records and two-way messaging with invigilators, and stays offline-first for core exam operation.';
   static const String _aboutLegalText =
-      'Copyright © 2026 Vigilo\u00A0Platforms\u00A0Ltd. All rights reserved. Vigilo® is a registered trademark of Vigilo\u00A0Platforms\u00A0Ltd.';
+      'Copyright © 2026 Vigilo Platforms Ltd. All rights reserved. Vigilo™ is a trademark of Vigilo Platforms Ltd.';
   static const String _segmentedLicenceMessage =
       'Enter the organisation name, organisation code, and 6-character activation code issued by Vigilo.';
 
@@ -334,7 +348,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
     NotificationService.show(
       context,
       title: "Error",
-      subtitle: 'No email app is available on this device',
+      subtitle: 'No email app is available on this device.',
       icon: Icons.error_outline_rounded,
       type: NotificationType.error,
     );
@@ -347,7 +361,10 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       try {
         content = await rootBundle.loadString('assets/LICENSE');
       } catch (_) {
-        content = 'Could not load licence agreement.';
+        content = _licenceAgreementText;
+      }
+      if (content.trim().isEmpty) {
+        content = _licenceAgreementText;
       }
     } else if (title == 'Privacy Notice') {
       content = _privacyNoticeText;
@@ -484,14 +501,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 for (var i = 0; i < paragraphs.length; i++) ...[
-                                  Text(
-                                    paragraphs[i],
-                                    style: TextStyle(
-                                      color: VigiloUiColors.textSoft(isDark),
-                                      fontSize: 15,
-                                      height: 1.6,
-                                    ),
-                                  ),
+                                  _buildDialogParagraph(paragraphs[i], isDark),
                                   if (i < paragraphs.length - 1)
                                     const SizedBox(height: 14),
                                 ],
@@ -509,6 +519,74 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDialogParagraph(String text, bool isDark) {
+    const email = 'support@vigiloapp.co.uk';
+    const web = 'ico.org.uk';
+
+    if (text.contains(email) || text.contains(web)) {
+      final spans = <InlineSpan>[];
+      final regex = RegExp(r'(support@vigiloapp\.co\.uk|ico\.org\.uk)');
+      int lastEnd = 0;
+
+      for (final match in regex.allMatches(text)) {
+        if (match.start > lastEnd) {
+          spans.add(TextSpan(text: text.substring(lastEnd, match.start)));
+        }
+        final matchText = match.group(0)!;
+        final isEmail = matchText == email;
+        final targetUri = isEmail
+            ? Uri(scheme: 'mailto', path: email)
+            : Uri.parse('https://ico.org.uk/');
+
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.baseline,
+            baseline: TextBaseline.alphabetic,
+            child: GestureDetector(
+              onTap: () async {
+                try {
+                  await launchUrl(targetUri, mode: LaunchMode.externalApplication);
+                } catch (_) {}
+              },
+              child: Text(
+                matchText,
+                style: TextStyle(
+                  color: VigiloUiColors.blue(isDark),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ),
+        );
+        lastEnd = match.end;
+      }
+
+      if (lastEnd < text.length) {
+        spans.add(TextSpan(text: text.substring(lastEnd)));
+      }
+
+      return Text.rich(
+        TextSpan(
+          style: TextStyle(
+            color: VigiloUiColors.textSoft(isDark),
+            fontSize: 15,
+            height: 1.6,
+          ),
+          children: spans,
+        ),
+      );
+    }
+    return Text(
+      text,
+      style: TextStyle(
+        color: VigiloUiColors.textSoft(isDark),
+        fontSize: 15,
+        height: 1.6,
+      ),
     );
   }
 
@@ -1170,7 +1248,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Exam session data is stored locally on this device.',
+                            'Exam session data is stored on this device. When you use live sessions, session information is also sent to our secure cloud service so invigilators can join and receive messages.',
                             style: TextStyle(
                               color: VigiloUiColors.textSoft(isDark),
                               height: 1.6,
@@ -1179,23 +1257,23 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                           const SizedBox(height: 12),
                           const _StaticInfoRow(
                             'Data Storage',
-                            'Local device only',
+                            'This device, plus secure cloud sync for live sessions.',
                           ),
                           const _StaticInfoRow(
                             'Export Responsibility',
-                            'User must export required records',
+                            'You must export any records you need to keep.',
                           ),
                           const _StaticInfoRow(
                             'Recommended Action',
-                            "Export logs after each exam session, then use Archive (from the exam screen) or Delete Exam Data (in that exam's Privacy tab) to keep your Home Screen showing only relevant, upcoming exams.",
+                            "Export logs after each exam session. Then use Archive (from the exam screen) or Delete Exam Data (in that exam's Privacy tab) to keep your Home Screen showing only relevant, upcoming exams.",
                           ),
                           const _StaticInfoRow(
                             'Licence Changes',
-                            'Data remains after upgrade, but access may be affected if the licence expires or the app is removed',
+                            'Your data stays on this device when you upgrade. Access may be affected if your licence expires. Removing the app deletes its data from the device.',
                           ),
                           const _StaticInfoRow(
                             'Important',
-                            'Export logs required for reporting or compliance before licence expiry or device changes',
+                            'Cloud copies of live sessions are temporary. Export any logs you need for reporting or compliance before your licence expires or you change device.',
                             paddingBottom: 0,
                           ),
                         ],
