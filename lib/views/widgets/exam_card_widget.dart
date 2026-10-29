@@ -272,7 +272,8 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                         data.running;
                     final showArchiveCheck =
                         isArchiveMode && (isExamCompleted || data.isDatePassed || data.isLocked);
-                    final hideChevronInArchive = isArchiveMode && isExamCompleted;
+                    final hideChevronInArchive =
+                        isArchiveMode && (isExamCompleted || data.isDatePassed);
                     final showChevron = !data.isLocked && !hideChevronInArchive;
 
                     return Column(

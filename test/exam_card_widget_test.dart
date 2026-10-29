@@ -469,6 +469,9 @@ void main() {
 
       expect(find.text('DATE PASSED'), findsOneWidget);
       expect(find.text('READY TO START'), findsNothing);
+      // When archive mode is off, chevron is shown and checkbox is hidden
+      expect(find.byIcon(Icons.expand_more), findsOneWidget);
+      expect(find.byIcon(Icons.radio_button_unchecked), findsNothing);
 
       // In Archive Mode, Date Passed cards show the selection checkbox
       await tester.pumpWidget(
@@ -496,8 +499,9 @@ void main() {
         ),
       );
 
-      // Checkbox is shown for Date Passed exam in archive mode
+      // In archive mode, Date Passed shows the checkbox and hides the chevron
       expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
+      expect(find.byIcon(Icons.expand_more), findsNothing);
 
       // If date is today and time has arrived, shows READY TO START
       final todayCard = pastCard.copyWith(

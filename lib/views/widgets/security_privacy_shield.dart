@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
+import 'animated_scale_on_press.dart';
 
 /// Opaque privacy shield widget displayed on app launch and background idle timeout.
 /// Hides sensitive candidate and exam session data until native biometric/PIN authentication succeeds.
@@ -38,33 +39,54 @@ class SecurityPrivacyShield extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
+          toolbarHeight: 56,
           actions: [
-            InkWell(
-              onTap: onToggleTheme,
-              borderRadius: BorderRadius.circular(14),
-              child: AnimatedContainer(
-                duration: kThemeFadeDuration,
-                curve: kThemeFadeCurve,
-                width: 44,
-                height: 44,
-              decoration: BoxDecoration(
-                color: VigiloUiColors.panel(dark),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: VigiloUiColors.line(dark),
-                  width: 1,
+            Padding(
+              padding: const EdgeInsets.only(top: 12, right: 20),
+              child: Align(
+                alignment: Alignment.topRight,
+                child: AnimatedScaleOnPress(
+                  child: InkWell(
+                    onTap: onToggleTheme,
+                    borderRadius: BorderRadius.circular(14),
+                    child: AnimatedContainer(
+                      duration: kThemeFadeDuration,
+                      curve: kThemeFadeCurve,
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: VigiloUiColors.panel(
+                          dark,
+                        ).withValues(alpha: dark ? 0.72 : 0.92),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: dark
+                              ? VigiloUiColors.line(dark).withValues(alpha: 0.70)
+                              : VigiloUiColors.line(dark),
+                          width: 1.0,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: dark ? 0.16 : 0.07,
+                            ),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        dark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
+                        color: VigiloUiColors.textSoft(dark),
+                        size: 20,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              child: Icon(
-                dark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
-                color: VigiloUiColors.textSoft(dark),
-                size: 20,
-              ),
             ),
-          ),
-          const SizedBox(width: 20),
-        ],
-      ),
+          ],
+        ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
