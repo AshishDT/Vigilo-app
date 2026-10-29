@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:vibration/vibration.dart';
@@ -115,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen>
   Timer? _extraPulseTicker;
   Timer? _clickTimer;
   final Map<String, ValueNotifier<ExamCardData>> _cardNotifiers = {};
+  final Map<String, GlobalKey> _cardKeys = {};
   bool _licenseRequired = true;
   bool _isSessionsLoaded = false;
   final ItemScrollController _itemScrollController = ItemScrollController();
@@ -894,16 +896,67 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _toggleExpanded(int i) {
     if (i < 0 || i >= _cards.length) return;
+    final bool isOpening = !_cards[i].expanded;
+    final String? cardRecordId = _cards[i].recordId;
+
+    if (isOpening && _showSessionMgr) {
+      _showSessionMgr = false;
+    }
+
     setState(() {
       for (int j = 0; j < _cards.length; j++) {
         if (j == i) {
-          _cards[j] = _cards[j].copyWith(expanded: !_cards[j].expanded);
+          _cards[j] = _cards[j].copyWith(expanded: isOpening);
         } else {
           _cards[j] = _cards[j].copyWith(expanded: false);
         }
       }
       _updateFilteredAndGroupedCards();
     });
+
+    if (isOpening && cardRecordId != null) {
+      _scrollToOpenedCard(cardRecordId);
+    }
+  }
+
+  Future<void> _scrollToOpenedCard(String recordId) async {
+    // 1. Wait 260ms for card expansion animation (250ms) to fully complete and settle layout
+    await Future.delayed(const Duration(milliseconds: 260));
+    if (!mounted) return;
+
+    // 2. Ensure card is still expanded and user is not actively dragging the list
+    final idx = _cards.indexWhere((c) => c.recordId == recordId);
+    if (idx == -1 || !_cards[idx].expanded || _isUserScrolling) return;
+
+    // 3. Find card context and render box
+    final cardContext = _cardKeys[recordId]?.currentContext;
+    if (cardContext == null || !cardContext.mounted) return;
+
+    final cardBox = cardContext.findRenderObject() as RenderBox?;
+    if (cardBox == null || !cardBox.hasSize) return;
+
+    // 4. Find the scrollable viewport
+    final viewport = RenderAbstractViewport.of(cardBox);
+    if (viewport == null) return;
+
+    // 5. Measure the offset to reveal the top of the card at alignment 0.0 (top of viewport)
+    final revealedOffset = viewport.getOffsetToReveal(cardBox, 0.0);
+    final scrollable = Scrollable.maybeOf(cardContext);
+    if (scrollable == null) return;
+
+    final currentOffset = scrollable.position.pixels;
+    final delta = (revealedOffset.offset - currentOffset).abs();
+
+    // Rule 1: If it is already there (within 2px tolerance), nothing moves.
+    if (delta <= 2.0) return;
+
+    // Rule 2: Scroll smoothly, 300 ms, ease-in-out
+    await Scrollable.ensureVisible(
+      cardContext,
+      alignment: 0.0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   void _toast(
@@ -1924,6 +1977,14 @@ class _HomeScreenState extends State<HomeScreen>
                                             dateKeys: _dateKeys,
                                             formatDate: _fd,
                                             buildCard: _buildExamCard,
+                                            padding: EdgeInsets.fromLTRB(
+                                              20,
+                                              0,
+                                              20,
+                                              anyOpen
+                                                  ? (MediaQuery.sizeOf(context).height * 0.85)
+                                                  : 100,
+                                            ),
                                           ),
                                         )),
                                 )),
@@ -2454,13 +2515,17 @@ class _HomeScreenState extends State<HomeScreen>
       notifier.value = currentData;
     }
 
-    return RepaintBoundary(
-      key: ValueKey('repaint_${currentData.recordId}'),
-      child: ValueListenableBuilder<ExamCardData>(
-        key: ValueKey('val_listen_${currentData.recordId}'),
-        valueListenable: notifier,
-        builder: (context, cardData, _) {
-          return ExamCard(
+    final cardKey = _cardKeys.putIfAbsent(id, () => GlobalKey());
+
+    return KeyedSubtree(
+      key: cardKey,
+      child: RepaintBoundary(
+        key: ValueKey('repaint_${currentData.recordId}'),
+        child: ValueListenableBuilder<ExamCardData>(
+          key: ValueKey('val_listen_${currentData.recordId}'),
+          valueListenable: notifier,
+          builder: (context, cardData, _) {
+            return ExamCard(
           key: key ?? ValueKey('exam_card_${cardData.recordId}'),
           isDark: widget.dark,
           data: cardData,
@@ -2913,6 +2978,7 @@ class _HomeScreenState extends State<HomeScreen>
         );
       },
     ),
+  ),
   );
   }
 

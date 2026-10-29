@@ -17,7 +17,7 @@ class HomeSessionsListView extends StatelessWidget {
     required this.dateKeys,
     required this.formatDate,
     required this.buildCard,
-    this.padding = const EdgeInsets.fromLTRB(20, 8, 20, 380),
+    this.padding = const EdgeInsets.fromLTRB(20, 0, 20, 100),
   });
 
   final ItemScrollController itemScrollController;
