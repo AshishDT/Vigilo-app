@@ -1262,7 +1262,9 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isArchivableExam(ExamCardData card) {
     final isFinished = card.phase == ExamPhase.finished || card.progress >= 1.0;
     // Also allow archiving date-passed exams (never started, date elapsed).
-    return (!card.running && !card.isPaused && isFinished) || card.isLocked;
+    return (!card.running && !card.isPaused && isFinished) ||
+        card.isDatePassed ||
+        card.isLocked;
   }
 
   int get _archivableExamCount => _cards.where(_isArchivableExam).length;

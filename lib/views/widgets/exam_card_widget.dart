@@ -266,10 +266,12 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                     final hasExamBoard = data.subjectBoard.trim().isNotEmpty;
                     final hasLevelOrBoard = hasExamLevel || hasExamBoard;
                     final hasStatusPill = data.isDatePassed ||
+                        data.isReadyToStart ||
                         data.phase == ExamPhase.finished ||
                         data.isPaused ||
                         data.running;
-                    final showArchiveCheck = isArchiveMode && (isExamCompleted || data.isLocked);
+                    final showArchiveCheck =
+                        isArchiveMode && (isExamCompleted || data.isDatePassed || data.isLocked);
                     final hideChevronInArchive = isArchiveMode && isExamCompleted;
                     final showChevron = !data.isLocked && !hideChevronInArchive;
 
@@ -845,11 +847,10 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
 
   Widget _buildClosedCardStatusPill(ExamCardData data, bool isDark) {
     if (data.isDatePassed) {
-      if (data.importedAsPast) {
-        return _pill('DATE PASSED', VigiloUiColors.textFaint(isDark));
-      } else {
-        return _pill('READY TO START', VigiloUiColors.blue(isDark));
-      }
+      return _pill('DATE PASSED', VigiloUiColors.textFaint(isDark));
+    }
+    if (data.isReadyToStart) {
+      return _pill('READY TO START', VigiloUiColors.blue(isDark));
     }
     if (data.phase == ExamPhase.finished) {
       return _pill('FINISHED', VigiloUiColors.green(isDark));

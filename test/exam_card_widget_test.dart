@@ -410,4 +410,129 @@ void main() {
       expect(chevronTapped, isTrue);
     },
   );
+
+  testWidgets(
+    'shows DATE PASSED pill for past unstarted exams and READY TO START pill for today exams whose start time has arrived',
+    (tester) async {
+      final pulse = AnimationController(
+        vsync: tester,
+        duration: const Duration(milliseconds: 200),
+      );
+      addTearDown(pulse.dispose);
+
+      final now = DateTime.now();
+      final yesterday = now.subtract(const Duration(days: 1));
+      final yesterdayStr = '${yesterday.day.toString().padLeft(2, '0')}/${yesterday.month.toString().padLeft(2, '0')}/${yesterday.year}';
+      final todayStr = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+
+      final pastCard = ExamCardData(
+        recordId: 'exam-past',
+        school: 'Northbridge College',
+        centreNumber: 'NB12',
+        date: yesterdayStr,
+        subject: 'Art and Design',
+        start: '09:00',
+        normalStart: '09:00',
+        duration: '01:30',
+        normalDuration: '01:30',
+        normalEnd: '10:30',
+        end: '10:30',
+        extraTime: '00:15',
+        totalDuration: '01:45',
+        extraEnd: '10:45',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ExamCard(
+              data: pastCard,
+              pulse: pulse,
+              onChevronTap: () {},
+              onEditDate: () {},
+              onEditStartTime: () {},
+              onEditDuration: () {},
+              onEditExtra: () {},
+              onUpdate: (_) {},
+              isExamCompleted: false,
+              isArchiveMode: false,
+              onSelect: () {},
+              extraPulse: false,
+              tapScale: 1.0,
+              onTimeTap: () {},
+              onProgressChangeEnd: (_) {},
+              onProgressDragState: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('DATE PASSED'), findsOneWidget);
+      expect(find.text('READY TO START'), findsNothing);
+
+      // In Archive Mode, Date Passed cards show the selection checkbox
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ExamCard(
+              data: pastCard,
+              pulse: pulse,
+              onChevronTap: () {},
+              onEditDate: () {},
+              onEditStartTime: () {},
+              onEditDuration: () {},
+              onEditExtra: () {},
+              onUpdate: (_) {},
+              isExamCompleted: false,
+              isArchiveMode: true,
+              onSelect: () {},
+              extraPulse: false,
+              tapScale: 1.0,
+              onTimeTap: () {},
+              onProgressChangeEnd: (_) {},
+              onProgressDragState: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      // Checkbox is shown for Date Passed exam in archive mode
+      expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
+
+      // If date is today and time has arrived, shows READY TO START
+      final todayCard = pastCard.copyWith(
+        date: todayStr,
+        start: '00:01',
+        normalStart: '00:01',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ExamCard(
+              data: todayCard,
+              pulse: pulse,
+              onChevronTap: () {},
+              onEditDate: () {},
+              onEditStartTime: () {},
+              onEditDuration: () {},
+              onEditExtra: () {},
+              onUpdate: (_) {},
+              isExamCompleted: false,
+              isArchiveMode: false,
+              onSelect: () {},
+              extraPulse: false,
+              tapScale: 1.0,
+              onTimeTap: () {},
+              onProgressChangeEnd: (_) {},
+              onProgressDragState: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('READY TO START'), findsOneWidget);
+      expect(find.text('DATE PASSED'), findsNothing);
+    },
+  );
 }

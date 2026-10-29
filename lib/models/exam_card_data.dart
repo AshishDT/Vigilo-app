@@ -278,6 +278,18 @@ class ExamCardData {
     return d.isAfter(todayStart);
   }
 
+  bool get isReadyToStart {
+    final hasActuallyStarted =
+        running || isPaused || phase == ExamPhase.finished || wasEverStarted;
+    if (hasActuallyStarted) return false;
+    if (!isToday) return false;
+
+    final sched = scheduledDateTime;
+    if (sched == null) return false;
+
+    return !DateTime.now().isBefore(sched);
+  }
+
   bool get isDatePassed {
     // An exam has a history if it is currently running/paused/finished OR
     // if it was ever started (even after a reset — wasEverStarted survives resets).
@@ -287,10 +299,12 @@ class ExamCardData {
         running || isPaused || phase == ExamPhase.finished || wasEverStarted;
     if (hasActuallyStarted) return false;
 
-    final sched = scheduledDateTime;
-    if (sched == null) return false;
+    final d = scheduledDate;
+    if (d == null) return false;
 
-    return sched.isBefore(DateTime.now());
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    return d.isBefore(todayStart);
   }
 
   bool get isLocked => isDatePassed && importedAsPast;
