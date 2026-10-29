@@ -78,7 +78,7 @@ class SecurityPrivacyShield extends StatelessWidget {
                       child: Icon(
                         dark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
                         color: VigiloUiColors.textSoft(dark),
-                        size: 20,
+                        size: 23,
                       ),
                     ),
                   ),

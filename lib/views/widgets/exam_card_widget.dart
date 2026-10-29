@@ -28,10 +28,12 @@ class ExamCard extends StatefulWidget {
     required this.onProgressChangeEnd,
     required this.onProgressDragState,
     required this.isExamCompleted,
+    this.animateCollapse = true,
     this.isDark,
   });
 
   final bool? isDark;
+  final bool animateCollapse;
 
   final bool isArchiveMode;
   final ExamCardData data;
@@ -82,7 +84,11 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
       if (widget.data.expanded) {
         _expandController.forward();
       } else {
-        _expandController.reverse();
+        if (widget.animateCollapse) {
+          _expandController.reverse();
+        } else {
+          _expandController.value = 0.0;
+        }
       }
     }
   }
@@ -185,9 +191,10 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
 
     return RepaintBoundary(
       child: AnimatedScale(
+        alignment: Alignment.topCenter,
         scale: isArchiveMode ? widget.tapScale : _localScale,
-      duration: const Duration(milliseconds: 120),
-      curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
       child: GestureDetector(
         onTap: (data.isLocked && !isExamCompleted && !isArchiveMode)
             ? null

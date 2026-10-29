@@ -117,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen>
   Timer? _clickTimer;
   final Map<String, ValueNotifier<ExamCardData>> _cardNotifiers = {};
   final Map<String, GlobalKey> _cardKeys = {};
+  String? _instantCollapseCardId;
   bool _licenseRequired = true;
   bool _isSessionsLoaded = false;
   final ItemScrollController _itemScrollController = ItemScrollController();
@@ -898,6 +899,15 @@ class _HomeScreenState extends State<HomeScreen>
     if (i < 0 || i >= _cards.length) return;
     final bool isOpening = !_cards[i].expanded;
     final String? cardRecordId = _cards[i].recordId;
+    final int priorOpenIdx = _cards.indexWhere((c) => c.expanded);
+    final bool isSwitching =
+        isOpening && priorOpenIdx != -1 && priorOpenIdx != i;
+
+    if (isSwitching) {
+      _instantCollapseCardId = _cards[priorOpenIdx].recordId;
+    } else {
+      _instantCollapseCardId = null;
+    }
 
     if (isOpening && _showSessionMgr) {
       _showSessionMgr = false;
@@ -914,32 +924,38 @@ class _HomeScreenState extends State<HomeScreen>
       _updateFilteredAndGroupedCards();
     });
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _instantCollapseCardId != null) {
+        _instantCollapseCardId = null;
+      }
+    });
+
     if (isOpening && cardRecordId != null) {
       _scrollToOpenedCard(cardRecordId);
     }
   }
 
   Future<void> _scrollToOpenedCard(String recordId) async {
-    // 1. Wait 260ms for card expansion animation (250ms) to fully complete and settle layout
-    await Future.delayed(const Duration(milliseconds: 260));
+    // Wait for the layout frame so any prior open card instantly collapses first
+    await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
 
-    // 2. Ensure card is still expanded and user is not actively dragging the list
+    // Ensure card is still expanded and user is not actively dragging the list
     final idx = _cards.indexWhere((c) => c.recordId == recordId);
     if (idx == -1 || !_cards[idx].expanded || _isUserScrolling) return;
 
-    // 3. Find card context and render box
+    // Find card context and render box
     final cardContext = _cardKeys[recordId]?.currentContext;
     if (cardContext == null || !cardContext.mounted) return;
 
     final cardBox = cardContext.findRenderObject() as RenderBox?;
     if (cardBox == null || !cardBox.hasSize) return;
 
-    // 4. Find the scrollable viewport
+    // Find the scrollable viewport
     final viewport = RenderAbstractViewport.of(cardBox);
     if (viewport == null) return;
 
-    // 5. Measure the offset to reveal the top of the card at alignment 0.0 (top of viewport)
+    // Measure the offset to reveal the top of the card at alignment 0.0 (top of viewport)
     final revealedOffset = viewport.getOffsetToReveal(cardBox, 0.0);
     final scrollable = Scrollable.maybeOf(cardContext);
     if (scrollable == null) return;
@@ -950,7 +966,7 @@ class _HomeScreenState extends State<HomeScreen>
     // Rule 1: If it is already there (within 2px tolerance), nothing moves.
     if (delta <= 2.0) return;
 
-    // Rule 2: Scroll smoothly, 300 ms, ease-in-out
+    // Rule 2: Scroll smoothly, 300 ms, ease-in-out in sync with downward expansion
     await Scrollable.ensureVisible(
       cardContext,
       alignment: 0.0,
@@ -2525,10 +2541,13 @@ class _HomeScreenState extends State<HomeScreen>
           key: ValueKey('val_listen_${currentData.recordId}'),
           valueListenable: notifier,
           builder: (context, cardData, _) {
+            final bool animateCollapse =
+                cardData.recordId != _instantCollapseCardId;
             return ExamCard(
-          key: key ?? ValueKey('exam_card_${cardData.recordId}'),
-          isDark: widget.dark,
-          data: cardData,
+              key: key ?? ValueKey('exam_card_${cardData.recordId}'),
+              animateCollapse: animateCollapse,
+              isDark: widget.dark,
+              data: cardData,
           pulse: _pulse,
           isExamCompleted:
               cardData.phase == ExamPhase.finished || isArchiveView,

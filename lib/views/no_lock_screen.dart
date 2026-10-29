@@ -137,7 +137,7 @@ class _NoLockScreenState extends State<NoLockScreen>
                       child: Icon(
                         d ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
                         color: VigiloUiColors.textSoft(d),
-                        size: 20,
+                        size: 23,
                       ),
                     ),
                   ),
