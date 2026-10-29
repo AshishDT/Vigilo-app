@@ -178,7 +178,10 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     final phaseElapsed = _elapsedSecond();
     final usedPercent = (data.progress * 100).clamp(0, 100).round();
     final collapsedExtra = data.phase == ExamPhase.extra && !data.expanded;
-    final showRunning = data.running || data.progress > 0.0;
+    final showRunning = data.running ||
+        data.progress > 0.0 ||
+        data.phase == ExamPhase.finished ||
+        isExamCompleted;
 
     return RepaintBoundary(
       child: AnimatedScale(
@@ -748,7 +751,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
   Widget _editButtonRows(BuildContext context, bool isDark, {required bool showRunning}) {
     final bool isStarted = data.hasStarted;
     final bool isFinished = isExamCompleted || data.phase == ExamPhase.finished;
-    final bool canStartNow = !data.isFutureDay;
+    final bool canStartNow = data.isToday;
 
     return Column(
       children: [
@@ -756,6 +759,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
           children: [
             Expanded(
               child: AnimatedScaleOnPress(
+                isDisabled: isStarted,
                 child: _editButton(
                   isDark,
                   'Date',
@@ -768,6 +772,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             const SizedBox(width: 6),
             Expanded(
               child: AnimatedScaleOnPress(
+                isDisabled: isStarted,
                 child: _editButton(
                   isDark,
                   'Start Time',
@@ -780,6 +785,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             const SizedBox(width: 6),
             Expanded(
               child: AnimatedScaleOnPress(
+                isDisabled: isFinished,
                 child: _editButton(
                   isDark,
                   'Duration',
@@ -796,6 +802,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
           children: [
             Expanded(
               child: AnimatedScaleOnPress(
+                isDisabled: isFinished,
                 child: _editButton(
                   isDark,
                   'Extra Time',
@@ -809,20 +816,25 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
             const SizedBox(width: 6),
             Expanded(
               child: AnimatedScaleOnPress(
+                isDisabled: showRunning ? (isExamCompleted || data.phase == ExamPhase.finished) : !canStartNow,
                 child: showRunning
                     ? _runningButton(isDark)
-                    : (canStartNow
-                        ? _startNowButton(isDark, () {
-                            onUpdate(
-                              data.copyWith(
-                                running: true,
-                                epochStart: DateTime.now(),
-                                pausedSeconds: 0,
-                                wasEverStarted: true,
-                              ),
-                            );
-                          })
-                        : _scheduledDisabledButton(isDark)),
+                    : _startNowButton(
+                        isDark,
+                        enabled: canStartNow,
+                        onTap: canStartNow
+                            ? () {
+                                onUpdate(
+                                  data.copyWith(
+                                    running: true,
+                                    epochStart: DateTime.now(),
+                                    pausedSeconds: 0,
+                                    wasEverStarted: true,
+                                  ),
+                                );
+                              }
+                            : () {},
+                      ),
               ),
             ),
           ],
@@ -909,6 +921,8 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
         color: Colors.transparent,
         child: InkWell(
           onTap: disabled ? () {} : onPressed,
+          splashColor: disabled ? Colors.transparent : null,
+          highlightColor: disabled ? Colors.transparent : null,
           borderRadius: BorderRadius.circular(18),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -953,79 +967,64 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
     );
   }
 
-  Widget _scheduledDisabledButton(bool isDark) {
+  Widget _startNowButton(
+    bool isDark, {
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    final Color tintColor = VigiloUiColors.finished(isDark);
+
     return AnimatedContainer(
       duration: kThemeFadeDuration,
       curve: kThemeFadeCurve,
       height: 42,
       decoration: BoxDecoration(
-        color: isDark
-            ? VigiloUiColors.panel2(isDark).withOpacity(0.4)
-            : VigiloUiColors.panel2(isDark).withOpacity(0.5),
+        color: enabled
+            ? VigiloUiColors.blue(isDark)
+            : tintColor.withOpacity(isDark ? 0.27 : 0.16),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: VigiloUiColors.lineSoft(isDark).withOpacity(0.4),
-          width: 1,
-        ),
+        border: enabled
+            ? null
+            : Border.all(
+                color: tintColor.withOpacity(isDark ? 0.36 : 0.30),
+                width: 1,
+              ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: onTap,
+          splashColor: enabled ? null : Colors.transparent,
+          highlightColor: enabled ? null : Colors.transparent,
           borderRadius: BorderRadius.circular(18),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.lock_rounded, size: 16, color: VigiloUiColors.textFaint(isDark)),
-                const SizedBox(width: 5),
-                Text(
-                  'Scheduled',
-                  style: TextStyle(
-                    color: VigiloUiColors.textFaint(isDark),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    letterSpacing: 0.05,
+                TweenAnimationBuilder<Color?>(
+                  tween: ColorTween(
+                    end: enabled ? Colors.white : VigiloUiColors.textSoft(isDark),
+                  ),
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
+                  builder: (context, iconColor, _) => Icon(
+                    Icons.play_arrow_rounded,
+                    size: 18,
+                    color: iconColor,
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _startNowButton(bool isDark, VoidCallback onTap) {
-    return AnimatedContainer(
-      duration: kThemeFadeDuration,
-      curve: kThemeFadeCurve,
-      height: 42,
-      decoration: BoxDecoration(
-        color: VigiloUiColors.blue(isDark),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.play_arrow_rounded, size: 18, color: Colors.white),
-                SizedBox(width: 4),
-                Text(
-                  'Start Now',
+                const SizedBox(width: 4),
+                AnimatedDefaultTextStyle(
+                  duration: kThemeFadeDuration,
+                  curve: kThemeFadeCurve,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: enabled ? Colors.white : VigiloUiColors.textSoft(isDark),
                     fontWeight: FontWeight.w900,
                     fontSize: 13,
                     letterSpacing: 0.05,
                   ),
+                  child: const Text('Start Now'),
                 ),
               ],
             ),
@@ -1060,6 +1059,8 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
         color: Colors.transparent,
         child: InkWell(
           onTap: () {},
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
           borderRadius: BorderRadius.circular(18),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),

@@ -61,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen>
   final Set<String> _normalTimeWarningVibrationSent = <String>{};
   final Set<String> _extraTimeWarningVibrationSent = <String>{};
   final Set<String> _scheduledReadyNotifiedIds = <String>{};
+  DateTime? _lastMidnightDate;
   bool _tickInFlight = false;
   bool _isAdjustingProgress = false;
   final ScrollController _homeScrollController = ScrollController();
@@ -146,6 +147,8 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    _lastMidnightDate = DateTime(now.year, now.month, now.day);
     _licenseRequired = widget.initialLicenseRequired ?? true;
     _pulse = AnimationController(
       vsync: this,
@@ -675,6 +678,24 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _tickAsync() async {
     if (!mounted) return;
     final now = DateTime.now();
+
+    final today = DateTime(now.year, now.month, now.day);
+    if (_lastMidnightDate != null && today != _lastMidnightDate) {
+      _lastMidnightDate = today;
+      // Midnight date rolled over: update all cards so isToday updates live
+      for (int i = 0; i < _cards.length; i++) {
+        final c = _cards[i];
+        final recordId = c.recordId;
+        final updated = c.copyWith();
+        _cards[i] = updated;
+        if (recordId != null && _cardNotifiers.containsKey(recordId)) {
+          _cardNotifiers[recordId]!.value = updated;
+        }
+      }
+      setState(() {});
+    } else {
+      _lastMidnightDate ??= today;
+    }
 
     for (final card in List<ExamCardData>.from(_cards)) {
       if (card.running || card.isPaused || card.phase == ExamPhase.finished) {

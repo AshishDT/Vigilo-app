@@ -232,22 +232,50 @@ class ExamCardData {
   bool get hasStarted =>
       running || isPaused || phase == ExamPhase.finished || wasEverStarted || progress > 0.0;
 
-  bool get isToday {
+  DateTime? get scheduledDate {
     final sched = scheduledDateTime;
-    if (sched == null) return false;
+    if (sched != null) return DateTime(sched.year, sched.month, sched.day);
+    try {
+      final clean = date.trim();
+      final dmyRegex = RegExp(r'^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$');
+      var dmyMatch = dmyRegex.firstMatch(clean);
+      if (dmyMatch != null) {
+        final day = int.parse(dmyMatch.group(1)!);
+        final month = int.parse(dmyMatch.group(2)!);
+        final year = int.parse(dmyMatch.group(3)!);
+        return DateTime(year, month, day);
+      }
+      final ymdRegex = RegExp(r'^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$');
+      var ymdMatch = ymdRegex.firstMatch(clean);
+      if (ymdMatch != null) {
+        final year = int.parse(ymdMatch.group(1)!);
+        final month = int.parse(ymdMatch.group(2)!);
+        final day = int.parse(ymdMatch.group(3)!);
+        return DateTime(year, month, day);
+      }
+      final parsed = DateTime.tryParse(clean);
+      if (parsed != null) {
+        return DateTime(parsed.year, parsed.month, parsed.day);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  bool get isToday {
+    final d = scheduledDate;
+    if (d == null) return false;
     final now = DateTime.now();
-    return sched.year == now.year &&
-           sched.month == now.month &&
-           sched.day == now.day;
+    return d.year == now.year &&
+           d.month == now.month &&
+           d.day == now.day;
   }
 
   bool get isFutureDay {
-    final sched = scheduledDateTime;
-    if (sched == null) return false;
+    final d = scheduledDate;
+    if (d == null) return false;
     final now = DateTime.now();
     final todayStart = DateTime(now.year, now.month, now.day);
-    final schedDay = DateTime(sched.year, sched.month, sched.day);
-    return schedDay.isAfter(todayStart);
+    return d.isAfter(todayStart);
   }
 
   bool get isDatePassed {
