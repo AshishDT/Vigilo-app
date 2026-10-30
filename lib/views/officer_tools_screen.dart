@@ -101,7 +101,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   int? _expandedLogIndex;
   int? _expandedRecentIncidentIndex;
   final Set<String> _expandedPrivacySections = {};
-  String _appVersion = '1.1.0+8';
+  String _appVersion = '1.1';
   String _setUpRole = '';
   int _activeTabIndex = 0;
   bool _hasExported = false;
@@ -243,11 +243,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     try {
       final info = await PackageInfo.fromPlatform();
       final version = info.version;
-      final build = info.buildNumber;
-      final fullVersion = build.isNotEmpty ? '$version+$build' : version;
-      if (mounted && fullVersion.isNotEmpty) {
+      final parts = version.split('.');
+      final shortVersion =
+          parts.length >= 2 ? '${parts[0]}.${parts[1]}' : version;
+      if (mounted && shortVersion.isNotEmpty) {
         setState(() {
-          _appVersion = fullVersion;
+          _appVersion = shortVersion;
         });
       }
     } catch (_) {}
@@ -3265,7 +3266,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               child: _otPrivacyOverviewSegment(
                 icon: Icons.shield_outlined,
                 title: "DATA STORAGE",
-                subtitle: "This device, plus cloud sync for live sessions",
+                subtitle: "Device and live cloud sync",
               ),
             ),
             VerticalDivider(
