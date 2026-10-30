@@ -913,6 +913,10 @@ class _HomeScreenState extends State<HomeScreen>
       _showSessionMgr = false;
     }
 
+    if (cardRecordId != null) {
+      _anchorListAtCard(cardRecordId);
+    }
+
     setState(() {
       for (int j = 0; j < _cards.length; j++) {
         if (j == i) {
@@ -935,6 +939,44 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  /// ScrollablePositionedList lays out every date group above its anchor item
+  /// in a reverse-growing sliver, where a resizing card keeps its bottom edge
+  /// fixed and grows/shrinks upwards. A far Jump to Date moves the anchor to
+  /// the jumped-to date, so cards in earlier dates would open bottom-to-top.
+  /// Re-anchor the list on the card's date group at its current on-screen
+  /// position (nothing moves) so the card resizes from its top edge.
+  void _anchorListAtCard(String recordId) {
+    if (!_itemScrollController.isAttached) return;
+    final cardBox = _cardKeys[recordId]?.currentContext?.findRenderObject();
+    if (cardBox is! RenderBox || !cardBox.hasSize) return;
+
+    // Walk up to the sliver that lays out the card's date group
+    RenderObject groupBox = cardBox;
+    RenderObject? sliver = cardBox.parent;
+    while (sliver != null && sliver is! RenderSliver) {
+      groupBox = sliver;
+      sliver = sliver.parent;
+    }
+    if (sliver is! RenderSliver ||
+        sliver.constraints.growthDirection != GrowthDirection.reverse ||
+        groupBox is! RenderBox) {
+      return;
+    }
+
+    final dates = _groupedCardsCached.keys.toList();
+    final groupIndex = dates.indexWhere(
+      (date) => _groupedCardsCached[date]!.any((c) => c.recordId == recordId),
+    );
+    final viewport = RenderAbstractViewport.of(groupBox);
+    if (groupIndex == -1 || viewport is! RenderViewportBase) return;
+
+    final groupTop = groupBox.localToGlobal(Offset.zero, ancestor: viewport).dy;
+    _itemScrollController.jumpTo(
+      index: groupIndex,
+      alignment: groupTop / viewport.size.height,
+    );
+  }
+
   Future<void> _scrollToOpenedCard(String recordId) async {
     // Wait for the layout frame so any prior open card instantly collapses first
     await WidgetsBinding.instance.endOfFrame;
@@ -955,21 +997,27 @@ class _HomeScreenState extends State<HomeScreen>
     final viewport = RenderAbstractViewport.of(cardBox);
     if (viewport == null) return;
 
-    // Measure the offset to reveal the top of the card at alignment 0.0 (top of viewport)
-    final revealedOffset = viewport.getOffsetToReveal(cardBox, 0.0);
+    // Measure the offset to reveal the top of the card at alignment 0.0 (top of viewport).
+    // getOffsetToReveal (and Scrollable.ensureVisible) ignore the viewport anchor,
+    // which ScrollablePositionedList moves on Jump to Date and _anchorListAtCard,
+    // so add it back.
+    final anchorOffset = viewport is RenderViewport
+        ? viewport.anchor * viewport.size.height
+        : 0.0;
+    final targetOffset =
+        viewport.getOffsetToReveal(cardBox, 0.0).offset + anchorOffset;
     final scrollable = Scrollable.maybeOf(cardContext);
     if (scrollable == null) return;
 
-    final currentOffset = scrollable.position.pixels;
-    final delta = (revealedOffset.offset - currentOffset).abs();
+    final position = scrollable.position;
+    final delta = (targetOffset - position.pixels).abs();
 
     // Rule 1: If it is already there (within 2px tolerance), nothing moves.
     if (delta <= 2.0) return;
 
     // Rule 2: Scroll smoothly, 300 ms, ease-in-out in sync with downward expansion
-    await Scrollable.ensureVisible(
-      cardContext,
-      alignment: 0.0,
+    await position.animateTo(
+      targetOffset.clamp(position.minScrollExtent, position.maxScrollExtent),
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
