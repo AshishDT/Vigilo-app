@@ -7,6 +7,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vigilo/views/briefings_library_sheet.dart';
 import 'widgets/erc_notice.dart';
@@ -100,6 +101,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   int? _expandedLogIndex;
   int? _expandedRecentIncidentIndex;
   final Set<String> _expandedPrivacySections = {};
+  String _appVersion = '1.1.0+8';
   String _setUpRole = '';
   int _activeTabIndex = 0;
   bool _hasExported = false;
@@ -223,6 +225,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     loadList();
     _migrateLegacyBriefings();
     _loadExportStatus();
+    _loadAppVersion();
     if (widget.openBriefingsOnStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -234,6 +237,20 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       const Duration(seconds: 1),
       (_) => _syncLiveState(),
     );
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      final version = info.version;
+      final build = info.buildNumber;
+      final fullVersion = build.isNotEmpty ? '$version+$build' : version;
+      if (mounted && fullVersion.isNotEmpty) {
+        setState(() {
+          _appVersion = fullVersion;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadExportStatus() async {
@@ -3248,7 +3265,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               child: _otPrivacyOverviewSegment(
                 icon: Icons.shield_outlined,
                 title: "DATA STORAGE",
-                subtitle: "Stored locally\non this device",
+                subtitle: "This device, plus cloud sync for live sessions",
               ),
             ),
             VerticalDivider(
@@ -4537,7 +4554,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                       sectionId: 'privacy',
                                       showCheckmark: true,
                                       content:
-                                          "Vigilo ERC stores exam data locally on the device and does not transmit it to any external server.\n\nNo personal data is shared, synced, or stored outside of the device by the application.",
+                                          "Exam data is stored on this device. When you run a live session, session information is also sent to our secure cloud service so invigilators can join and receive messages. Cloud session data is deleted no more than 30 days after the session ends. We do not sell data or use it for advertising.",
                                     ),
                                     Container(
                                       height: .7,
@@ -4603,7 +4620,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                           "App version and compliance info",
                                       sectionId: 'version',
                                       content:
-                                          "Vigilo ERC v1.0\n\nCopyright © 2026 Vigilo Platforms Ltd. All rights reserved.",
+                                          "Vigilo ERC v$_appVersion\n\nCopyright © 2026 Vigilo Platforms Ltd. All rights reserved. Vigilo™ is a trademark of Vigilo Platforms Ltd.",
                                     ),
                                   ],
                                 ),
