@@ -26,7 +26,7 @@ void main() {
       );
     }
 
-    testWidgets('HomeSessionsListView applies 0 top padding and dynamic bottom runway',
+    testWidgets('HomeSessionsListView applies 12 top padding and dynamic bottom runway',
         (WidgetTester tester) async {
       final controller = ItemScrollController();
       final groupedCards = <String, List<ExamCardData>>{
@@ -45,7 +45,7 @@ void main() {
               dateKeys: const {},
               formatDate: (d) => d,
               buildCard: (card) => Text('Card ${card.recordId}'),
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
             ),
           ),
         ),
@@ -54,7 +54,7 @@ void main() {
       final listFinderClosed = find.byType(ScrollablePositionedList);
       expect(listFinderClosed, findsOneWidget);
       final widgetClosed = tester.widget<ScrollablePositionedList>(listFinderClosed);
-      expect(widgetClosed.padding, const EdgeInsets.fromLTRB(20, 0, 20, 100));
+      expect(widgetClosed.padding, const EdgeInsets.fromLTRB(20, 12, 20, 100));
 
       // 2. When a card is open (anyOpen == true), bottom padding provides runway for last card
       await tester.pumpWidget(
@@ -68,7 +68,7 @@ void main() {
               dateKeys: const {},
               formatDate: (d) => d,
               buildCard: (card) => Text('Card ${card.recordId}'),
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 680),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 680),
             ),
           ),
         ),
@@ -76,7 +76,7 @@ void main() {
 
       final listFinderOpen = find.byType(ScrollablePositionedList);
       final widgetOpen = tester.widget<ScrollablePositionedList>(listFinderOpen);
-      expect(widgetOpen.padding, const EdgeInsets.fromLTRB(20, 0, 20, 680));
+      expect(widgetOpen.padding, const EdgeInsets.fromLTRB(20, 12, 20, 680));
     });
   });
 }

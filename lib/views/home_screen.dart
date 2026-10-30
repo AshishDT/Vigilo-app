@@ -1005,7 +1005,7 @@ class _HomeScreenState extends State<HomeScreen>
         ? viewport.anchor * viewport.size.height
         : 0.0;
     final targetOffset =
-        viewport.getOffsetToReveal(cardBox, 0.0).offset + anchorOffset;
+        viewport.getOffsetToReveal(cardBox, 0.0).offset + anchorOffset - 12.0;
     final scrollable = Scrollable.maybeOf(cardContext);
     if (scrollable == null) return;
 
@@ -1849,13 +1849,14 @@ class _HomeScreenState extends State<HomeScreen>
                       isArchiveView: isArchiveView,
                     ),
                   ),
-                  const SizedBox(height: 12),
                   AnimatedSize(
                     duration: const Duration(milliseconds: 250),
                     curve: Curves.easeInOut,
                     clipBehavior: Clip.hardEdge,
                     child: _showSessionMgr
-                        ? SessionManagerPanel(
+                        ? Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: SessionManagerPanel(
                             dark: dark,
                             statusFilter: _statusFilter,
                             dateFilter: _dateFilter,
@@ -1927,7 +1928,8 @@ class _HomeScreenState extends State<HomeScreen>
                                 await _refreshCards();
                               }
                             },
-                          )
+                          ),
+                        )
                         : const SizedBox(width: double.infinity, height: 0),
                   ),
                   Expanded(
@@ -1965,7 +1967,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   key: const ValueKey('archive_list'),
                                   padding: const EdgeInsets.fromLTRB(
                                     20,
-                                    8,
+                                    12,
                                     20,
                                     380,
                                   ),
@@ -2043,7 +2045,7 @@ class _HomeScreenState extends State<HomeScreen>
                                             buildCard: _buildExamCard,
                                             padding: EdgeInsets.fromLTRB(
                                               20,
-                                              0,
+                                              12,
                                               20,
                                               anyOpen
                                                   ? (MediaQuery.sizeOf(context).height * 0.85)

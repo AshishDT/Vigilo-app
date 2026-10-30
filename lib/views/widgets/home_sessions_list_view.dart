@@ -17,7 +17,7 @@ class HomeSessionsListView extends StatelessWidget {
     required this.dateKeys,
     required this.formatDate,
     required this.buildCard,
-    this.padding = const EdgeInsets.fromLTRB(20, 0, 20, 100),
+    this.padding = const EdgeInsets.fromLTRB(20, 12, 20, 100),
   });
 
   final ItemScrollController itemScrollController;
@@ -96,7 +96,7 @@ class HomeSessionsListView extends StatelessWidget {
             RepaintBoundary(
               child: Padding(
                 key: ValueKey('header_$date'),
-                padding: const EdgeInsets.fromLTRB(0, 14, 0, 14),
+                padding: EdgeInsets.fromLTRB(0, index == 0 ? 0 : 14, 0, 14),
                 child: Row(
                   children: [
                     AnimatedContainer(
