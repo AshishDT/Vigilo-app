@@ -150,7 +150,7 @@ class SessionService {
         final id = await _upsertCard(
           txn,
           card: card,
-          archived: _isArchivableCard(card),
+          archived: true,
           fromMigration: markMigrated,
         );
         keepIds.add(id);
@@ -2137,16 +2137,19 @@ class SessionService {
         ? 0.0
         : (elapsedSeconds / totalSeconds).clamp(0.0, 1.0);
 
+    final isEnded = snapshot.sessionStatus == SessionStatus.ended ||
+        (totalSeconds > 0 && elapsedSeconds >= totalSeconds);
+
     final phase = _phaseFor(
       normalSeconds: card.normalSeconds,
       totalSeconds: totalSeconds,
       elapsedSeconds: elapsedSeconds,
-      ended: snapshot.sessionStatus == SessionStatus.ended,
+      ended: isEnded,
     );
 
     return card.copyWith(
-      running: snapshot.sessionStatus == SessionStatus.running,
-      isPaused: snapshot.sessionStatus == SessionStatus.paused,
+      running: isEnded ? false : (snapshot.sessionStatus == SessionStatus.running),
+      isPaused: isEnded ? false : (snapshot.sessionStatus == SessionStatus.paused),
       epochStart: snapshot.startedAtUtc.toLocal(),
       pausedSeconds: effectivePausedMs ~/ 1000,
       progress: progress,
@@ -2208,20 +2211,20 @@ class SessionService {
   }
 
   SessionStatus _statusFromCard(ExamCardData card) {
+    if (card.progress >= 1.0 || card.phase == ExamPhase.finished) {
+      return SessionStatus.ended;
+    }
     if (card.running) {
       return SessionStatus.running;
     }
     if (card.isPaused) {
       return SessionStatus.paused;
     }
-    if (card.progress >= 1.0 || card.phase == ExamPhase.finished) {
-      return SessionStatus.ended;
-    }
     return SessionStatus.idle;
   }
 
   bool _isArchivableCard(ExamCardData card) {
-    return _statusFromCard(card) == SessionStatus.ended || card.isLocked;
+    return _statusFromCard(card) == SessionStatus.ended;
   }
 
   DateTime? _scheduledDateTimeUtc(ExamCardData c) {

@@ -422,6 +422,22 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     return match == null ? trimmed : match.group(1)!;
   }
 
+  String _joinLastTwoWordsWithNonBreakingSpace(String text) {
+    final trimmed = text.trimRight();
+    final lastSpaceIndex = trimmed.lastIndexOf(' ');
+    if (lastSpaceIndex == -1) {
+      return text;
+    }
+    final lastWord = trimmed.substring(lastSpaceIndex + 1);
+    final cleanWord = lastWord.replaceAll(RegExp(r'[().,]'), '');
+    final isNumber = RegExp(r'^\d+[a-zA-Z]?$').hasMatch(cleanWord) ||
+        RegExp(r'^(I|II|III|IV|V|VI|VII|VIII|IX|X)$', caseSensitive: false).hasMatch(cleanWord);
+    if (!isNumber) {
+      return text; // Words only: no non-breaking space, wrap as normal
+    }
+    return '${trimmed.substring(0, lastSpaceIndex)}\u00A0$lastWord';
+  }
+
   void _syncSetupControllersFromSchedule() {
     _setupRoomController.text = _scheduleRoomsSummary();
     _setupInvigilatorsController.text = allInvigilators.join(", ");
@@ -3266,7 +3282,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               child: _otPrivacyOverviewSegment(
                 icon: Icons.shield_outlined,
                 title: "DATA STORAGE",
-                subtitle: "Device and live cloud sync",
+                subtitle: "Device and\nlive cloud sync",
               ),
             ),
             VerticalDivider(
@@ -3509,7 +3525,8 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                         child: () {
                           final hasExamLevel = (data.examLevel ?? '').trim().isNotEmpty;
                           final hasExamBoard = data.subjectBoard.trim().isNotEmpty;
-                          final title = hasExamBoard ? data.subjectName : data.subject;
+                          final rawTitle = hasExamBoard ? data.subjectName : data.subject;
+                          final title = _joinLastTwoWordsWithNonBreakingSpace(rawTitle);
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -4621,7 +4638,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                           "App version and compliance info",
                                       sectionId: 'version',
                                       content:
-                                          "Vigilo ERC v$_appVersion\n\nCopyright © 2026 Vigilo Platforms Ltd. All rights reserved. Vigilo™ is a trademark of Vigilo Platforms Ltd.",
+                                          "Vigilo ERC v$_appVersion\n\nCopyright © 2026 Vigilo\u00A0Platforms\u00A0Ltd. All rights reserved. Vigilo™ is a trademark of Vigilo\u00A0Platforms\u00A0Ltd.",
                                     ),
                                   ],
                                 ),

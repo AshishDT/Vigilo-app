@@ -499,8 +499,8 @@ void main() {
         ),
       );
 
-      // In archive mode, Date Passed shows the checkbox and hides the chevron
-      expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
+      // In archive mode, Date Passed is not archivable: shows no checkbox and hides the chevron
+      expect(find.byIcon(Icons.radio_button_unchecked), findsNothing);
       expect(find.byIcon(Icons.expand_more), findsNothing);
 
       // If date is today and time has arrived, shows READY TO START
@@ -537,6 +537,148 @@ void main() {
 
       expect(find.text('READY TO START'), findsOneWidget);
       expect(find.text('DATE PASSED'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'A2 buttons: Running and Finished are text only, Start Now keeps play arrow, locked buttons keep padlocks',
+    (tester) async {
+      final pulse = AnimationController(
+        vsync: tester,
+        duration: const Duration(milliseconds: 200),
+      );
+      addTearDown(pulse.dispose);
+
+      // 1. Unstarted card scheduled for today -> shows "Start Now" with play arrow
+      final now = DateTime.now();
+      final todayStr =
+          "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+      final todayCard = ExamCardData(
+        recordId: 'exam-today',
+        school: 'Northbridge College',
+        centreNumber: 'NB12',
+        date: todayStr,
+        subject: 'Physics',
+        start: '09:00',
+        normalStart: '09:00',
+        duration: '01:00',
+        normalDuration: '01:00',
+        normalEnd: '10:00',
+        end: '10:00',
+        extraTime: '00:00',
+        totalDuration: '01:00',
+        extraEnd: '10:00',
+        running: false,
+        phase: ExamPhase.normal,
+        wasEverStarted: false,
+        expanded: true,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ExamCard(
+                data: todayCard,
+                pulse: pulse,
+                onChevronTap: () {},
+                onEditDate: () {},
+                onEditStartTime: () {},
+                onEditDuration: () {},
+                onEditExtra: () {},
+                onUpdate: (_) {},
+                isExamCompleted: false,
+                isArchiveMode: false,
+                onSelect: () {},
+                extraPulse: false,
+                tapScale: 1.0,
+                onTimeTap: () {},
+                onProgressChangeEnd: (_) {},
+                onProgressDragState: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Start Now'), findsOneWidget);
+      expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+
+      // 2. Running card -> shows "Running" (text only, NO padlock, NO icon inside button)
+      final runningCard = todayCard.copyWith(
+        running: true,
+        wasEverStarted: true,
+        progress: 0.25,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ExamCard(
+                data: runningCard,
+                pulse: pulse,
+                onChevronTap: () {},
+                onEditDate: () {},
+                onEditStartTime: () {},
+                onEditDuration: () {},
+                onEditExtra: () {},
+                onUpdate: (_) {},
+                isExamCompleted: false,
+                isArchiveMode: false,
+                onSelect: () {},
+                extraPulse: false,
+                tapScale: 1.0,
+                onTimeTap: () {},
+                onProgressChangeEnd: (_) {},
+                onProgressDragState: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Running'), findsOneWidget);
+      // Date and Start Time have padlocks (2 locked buttons)
+      expect(find.byIcon(Icons.lock_rounded), findsNWidgets(2));
+
+      // 3. Finished card -> shows "Finished" (text only, NO check circle icon inside button)
+      final finishedCard = runningCard.copyWith(
+        running: false,
+        phase: ExamPhase.finished,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ExamCard(
+                data: finishedCard,
+                pulse: pulse,
+                onChevronTap: () {},
+                onEditDate: () {},
+                onEditStartTime: () {},
+                onEditDuration: () {},
+                onEditExtra: () {},
+                onUpdate: (_) {},
+                isExamCompleted: true,
+                isArchiveMode: false,
+                onSelect: () {},
+                extraPulse: false,
+                tapScale: 1.0,
+                onTimeTap: () {},
+                onProgressChangeEnd: (_) {},
+                onProgressDragState: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Finished'), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle_outline_rounded), findsNothing);
+      // Date, Start Time, Duration, and Extra Time all have padlocks (4 locked buttons)
+      expect(find.byIcon(Icons.lock_rounded), findsNWidgets(4));
     },
   );
 }

@@ -278,7 +278,7 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
                         data.isPaused ||
                         data.running;
                     final showArchiveCheck =
-                        isArchiveMode && (isExamCompleted || data.isDatePassed || data.isLocked);
+                        isArchiveMode && isExamCompleted;
                     final hideChevronInArchive =
                         isArchiveMode && (isExamCompleted || data.isDatePassed);
                     final showChevron = !data.isLocked && !hideChevronInArchive;
@@ -1046,8 +1046,6 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
   Widget _runningButton(bool isDark) {
     final bool completed = isExamCompleted || data.phase == ExamPhase.finished;
     final String labelText = completed ? 'Finished' : 'Running';
-    final IconData iconData =
-        completed ? Icons.check_circle_outline_rounded : Icons.lock_rounded;
     final Color tintColor = completed
         ? VigiloUiColors.finished(isDark)
         : VigiloUiColors.blue(isDark);
@@ -1073,29 +1071,18 @@ class _ExamCardState extends State<ExamCard> with SingleTickerProviderStateMixin
           borderRadius: BorderRadius.circular(18),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TweenAnimationBuilder<Color?>(
-                  tween: ColorTween(end: VigiloUiColors.textSoft(isDark)),
-                  duration: kThemeFadeDuration,
-                  curve: kThemeFadeCurve,
-                  builder: (context, iconColor, _) =>
-                      Icon(iconData, size: 16, color: iconColor),
+            child: Center(
+              child: AnimatedDefaultTextStyle(
+                duration: kThemeFadeDuration,
+                curve: kThemeFadeCurve,
+                style: TextStyle(
+                  color: VigiloUiColors.textSoft(isDark),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                  letterSpacing: 0.05,
                 ),
-                const SizedBox(width: 4),
-                AnimatedDefaultTextStyle(
-                  duration: kThemeFadeDuration,
-                  curve: kThemeFadeCurve,
-                  style: TextStyle(
-                    color: VigiloUiColors.textSoft(isDark),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    letterSpacing: 0.05,
-                  ),
-                  child: Text(labelText),
-                ),
-              ],
+                child: Text(labelText),
+              ),
             ),
           ),
         ),

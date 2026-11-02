@@ -177,6 +177,8 @@ class _HomeScreenState extends State<HomeScreen>
     if (_licenseRequired) return;
     await _sessionService.initialize();
     if (!mounted) return;
+    await _sessionService.autoEndIfNeeded();
+    if (!mounted) return;
     await _loadState();
     if (!mounted) return;
     await _clearLegacyLicenceCentrePrefillIfNeeded();
@@ -909,10 +911,6 @@ class _HomeScreenState extends State<HomeScreen>
       _instantCollapseCardId = null;
     }
 
-    if (isOpening && _showSessionMgr) {
-      _showSessionMgr = false;
-    }
-
     if (cardRecordId != null) {
       _anchorListAtCard(cardRecordId);
     }
@@ -1378,10 +1376,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   bool _isArchivableExam(ExamCardData card) {
     final isFinished = card.phase == ExamPhase.finished || card.progress >= 1.0;
-    // Also allow archiving date-passed exams (never started, date elapsed).
-    return (!card.running && !card.isPaused && isFinished) ||
-        card.isDatePassed ||
-        card.isLocked;
+    return !card.running && !card.isPaused && isFinished;
   }
 
   int get _archivableExamCount => _cards.where(_isArchivableExam).length;
@@ -2630,7 +2625,8 @@ class _HomeScreenState extends State<HomeScreen>
             (card) => card.recordId == c.recordId,
           );
           if (currentIdx == -1) return;
-          if (!_isArchivableExam(c)) {
+          final targetCard = _cards[currentIdx];
+          if (!_isArchivableExam(targetCard)) {
             _toast(
               "Action Restricted",
               "Only finished exams can be archived",

@@ -72,8 +72,7 @@ class SecurityService {
     isAuthenticating = true;
     try {
       final authenticated = await _auth.authenticate(
-        localizedReason:
-            'Authentication required to access exam sessions and candidate data.',
+        localizedReason: 'Access exam sessions and candidate data.',
         options: const AuthenticationOptions(
           stickyAuth: true,
           biometricOnly: false, // Allows fallback to device PIN/pattern/password

@@ -4,11 +4,11 @@ import 'package:vigilo/models/exam_card_data.dart';
 import 'package:vigilo/models/incident.dart';
 import 'package:vigilo/views/officer_tools_screen.dart';
 
-ExamCardData _createExamData({List<Incident>? logs}) {
+ExamCardData _createExamData({String? subject, List<Incident>? logs}) {
   return ExamCardData(
     school: 'Test School',
     date: '2026-09-24',
-    subject: 'Mathematics',
+    subject: subject ?? 'Mathematics',
     start: '09:00 AM',
     duration: '01:30',
     end: '10:30 AM',
@@ -240,6 +240,93 @@ void main() {
       // Verifies it does NOT render "Student: Students : Ertff"
       final textFinder = find.text('Medical Incident\nStudent: Ertff');
       expect(textFinder, findsOneWidget);
+    });
+  });
+
+  group('A3 Officer Tools title non-breaking space formatting', () {
+    testWidgets('Joins last two words of title with non-breaking space (Paper 1)', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: OfficerToolsSheet(
+              data: _createExamData(subject: 'Further Mathematics Paper 1'),
+              onLog: (_) {},
+              onReStart: () async {},
+              onPause: () {},
+              onEnd: () async {},
+              onExportCopy: () {},
+              onExportCsvDownload: () {},
+              onExportCsvShare: () {},
+              onDeleteData: () {},
+              onUpdateData: (_) {},
+              onSaveData: () {},
+              isExamCompleted: false,
+              initialTabIndex: 0,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Should be joined with non-breaking space (\u00A0)
+      expect(find.text('Further Mathematics Paper\u00A01'), findsOneWidget);
+      expect(find.text('Further Mathematics Paper 1'), findsNothing);
+    });
+
+    testWidgets('Single-word title remains unchanged', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: OfficerToolsSheet(
+              data: _createExamData(subject: 'Mathematics'),
+              onLog: (_) {},
+              onReStart: () async {},
+              onPause: () {},
+              onEnd: () async {},
+              onExportCopy: () {},
+              onExportCsvDownload: () {},
+              onExportCsvShare: () {},
+              onDeleteData: () {},
+              onUpdateData: (_) {},
+              onSaveData: () {},
+              isExamCompleted: false,
+              initialTabIndex: 0,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mathematics'), findsOneWidget);
+    });
+
+    testWidgets('Word-only multi-word title remains unchanged with standard spaces', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: OfficerToolsSheet(
+              data: _createExamData(subject: 'English Literature Core'),
+              onLog: (_) {},
+              onReStart: () async {},
+              onPause: () {},
+              onEnd: () async {},
+              onExportCopy: () {},
+              onExportCsvDownload: () {},
+              onExportCsvShare: () {},
+              onDeleteData: () {},
+              onUpdateData: (_) {},
+              onSaveData: () {},
+              isExamCompleted: false,
+              initialTabIndex: 0,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Words only: no non-breaking space added
+      expect(find.text('English Literature Core'), findsOneWidget);
+      expect(find.text('English Literature Core\u00A0'), findsNothing);
     });
   });
 }

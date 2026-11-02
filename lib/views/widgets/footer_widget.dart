@@ -63,45 +63,48 @@ class _FooterWidgetState extends State<FooterWidget>
           color: VigiloUiColors.line(dark),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            _actionCell(
-              dark,
-              Icons.admin_panel_settings,
-              'Officer Tools',
-              color: VigiloUiColors.blue(dark),
-              onTap: widget.onOfficerTools,
-            ),
-            _actionCell(
-              dark,
-              Icons.vibration,
-              'Vibrate',
-              color: widget.isVibrateOn
-                  ? VigiloUiColors.blue(dark)
-                  : (dark ? Colors.grey : VigiloUiColors.textFaint(dark)),
-              onTap: widget.onVibrate,
-            ),
-            _actionCell(
-              dark,
-              Icons.archive_outlined,
-              'Archive',
-              color: widget.isArchiveMode
-                  ? VigiloUiColors.green(dark)
-                  : VigiloUiColors.blue(dark),
-              pulse: true,
-              onTap: () {
-                widget.onArchive();
-                if (!widget.isArchiveMode) _pulseController.forward();
-              },
-            ),
-            _actionCell(
-              dark,
-              Icons.description,
-              'Briefings',
-              color: VigiloUiColors.blue(dark),
-              onTap: widget.onBriefings,
-            ),
-          ],
+        Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: Row(
+            children: [
+              _actionCell(
+                dark,
+                Icons.admin_panel_settings,
+                'Officer Tools',
+                color: VigiloUiColors.blue(dark),
+                onTap: widget.onOfficerTools,
+              ),
+              _actionCell(
+                dark,
+                Icons.vibration,
+                'Vibrate',
+                color: widget.isVibrateOn
+                    ? VigiloUiColors.blue(dark)
+                    : (dark ? Colors.grey : VigiloUiColors.textFaint(dark)),
+                onTap: widget.onVibrate,
+              ),
+              _actionCell(
+                dark,
+                Icons.archive_outlined,
+                'Archive',
+                color: widget.isArchiveMode
+                    ? VigiloUiColors.green(dark)
+                    : VigiloUiColors.blue(dark),
+                pulse: true,
+                onTap: () {
+                  widget.onArchive();
+                  if (!widget.isArchiveMode) _pulseController.forward();
+                },
+              ),
+              _actionCell(
+                dark,
+                Icons.description,
+                'Briefings',
+                color: VigiloUiColors.blue(dark),
+                onTap: widget.onBriefings,
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
       ],

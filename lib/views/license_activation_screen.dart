@@ -24,16 +24,17 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
   static const String _licenceAgreementText =
       'Vigilo ERC is licensed, not sold, to the organisation named on your licence for use by its authorised examination staff. No ownership of the software passes to you.\n\n'
       'The licence cannot be transferred. You must not copy, modify, reverse engineer, sublicense or resell the app, or use it to build a competing product.\n\n'
-      'Your licence belongs to your organisation and may only be used on the devices it allows. Vigilo Platforms Ltd may check your licence online and may suspend it if it expires, is misused or is shared outside your organisation.\n\n'
+      'Your licence belongs to your organisation and may only be used on the devices it allows. Vigilo\u00A0Platforms\u00A0Ltd may check your licence online and may suspend it if it expires, is misused or is shared outside your organisation.\n\n'
       'The app is an aid to exam administration. Your organisation remains responsible for running its examinations, for meeting examination board and regulator requirements, and for keeping its own records.\n\n'
-      'To the extent the law allows, Vigilo Platforms Ltd is not liable for indirect or consequential loss. Nothing in this agreement limits liability that cannot lawfully be limited.\n\n'
-      'If your organisation has signed a separate agreement with Vigilo Platforms Ltd, that agreement applies where it differs from this summary. This agreement is governed by the law of England and Wales.\n\n'
+      'To the extent the law allows, Vigilo\u00A0Platforms\u00A0Ltd is not liable for indirect or consequential loss. Nothing in this agreement limits liability that cannot lawfully be limited.\n\n'
+      'If your organisation has signed a separate agreement with Vigilo\u00A0Platforms\u00A0Ltd, that agreement applies where it differs from this summary. This agreement is governed by the law of England and Wales.\n\n'
       'Using Vigilo ERC means you accept these licence terms.';
 
   static const String _privacyNoticeText =
-      'Vigilo ERC is provided by Vigilo Platforms Ltd. Your organisation decides why and how exam data is used, so it is the data controller. For data held on our cloud service, Vigilo Platforms Ltd acts as its processor.\n\n'
+      'Vigilo ERC is provided by Vigilo\u00A0Platforms\u00A0Ltd. Your organisation decides why and how exam data is used, so it is the data controller. For data held on our cloud service, Vigilo\u00A0Platforms\u00A0Ltd acts as its processor.\n\n'
       'On this device: exam sessions, incident logs, candidate details, invigilator names and notes are stored locally and protected by your device lock and the app\'s PIN or biometric check. Incident logs, candidate details and exported records stay on this device.\n\n'
-      'In the cloud: when you run a live session, information such as exam details, the invigilator list, messages and briefings is sent to our secure cloud service provider so that invigilators can join by QR code and exchange messages. We also check your licence online. Cloud session data is deleted no more than 30 days after the session ends. We do not sell data or use it for advertising.\n\n'
+      'In the cloud: when you run a live session, information such as exam details, the invigilator list, messages and briefings is sent to our secure cloud service provider so that invigilators can join by QR code and exchange messages. We also check your licence online.\n\n'
+      'Cloud session data is deleted no more than 30 days after the session ends. We do not sell data or use it for advertising.\n\n'
       'Your organisation is responsible for the retention, export, archiving and deletion of records in accordance with its own policies, relevant examination regulations (such as JCQ where applicable) and data protection law, including the UK GDPR.\n\n'
       'For privacy questions, contact support@vigiloapp.co.uk. You can complain to the Information Commissioner\'s Office (ico.org.uk).\n\n'
       'Vigilo ERC is intended only for use by authorised staff during examinations.';
@@ -49,7 +50,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       'Vigilo ERC is a digital exam room control system for exam officers and invigilators. '
       'It supports live timing, structured event logging, incident capture, exportable records and two-way messaging with invigilators, and stays offline-first for core exam operation.';
   static const String _aboutLegalText =
-      'Copyright © 2026 Vigilo Platforms Ltd. All rights reserved. Vigilo™ is a trademark of Vigilo Platforms Ltd.';
+      'Copyright © 2026 Vigilo\u00A0Platforms\u00A0Ltd. All rights reserved. Vigilo™ is a trademark of Vigilo\u00A0Platforms\u00A0Ltd.';
   static const String _segmentedLicenceMessage =
       'Enter the organisation name, organisation code, and 6-character activation code issued by Vigilo.';
 
@@ -523,63 +524,6 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
   }
 
   Widget _buildDialogParagraph(String text, bool isDark) {
-    const email = 'support@vigiloapp.co.uk';
-    const web = 'ico.org.uk';
-
-    if (text.contains(email) || text.contains(web)) {
-      final spans = <InlineSpan>[];
-      final regex = RegExp(r'(support@vigiloapp\.co\.uk|ico\.org\.uk)');
-      int lastEnd = 0;
-
-      for (final match in regex.allMatches(text)) {
-        if (match.start > lastEnd) {
-          spans.add(TextSpan(text: text.substring(lastEnd, match.start)));
-        }
-        final matchText = match.group(0)!;
-        final isEmail = matchText == email;
-        final targetUri = isEmail
-            ? Uri(scheme: 'mailto', path: email)
-            : Uri.parse('https://ico.org.uk/');
-
-        spans.add(
-          WidgetSpan(
-            alignment: PlaceholderAlignment.baseline,
-            baseline: TextBaseline.alphabetic,
-            child: GestureDetector(
-              onTap: () async {
-                try {
-                  await launchUrl(targetUri, mode: LaunchMode.externalApplication);
-                } catch (_) {}
-              },
-              child: Text(
-                matchText,
-                style: TextStyle(
-                  color: VigiloUiColors.blue(isDark),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-          ),
-        );
-        lastEnd = match.end;
-      }
-
-      if (lastEnd < text.length) {
-        spans.add(TextSpan(text: text.substring(lastEnd)));
-      }
-
-      return Text.rich(
-        TextSpan(
-          style: TextStyle(
-            color: VigiloUiColors.textSoft(isDark),
-            fontSize: 15,
-            height: 1.6,
-          ),
-          children: spans,
-        ),
-      );
-    }
     return Text(
       text,
       style: TextStyle(

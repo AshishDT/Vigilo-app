@@ -522,4 +522,52 @@ void main() {
     );
     expect(animatedScaleFinder, findsOneWidget);
   });
+
+  testWidgets('A7: Privacy Notice renders support email and ico.org.uk as plain text and has separate cloud data retention paragraph', (tester) async {
+    await pumpScreen(tester, scrollToActivation: false);
+
+    await tester.scrollUntilVisible(
+      find.text('Privacy Notice'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Privacy Notice').first);
+    await tester.pumpAndSettle();
+
+    // Verify email and (ico.org.uk) are present in plain text paragraph without WidgetSpan
+    expect(
+      find.text(
+        "For privacy questions, contact support@vigiloapp.co.uk. You can complain to the Information Commissioner's Office (ico.org.uk).",
+      ),
+      findsOneWidget,
+    );
+
+    // Verify separate paragraph for cloud data retention
+    expect(
+      find.text(
+        'Cloud session data is deleted no more than 30 days after the session ends. We do not sell data or use it for advertising.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('A7: About Vigilo ERC renders non-breaking spaces inside Vigilo Platforms Ltd', (tester) async {
+    await pumpScreen(tester, scrollToActivation: false);
+
+    await tester.scrollUntilVisible(
+      find.text('About Vigilo ERC'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Copyright © 2026 Vigilo\u00A0Platforms\u00A0Ltd. All rights reserved. Vigilo™ is a trademark of Vigilo\u00A0Platforms\u00A0Ltd.',
+      ),
+      findsOneWidget,
+    );
+  });
 }
