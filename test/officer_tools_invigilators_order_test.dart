@@ -57,7 +57,7 @@ void main() {
             onExportCopy: () {},
             onExportCsvDownload: () {},
             onExportCsvShare: () {},
-            onDeleteData: () {},
+            onDeleteData: () async => false,
             onUpdateData: (updated) {
               currentData = updated;
               savedData = updated;
@@ -128,7 +128,7 @@ void main() {
             onExportCopy: () {},
             onExportCsvDownload: () {},
             onExportCsvShare: () {},
-            onDeleteData: () {},
+            onDeleteData: () async => false,
             onUpdateData: (_) {},
             onSaveData: () {},
             isExamCompleted: false,

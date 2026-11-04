@@ -290,7 +290,7 @@ void main() {
               onExportCopy: () {},
               onExportCsvDownload: () {},
               onExportCsvShare: () {},
-              onDeleteData: () {},
+              onDeleteData: () async => false,
               onUpdateData: (_) {},
               onSaveData: () {},
               isExamCompleted: false,
