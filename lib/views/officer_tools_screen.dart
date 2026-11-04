@@ -430,12 +430,6 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
       return text;
     }
     final lastWord = trimmed.substring(lastSpaceIndex + 1);
-    final cleanWord = lastWord.replaceAll(RegExp(r'[().,]'), '');
-    final isNumber = RegExp(r'^\d+[a-zA-Z]?$').hasMatch(cleanWord) ||
-        RegExp(r'^(I|II|III|IV|V|VI|VII|VIII|IX|X)$', caseSensitive: false).hasMatch(cleanWord);
-    if (!isNumber) {
-      return text; // Words only: no non-breaking space, wrap as normal
-    }
     return '${trimmed.substring(0, lastSpaceIndex)}\u00A0$lastWord';
   }
 
