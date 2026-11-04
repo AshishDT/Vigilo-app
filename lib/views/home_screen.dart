@@ -1643,6 +1643,8 @@ class _HomeScreenState extends State<HomeScreen>
                   int i = getExpandedCardIndex();
                   if (i != -1) {
                     final c = _cards[i];
+                    final targetRecordId = c.recordId;
+                    bool isExamDeleted = false;
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
@@ -1659,19 +1661,15 @@ class _HomeScreenState extends State<HomeScreen>
                           _log(_cards[i], inc);
                         },
                         onSaveData: () async {
-                          final targetId = _cards[i].recordId;
-                          final idx = targetId != null
-                              ? _cards.indexWhere((c) => c.recordId == targetId)
-                              : i;
+                          if (isExamDeleted || targetRecordId == null) return;
+                          final idx = _cards.indexWhere((card) => card.recordId == targetRecordId);
                           if (idx >= 0 && idx < _cards.length) {
                             await _sessionService.saveCardDelta(
                               _cards[idx],
                               debounceDurationMs: 0,
                             );
                           } else {
-                            final archIdx = targetId != null
-                                ? _archiveCards.indexWhere((c) => c.recordId == targetId)
-                                : -1;
+                            final archIdx = _archiveCards.indexWhere((card) => card.recordId == targetRecordId);
                             if (archIdx != -1) {
                               await _sessionService.saveCardDelta(
                                 _archiveCards[archIdx],
@@ -1729,21 +1727,18 @@ class _HomeScreenState extends State<HomeScreen>
                         onExportCsvShare: () =>
                             exportCsvShare(_cards[i], context),
                         onUpdateData: (updated) {
-                          if (!mounted) return;
+                          if (!mounted || isExamDeleted) return;
                           final targetId = updated.recordId;
-                          final idx = targetId != null
-                              ? _cards.indexWhere((c) => c.recordId == targetId)
-                              : -1;
-                          final resolvedIndex = idx != -1 ? idx : i;
-                          if (resolvedIndex >= 0 && resolvedIndex < _cards.length) {
-                            final current = _cards[resolvedIndex];
+                          if (targetId == null) return;
+                          final idx = _cards.indexWhere((card) => card.recordId == targetId);
+                          if (idx != -1) {
+                            final current = _cards[idx];
                             final merged = _mergeOfficerToolsUpdate(
                               current: current,
                               updated: updated,
                             );
-                            _cards[resolvedIndex] = merged;
-                            if (targetId != null &&
-                                _cardNotifiers.containsKey(targetId)) {
+                            _cards[idx] = merged;
+                            if (_cardNotifiers.containsKey(targetId)) {
                               _cardNotifiers[targetId]!.value = merged;
                             }
                             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1754,11 +1749,9 @@ class _HomeScreenState extends State<HomeScreen>
                               }
                             });
                           } else {
-                            final archIdx = targetId != null
-                                ? _archiveCards.indexWhere(
-                                    (c) => c.recordId == targetId,
-                                  )
-                                : -1;
+                            final archIdx = _archiveCards.indexWhere(
+                              (card) => card.recordId == targetId,
+                            );
                             if (archIdx != -1) {
                               final current = _archiveCards[archIdx];
                               final merged = _mergeOfficerToolsUpdate(
@@ -1766,8 +1759,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 updated: updated,
                               );
                               _archiveCards[archIdx] = merged;
-                              if (targetId != null &&
-                                  _cardNotifiers.containsKey(targetId)) {
+                              if (_cardNotifiers.containsKey(targetId)) {
                                 _cardNotifiers[targetId]!.value = merged;
                               }
                               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1793,20 +1785,27 @@ class _HomeScreenState extends State<HomeScreen>
                               onConfirm: () => ctx.safePop(true),
                             ),
                           );
-                          if (!context.mounted) return;
+                          if (!context.mounted) return false;
                           if (ok == true) {
+                            isExamDeleted = true;
                             final deleteRecordId = c.recordId;
                             if (deleteRecordId != null) {
                               _cards.removeWhere(
                                 (card) => card.recordId == deleteRecordId,
                               );
+                              _cardNotifiers.remove(deleteRecordId);
                             } else if (i >= 0 && i < _cards.length) {
                               _cards.removeAt(i);
                             }
-                            context.safePop();
                             _saveState();
-                            setState(() {});
+                            if (mounted) {
+                              setState(() {
+                                _updateFilteredAndGroupedCards();
+                              });
+                            }
+                            return true;
                           }
+                          return false;
                         },
                       ),
                     );

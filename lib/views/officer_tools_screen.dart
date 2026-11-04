@@ -50,7 +50,7 @@ class OfficerToolsSheet extends StatefulWidget {
   final VoidCallback onExportCopy;
   final VoidCallback onExportCsvDownload;
   final VoidCallback onExportCsvShare;
-  final VoidCallback onDeleteData;
+  final Future<bool> Function() onDeleteData;
   final ValueChanged<ExamCardData> onUpdateData;
   final VoidCallback onSaveData;
   final int initialTabIndex;
@@ -108,6 +108,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   bool _isPausingLoading = false;
   bool _isRestartingLoading = false;
   bool _isEndingLoading = false;
+  bool _isExamDeleted = false;
 
   late ExamCardData _currentData;
   Timer? _updateTimer;
@@ -521,7 +522,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
   }
 
   void _syncTransientSetupState() {
-    if (_isExamCompleted) return;
+    if (_isExamDeleted || _isExamCompleted) return;
     final entry = ScheduleData(
       time: _setupTimeRange(),
       room: _setupRoomController.text.trim(),
@@ -4676,7 +4677,16 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   sectionId: 'delete',
                                   content: "",
                                   isDanger: true,
-                                  onTap: widget.onDeleteData,
+                                  onTap: () async {
+                                    final deleted =
+                                        await widget.onDeleteData();
+                                    if (deleted) {
+                                      _isExamDeleted = true;
+                                      if (mounted) {
+                                        Navigator.of(context).pop();
+                                      }
+                                    }
+                                  },
                                 ),
                               ),
                             ],
