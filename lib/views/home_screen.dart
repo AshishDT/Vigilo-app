@@ -1812,6 +1812,12 @@ class _HomeScreenState extends State<HomeScreen>
                               setState(() {
                                 _updateFilteredAndGroupedCards();
                               });
+                              _toast(
+                                "Exam Deleted",
+                                "The exam has been removed",
+                                Icons.delete_outline_rounded,
+                                NotificationType.success,
+                              );
                             }
                             return true;
                           }
