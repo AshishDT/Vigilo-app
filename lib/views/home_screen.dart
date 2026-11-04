@@ -60,7 +60,6 @@ class _HomeScreenState extends State<HomeScreen>
   List<String> _lastImportedSessionIds = [];
   final SessionService _sessionService = SessionService();
   final Set<String> _normalTimeWarningVibrationSent = <String>{};
-  final Set<String> _extraTimeWarningVibrationSent = <String>{};
   final Set<String> _scheduledReadyNotifiedIds = <String>{};
   DateTime? _lastMidnightDate;
   bool _tickInFlight = false;
@@ -252,7 +251,6 @@ class _HomeScreenState extends State<HomeScreen>
         .whereType<String>()
         .toSet();
     _normalTimeWarningVibrationSent.retainAll(activeIds);
-    _extraTimeWarningVibrationSent.retainAll(activeIds);
     _scheduledReadyNotifiedIds.retainAll(activeIds);
     if (!mounted) return;
     setState(() {
@@ -747,8 +745,6 @@ class _HomeScreenState extends State<HomeScreen>
       } else {
         _pendingCardRefreshAfterScroll = true;
       }
-      await _vibrateForTenMinutesBeforeNormalEnd();
-      await _vibrateForTenMinutesBeforeExtraEnd();
       return;
     }
 
@@ -814,7 +810,6 @@ class _HomeScreenState extends State<HomeScreen>
       }
     }
     await _vibrateForTenMinutesBeforeNormalEnd();
-    await _vibrateForTenMinutesBeforeExtraEnd();
   }
 
   int _elapsedSecondsForWarning(ExamCardData card) {
@@ -830,53 +825,36 @@ class _HomeScreenState extends State<HomeScreen>
       final id = current.recordId;
       if (id == null) continue;
       if (!current.vibrateOn) continue;
-      if (_normalTimeWarningVibrationSent.contains(id)) continue;
       if (!current.running && !current.isPaused && current.progress <= 0.0) {
         continue;
       }
 
       final normalSeconds = current.normalSeconds;
-      if (normalSeconds <= 0) continue;
+      if (normalSeconds <= 600) continue;
 
-      final thresholdSeconds = (normalSeconds - 600).clamp(0, normalSeconds);
+      final targetSeconds = normalSeconds - 600;
       final currentElapsedSeconds = _elapsedSecondsForWarning(current);
-      if (currentElapsedSeconds >= normalSeconds) continue;
-      if (currentElapsedSeconds < thresholdSeconds) continue;
 
-      _normalTimeWarningVibrationSent.add(id);
-      shouldVibrate = true;
-    }
-
-    if (!shouldVibrate) return;
-    await _triggerWarningVibration();
-  }
-
-  Future<void> _vibrateForTenMinutesBeforeExtraEnd() async {
-    bool shouldVibrate = false;
-
-    for (final current in _cards) {
-      final id = current.recordId;
-      if (id == null) continue;
-      if (!current.vibrateOn) continue;
-      if (_extraTimeWarningVibrationSent.contains(id)) continue;
-      if (!current.running && !current.isPaused && current.progress <= 0.0) {
+      // If more than 10 minutes left (e.g. duration or time was changed/extended),
+      // reset the sent flag so it will warn when it reaches the 10-minute point.
+      if (currentElapsedSeconds < targetSeconds) {
+        if (_normalTimeWarningVibrationSent.remove(id)) {
+          debugPrint("[Vibrate] Reset warning flag for $id: $currentElapsedSeconds < $targetSeconds");
+        }
         continue;
       }
 
-      final extraSeconds = current.extraSeconds;
-      if (extraSeconds <= 0) continue;
+      if (_normalTimeWarningVibrationSent.contains(id)) {
+        continue;
+      }
 
-      final totalSeconds = current.totalSeconds;
-      final thresholdSeconds = (totalSeconds - 600).clamp(
-        current.normalSeconds,
-        totalSeconds,
-      );
-      final currentElapsedSeconds = _elapsedSecondsForWarning(current);
-      if (currentElapsedSeconds >= totalSeconds) continue;
-      if (currentElapsedSeconds < thresholdSeconds) continue;
-
-      _extraTimeWarningVibrationSent.add(id);
-      shouldVibrate = true;
+      _normalTimeWarningVibrationSent.add(id);
+      if (currentElapsedSeconds <= targetSeconds + 30) {
+        debugPrint("[Vibrate] TRIGGERING buzz for $id: elapsed=$currentElapsedSeconds, target=$targetSeconds (window: $targetSeconds-${targetSeconds + 30})");
+        shouldVibrate = true;
+      } else {
+        debugPrint("[Vibrate] LATE - Suppressed buzz for $id: elapsed=$currentElapsedSeconds > target+30 (${targetSeconds + 30})");
+      }
     }
 
     if (!shouldVibrate) return;
@@ -884,17 +862,25 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _triggerWarningVibration() async {
+    debugPrint("[Vibrate] Calling _triggerWarningVibration...");
     try {
       final hasVibrator = await Vibration.hasVibrator();
+      debugPrint("[Vibrate] hasVibrator: $hasVibrator");
       if (hasVibrator) {
         await Vibration.vibrate(pattern: const [0, 350, 150, 350, 150, 500]);
+        debugPrint("[Vibrate] Vibration.vibrate 3-burst completed");
         return;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("[Vibrate] Vibration.vibrate error: $e");
+    }
 
     try {
       await HapticFeedback.vibrate();
-    } catch (_) {}
+      debugPrint("[Vibrate] HapticFeedback.vibrate completed");
+    } catch (e) {
+      debugPrint("[Vibrate] HapticFeedback error: $e");
+    }
   }
 
   void _toggleExpanded(int i) {
@@ -1114,7 +1100,6 @@ class _HomeScreenState extends State<HomeScreen>
         extraTimeMs: _cards[i].extraSeconds * 1000,
       );
       _normalTimeWarningVibrationSent.remove(recordId);
-      _extraTimeWarningVibrationSent.remove(recordId);
       await _refreshCards();
       _toast(
         "Exam Restarted",
@@ -2904,6 +2889,8 @@ class _HomeScreenState extends State<HomeScreen>
             await _sessionService.saveCardDelta(updated);
             final recordId = _cards[saveIdx].recordId;
             if (recordId != null) {
+              _normalTimeWarningVibrationSent.remove(recordId);
+              debugPrint("[Vibrate] Cleared sent flag for $recordId due to duration change");
               await _sessionService.updatePlannedDuration(
                 examRecordId: recordId,
                 normalDurationMs: _cards[saveIdx].normalSeconds * 1000,
@@ -2967,6 +2954,8 @@ class _HomeScreenState extends State<HomeScreen>
             await _sessionService.saveCardDelta(updated);
             final recordId = _cards[saveIdx].recordId;
             if (recordId != null) {
+              _normalTimeWarningVibrationSent.remove(recordId);
+              debugPrint("[Vibrate] Cleared sent flag for $recordId due to duration change");
               await _sessionService.updatePlannedDuration(
                 examRecordId: recordId,
                 normalDurationMs: _cards[saveIdx].normalSeconds * 1000,
