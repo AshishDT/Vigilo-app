@@ -4678,6 +4678,16 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                   content: "",
                                   isDanger: true,
                                   onTap: () async {
+                                    if (_currentData.running ||
+                                        _currentData.isPaused) {
+                                      _showBanner(
+                                        "Action Restricted",
+                                        "End the exam first (Control tab, End Exam) before deleting it.",
+                                        Icons.block_rounded,
+                                        NotificationType.error,
+                                      );
+                                      return;
+                                    }
                                     final deleted =
                                         await widget.onDeleteData();
                                     if (deleted) {

@@ -1773,6 +1773,16 @@ class _HomeScreenState extends State<HomeScreen>
                           }
                         },
                         onDeleteData: () async {
+                          if (targetRecordId != null) {
+                            final curIdx = _cards.indexWhere(
+                              (card) => card.recordId == targetRecordId,
+                            );
+                            if (curIdx != -1 &&
+                                (_cards[curIdx].running ||
+                                    _cards[curIdx].isPaused)) {
+                              return false;
+                            }
+                          }
                           final ok = await showDialog<bool>(
                             context: context,
                             builder: (ctx) => confirmationDialog(
