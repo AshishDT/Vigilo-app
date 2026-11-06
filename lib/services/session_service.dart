@@ -1656,6 +1656,29 @@ class SessionService {
       Duration(milliseconds: (card.totalSeconds * 1000) + effectivePausedMs),
     );
 
+    if (snapshot.sessionStatus == SessionStatus.ended &&
+        snapshot.endedAtUtc != null) {
+      final actualEndFormatted = _formatLocalHms(snapshot.endedAtUtc!);
+      if (card.extraSeconds > 0) {
+        if (snapshot.endedAtUtc!.isAfter(projectedNormalUtc)) {
+          return _DisplayTimeline(
+            normalEnd: _formatLocalHms(projectedNormalUtc),
+            examEnd: actualEndFormatted,
+          );
+        } else {
+          return _DisplayTimeline(
+            normalEnd: actualEndFormatted,
+            examEnd: actualEndFormatted,
+          );
+        }
+      } else {
+        return _DisplayTimeline(
+          normalEnd: actualEndFormatted,
+          examEnd: actualEndFormatted,
+        );
+      }
+    }
+
     return _DisplayTimeline(
       normalEnd: _formatLocalHms(projectedNormalUtc),
       examEnd: _formatLocalHms(projectedExamEndUtc),
@@ -2147,6 +2170,14 @@ class SessionService {
       ended: isEnded,
     );
 
+    final overallEnd = (card.extraSeconds > 0 &&
+            (phase == ExamPhase.extra ||
+                (isEnded &&
+                    snapshot.endedAtUtc != null &&
+                    timeline.examEnd != timeline.normalEnd)))
+        ? timeline.examEnd
+        : timeline.normalEnd;
+
     return card.copyWith(
       running: isEnded ? false : (snapshot.sessionStatus == SessionStatus.running),
       isPaused: isEnded ? false : (snapshot.sessionStatus == SessionStatus.paused),
@@ -2154,7 +2185,7 @@ class SessionService {
       pausedSeconds: effectivePausedMs ~/ 1000,
       progress: progress,
       phase: phase,
-      end: timeline.normalEnd,
+      end: overallEnd,
       normalEnd: timeline.normalEnd,
       extraEnd: timeline.examEnd,
     );
