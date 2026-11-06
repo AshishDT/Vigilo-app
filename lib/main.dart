@@ -73,15 +73,9 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
 
   void _handleScreenOff() {
     SecurityService().recordPause();
-    // When the physical screen powers down / locks, pre-render the privacy shield
-    // into the GPU surface buffer before the display turns off completely.
-    if (!SecurityService().isAuthenticating && !_isNoLockState) {
-      if (mounted && !_isShieldActive) {
-        setState(() {
-          _isShieldActive = true;
-        });
-      }
-    }
+    // Do NOT pre-render the shield here — it causes a 1-3 frame flash of
+    // "Vigilo ERC Locked" when the phone is unlocked within the idle timeout.
+    // The resumed lifecycle path already raises the shield if needed.
   }
 
   @override

@@ -1045,8 +1045,8 @@ class _HomeScreenState extends State<HomeScreen>
     await Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const LicenseActivationScreen()));
-    await _seedOrganizationFromLicenseIfNeeded();
     await _loadLicenseStatus();
+    await _seedOrganizationFromLicenseIfNeeded();
   }
 
   bool _isProcessingRestart = false;
