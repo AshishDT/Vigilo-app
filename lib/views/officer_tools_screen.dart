@@ -3362,6 +3362,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
     required String content,
     bool showCheckmark = false,
     bool isDanger = false,
+    BorderRadius? borderRadius,
     VoidCallback? onTap,
   }) {
     final bool isAction = onTap != null;
@@ -3373,19 +3374,25 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
         ? VigiloUiColors.red(_isDark)
         : VigiloUiColors.blueSoft(_isDark);
 
-    return InkWell(
-      onTap: isAction
-          ? onTap
-          : () {
-              setState(() {
-                if (expanded) {
-                  _expandedPrivacySections.remove(sectionId);
-                } else {
-                  _expandedPrivacySections.add(sectionId);
-                }
-              });
-            },
-      child: Padding(
+    final effectiveRadius = borderRadius ?? BorderRadius.circular(20);
+    return Material(
+      color: Colors.transparent,
+      borderRadius: effectiveRadius,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        borderRadius: effectiveRadius,
+        onTap: isAction
+            ? onTap
+            : () {
+                setState(() {
+                  if (expanded) {
+                    _expandedPrivacySections.remove(sectionId);
+                  } else {
+                    _expandedPrivacySections.add(sectionId);
+                  }
+                });
+              },
+        child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3462,6 +3469,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
               ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -4557,9 +4565,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     width: .7,
                                   ),
                                 ),
-                                child: Column(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Column(
                                   children: [
                                     _otPrivacyTile(
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                                       icon: Icons.article_outlined,
                                       title: "Privacy Notice",
                                       subtitle:
@@ -4575,6 +4586,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                       color: VigiloUiColors.lineSoft(_isDark),
                                     ),
                                     _otPrivacyTile(
+                                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
                                       icon: Icons.download_rounded,
                                       title: "Export & Retention",
                                       subtitle:
@@ -4585,6 +4597,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                           "Exported logs are generated for organisational record keeping and should be stored, shared, retained, or deleted in accordance with the organisation's own procedures.\n\nVigilo ERC does not upload exported records to an external server.",
                                     ),
                                   ],
+                                ),
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -4610,9 +4623,12 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     width: .7,
                                   ),
                                 ),
-                                child: Column(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Column(
                                   children: [
                                     _otPrivacyTile(
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                                       icon: Icons.group_outlined,
                                       title: "Responsibilities",
                                       subtitle:
@@ -4627,6 +4643,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                       color: VigiloUiColors.lineSoft(_isDark),
                                     ),
                                     _otPrivacyTile(
+                                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
                                       icon: Icons.info_outline_rounded,
                                       title: "Version Information",
                                       subtitle:
@@ -4636,6 +4653,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                           "Vigilo ERC v$_appVersion\n\nCopyright © 2026 Vigilo\u00A0Platforms\u00A0Ltd. All rights reserved. Vigilo™ is a trademark of Vigilo\u00A0Platforms\u00A0Ltd.",
                                     ),
                                   ],
+                                ),
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -4663,7 +4681,9 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                     width: .7,
                                   ),
                                 ),
-                                child: _otPrivacyTile(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: _otPrivacyTile(
                                   icon: Icons.delete_outline_rounded,
                                   title: "Delete Exam Data",
                                   subtitle:
@@ -4691,6 +4711,7 @@ class _OfficerToolsSheetState extends State<OfficerToolsSheet>
                                       }
                                     }
                                   },
+                                ),
                                 ),
                               ),
                             ],
