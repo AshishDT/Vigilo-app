@@ -838,9 +838,7 @@ class _HomeScreenState extends State<HomeScreen>
       // If more than 10 minutes left (e.g. duration or time was changed/extended),
       // reset the sent flag so it will warn when it reaches the 10-minute point.
       if (currentElapsedSeconds < targetSeconds) {
-        if (_normalTimeWarningVibrationSent.remove(id)) {
-          debugPrint("[Vibrate] Reset warning flag for $id: $currentElapsedSeconds < $targetSeconds");
-        }
+        _normalTimeWarningVibrationSent.remove(id);
         continue;
       }
 
@@ -850,10 +848,7 @@ class _HomeScreenState extends State<HomeScreen>
 
       _normalTimeWarningVibrationSent.add(id);
       if (currentElapsedSeconds <= targetSeconds + 30) {
-        debugPrint("[Vibrate] TRIGGERING buzz for $id: elapsed=$currentElapsedSeconds, target=$targetSeconds (window: $targetSeconds-${targetSeconds + 30})");
         shouldVibrate = true;
-      } else {
-        debugPrint("[Vibrate] LATE - Suppressed buzz for $id: elapsed=$currentElapsedSeconds > target+30 (${targetSeconds + 30})");
       }
     }
 
@@ -862,25 +857,12 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _triggerWarningVibration() async {
-    debugPrint("[Vibrate] Calling _triggerWarningVibration...");
     try {
       final hasVibrator = await Vibration.hasVibrator();
-      debugPrint("[Vibrate] hasVibrator: $hasVibrator");
-      if (hasVibrator) {
+      if (hasVibrator == true) {
         await Vibration.vibrate(pattern: const [0, 350, 150, 350, 150, 500]);
-        debugPrint("[Vibrate] Vibration.vibrate 3-burst completed");
-        return;
       }
-    } catch (e) {
-      debugPrint("[Vibrate] Vibration.vibrate error: $e");
-    }
-
-    try {
-      await HapticFeedback.vibrate();
-      debugPrint("[Vibrate] HapticFeedback.vibrate completed");
-    } catch (e) {
-      debugPrint("[Vibrate] HapticFeedback error: $e");
-    }
+    } catch (_) {}
   }
 
   void _toggleExpanded(int i) {
@@ -1525,7 +1507,12 @@ class _HomeScreenState extends State<HomeScreen>
                           Icons.vibration_rounded,
                           NotificationType.success,
                         );
-                        await HapticFeedback.vibrate();
+                        try {
+                          final hasVibrator = await Vibration.hasVibrator();
+                          if (hasVibrator == true) {
+                            await Vibration.vibrate(pattern: const [0, 100]);
+                          }
+                        } catch (_) {}
                       } catch (_) {}
                     } else {
                       _toast(
@@ -2890,7 +2877,6 @@ class _HomeScreenState extends State<HomeScreen>
             final recordId = _cards[saveIdx].recordId;
             if (recordId != null) {
               _normalTimeWarningVibrationSent.remove(recordId);
-              debugPrint("[Vibrate] Cleared sent flag for $recordId due to duration change");
               await _sessionService.updatePlannedDuration(
                 examRecordId: recordId,
                 normalDurationMs: _cards[saveIdx].normalSeconds * 1000,
@@ -2955,7 +2941,6 @@ class _HomeScreenState extends State<HomeScreen>
             final recordId = _cards[saveIdx].recordId;
             if (recordId != null) {
               _normalTimeWarningVibrationSent.remove(recordId);
-              debugPrint("[Vibrate] Cleared sent flag for $recordId due to duration change");
               await _sessionService.updatePlannedDuration(
                 examRecordId: recordId,
                 normalDurationMs: _cards[saveIdx].normalSeconds * 1000,
