@@ -59,9 +59,51 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
         _handleScreenOff();
       }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final savedDark =
+            await _screenEventsChannel.invokeMethod<bool>('getTheme');
+        if (savedDark != null && mounted && savedDark != dark) {
+          setState(() {
+            dark = savedDark;
+          });
+        }
+      } catch (_) {}
+      _syncThemeToNative(dark);
       _checkSecurityLockOnLaunch();
     });
+  }
+
+  Future<void> _syncThemeToNative(bool isDark) async {
+    try {
+      await _screenEventsChannel.invokeMethod('setTheme', {'dark': isDark});
+    } catch (_) {}
+  }
+
+  Future<void> _dismissNativeCover() async {
+    try {
+      await _screenEventsChannel.invokeMethod('dismissNativeCover');
+    } catch (_) {}
+  }
+
+  Future<void> _clearNativePauseTime() async {
+    try {
+      await _screenEventsChannel.invokeMethod('clearPauseTime');
+    } catch (_) {}
+  }
+
+  Future<void> _setAuthenticating(bool authenticating) async {
+    try {
+      await _screenEventsChannel
+          .invokeMethod('setAuthenticating', {'authenticating': authenticating});
+    } catch (_) {}
+  }
+
+  void _toggleTheme() {
+    setState(() {
+      dark = !dark;
+    });
+    _syncThemeToNative(dark);
   }
 
   @override
@@ -98,6 +140,9 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
             _isShieldActive = true;
           });
         }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _dismissNativeCover();
+        });
         return;
       }
 
@@ -114,6 +159,8 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
       } else {
         // Under timeout threshold -> Automatically dismiss the temporary sleep shield
         SecurityService().clearPause();
+        _dismissNativeCover();
+        _clearNativePauseTime();
         if (mounted && _isShieldActive) {
           setState(() {
             _isShieldActive = false;
@@ -135,6 +182,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
         });
       }
       FlutterNativeSplash.remove();
+      _dismissNativeCover();
       return;
     }
 
@@ -144,6 +192,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
     // before dismissing the OS native splash screen.
     await WidgetsBinding.instance.endOfFrame;
     FlutterNativeSplash.remove();
+    _dismissNativeCover();
     await _triggerSecurityAuthentication();
   }
 
@@ -158,6 +207,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
           _hasInitiallyAuthenticated = true;
         });
       }
+      _dismissNativeCover();
       return;
     }
 
@@ -168,16 +218,20 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
         _isAuthenticating = true;
       });
     }
+    _setAuthenticating(true);
 
     // Await complete Flutter frame paint so SecurityPrivacyShield is drawn
     // on screen BEFORE native Knox/Biometric authentication window opens.
     await WidgetsBinding.instance.endOfFrame;
+    _dismissNativeCover();
 
     final authenticated = await SecurityService().authenticate();
+    _setAuthenticating(false);
     if (!mounted) return;
 
     if (authenticated) {
       SecurityService().clearPause();
+      _clearNativePauseTime();
       _requiresAuthentication = false;
       setState(() {
         _isShieldActive = false;
@@ -217,9 +271,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
             if (_isNoLockState)
               NoLockScreen(
                 dark: dark,
-                onToggleTheme: () {
-                  setState(() => dark = !dark);
-                },
+                onToggleTheme: _toggleTheme,
                 onLockDetected: () {
                   setState(() => _isNoLockState = false);
                   _checkSecurityLockOnLaunch();
@@ -228,9 +280,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
             else if (_isShieldActive)
               SecurityPrivacyShield(
                 dark: dark,
-                onToggleTheme: () {
-                  setState(() => dark = !dark);
-                },
+                onToggleTheme: _toggleTheme,
                 onUnlockPressed: _triggerSecurityAuthentication,
                 isAuthenticating: _isAuthenticating,
               ),
@@ -240,9 +290,7 @@ class _VigiloAppState extends State<VigiloApp> with WidgetsBindingObserver {
       home: HomeScreen(
         dark: dark,
         initialLicenseRequired: widget.initialLicenseRequired,
-        onToggleTheme: () {
-          setState(() => dark = !dark);
-        },
+        onToggleTheme: _toggleTheme,
       ),
     );
   }
