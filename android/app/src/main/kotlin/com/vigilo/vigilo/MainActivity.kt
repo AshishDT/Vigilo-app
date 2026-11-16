@@ -20,9 +20,8 @@ class MainActivity : FlutterFragmentActivity() {
         private const val PREFS_NAME = "vigilo_security_prefs"
         private const val KEY_SCREEN_OFF_TIME = "screen_off_time"
         private const val KEY_IS_DARK_THEME = "is_dark_theme"
-        // Idle timeout threshold for testing: 1 minute (60,000 ms).
-        // Change to 15 * 60 * 1000L (15 minutes) for production.
-        private const val IDLE_TIMEOUT_MS = 60 * 1000L
+        // Idle timeout threshold: 15 minutes (900,000 ms), matching app idle timeout.
+        private const val IDLE_TIMEOUT_MS = 15 * 60 * 1000L
         private const val COLOR_DARK_NAVY = "#071A2B"
         private const val COLOR_LIGHT_BG = "#EAF1F8"
     }
